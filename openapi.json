@@ -1,0 +1,442 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FastAPI",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Describe Evolver",
+        "operationId": "describe",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Update Evolver",
+        "operationId": "update",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvolverConfigWithoutDefaults"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/state": {
+      "get": {
+        "summary": "Get State",
+        "operationId": "get_state_state_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schema/": {
+      "get": {
+        "summary": "Get Schema",
+        "operationId": "get_schema_schema__get",
+        "parameters": [
+          {
+            "name": "classinfo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "fully qualified class name"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "evolver.device.Evolver",
+              "title": "Classinfo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/history/{name}": {
+      "get": {
+        "summary": "Get History",
+        "operationId": "get_history",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "summary": "Healthz",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ConfigDescriptor": {
+        "properties": {
+          "classinfo": {
+            "type": "string",
+            "title": "Classinfo",
+            "description": "fully qualified class name"
+          },
+          "config": {
+            "type": "object",
+            "title": "Config",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "classinfo"
+        ],
+        "title": "ConfigDescriptor"
+      },
+      "EvolverConfigWithoutDefaults": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "vials": {
+            "items": {},
+            "type": "array",
+            "title": "Vials"
+          },
+          "hardware": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ConfigDescriptor"
+                },
+                {
+                  "$ref": "#/components/schemas/evolver__hardware__interface__HardwareDriver__Config"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Hardware"
+          },
+          "controllers": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ConfigDescriptor"
+                },
+                {
+                  "$ref": "#/components/schemas/evolver__controller__interface__Controller__Config"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Controllers"
+          },
+          "serial": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfigDescriptor"
+              },
+              {
+                "$ref": "#/components/schemas/evolver__connection__interface__Connection__Config"
+              }
+            ],
+            "title": "Serial"
+          },
+          "history": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfigDescriptor"
+              },
+              {
+                "$ref": "#/components/schemas/evolver__history__HistoryServer__Config"
+              }
+            ],
+            "title": "History"
+          },
+          "enable_control": {
+            "type": "boolean",
+            "title": "Enable Control"
+          },
+          "enable_commit": {
+            "type": "boolean",
+            "title": "Enable Commit"
+          },
+          "interval": {
+            "type": "integer",
+            "title": "Interval"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "vials",
+          "hardware",
+          "controllers",
+          "serial",
+          "history",
+          "enable_control",
+          "enable_commit",
+          "interval"
+        ],
+        "title": "EvolverConfigWithoutDefaults"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "SchemaResponse": {
+        "properties": {
+          "classinfo": {
+            "type": "string",
+            "title": "Classinfo",
+            "description": "fully qualified class name"
+          },
+          "config": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Config"
+          },
+          "input": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input"
+          },
+          "output": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output"
+          }
+        },
+        "type": "object",
+        "required": [
+          "classinfo"
+        ],
+        "title": "SchemaResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "evolver__connection__interface__Connection__Config": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "title": "Config"
+      },
+      "evolver__controller__interface__Controller__Config": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "title": "Config"
+      },
+      "evolver__hardware__interface__HardwareDriver__Config": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "title": "Config"
+      },
+      "evolver__history__HistoryServer__Config": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": "HistoryServer"
+          }
+        },
+        "type": "object",
+        "title": "Config"
+      }
+    }
+  }
+}
