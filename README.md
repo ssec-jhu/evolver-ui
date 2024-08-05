@@ -16,16 +16,16 @@ npm install
 
 ## Generate the evolver-ng typescript client
 
-1. from the parent `/evolver-ng` root directory generate an `openapi.json` file and copy it into this, the `/evolver-ng/ui` directory.
+1. from the [`/evolver-ng`](https://github.com/ssec-jhu/evolver-ng) repo generate an `openapi.json` file and copy it into this, project's root directory.
 
 ```shellscript
-tox -e generate_openapi && mv openapi.json ui/
+tox -e generate_openapi
 ```
 
-2. from the `/evolver-ng/ui` directory run this command.
+2. from the `/evolver-ui` directory run this command.
 
 ```shellscript
-npm run gen_ng_evolver_ts_client
+npm run bootstrap_evolver_ts_client
 ```
 
 # Development
@@ -54,12 +54,6 @@ npm run dev
 ## Deployment
 
 This app can run on an evolver device (raspberry pi). It can also run persistently in the cloud or on a local machine in your lab. This app can connect to an unlimited number of evolver devices.
-
-### Init prod db and/or apply migrations
-
-```shellscript
-npx prisma migrate deploy
-```
 
 ### build the web app
 
@@ -90,7 +84,7 @@ npm start
 ## testing
 
 ### unit tests
-[Vitest](https://vitest.dev) and [react-testing-library](https://testing-library.com/docs/react-testing-library/intro/) are used for unit tests, if a system entity is pure (this term is generally analagous to idempotency) it is a good candidate for unit tests. For example a React component that is a pure function of it's parameters/props. Or a remix loaders and actions that are a pure function of the parameters of the incoming request that they handle.
+[Vitest](https://vitest.dev) and [react-testing-library](https://testing-library.com/docs/react-testing-library/intro/) are used for unit tests, if a system entity is pure (this term is generally analagous to idempotency) it is a good candidate for unit tests. For example a React component that is a pure function of it's parameters/props. Or remix loaders and actions that are a pure function of the parameters of the incoming request that they handle.
 
 ### integration tests
 Whenever a part of the system relies on network requests or complex user interactions, we consider it impure, in these cases, it has dependencies outside our control. For example network requests fail, or respond with unexpected data, while user interactions introduce cyclomatic complexity. To cover these cases we rely on [MSW](https://mswjs.io/) and [puppeteer](https://pptr.dev/) respectively to encapsulate and manage the complexity introduced by the network boundary and human interaction. Within the context of this app, remix routes are a good candidate for integration tests.
@@ -101,4 +95,4 @@ Having trouble with MSW? Refer to this example repo: https://github.com/mswjs/ex
 https://github.com/remix-run/remix/discussions/5769#discussioncomment-5281163
 
 ### e2e tests
-in a production system at scale the entire evolver system, would have a simulated and tested as part of its deployment pipeline as close to production as possible. At this stage e2e tests could be run against real hardware. This is out of scope for current stage of research. e2e tests are not included in this software. That said, the front end integration tests could be run without MSW against a real evolver endpoint to achieve this whenever it becomes feasible and desirable.
+in a production system at scale the entire evolver system, would have a simulated and tested as part of its deployment pipeline as close to production as possible. At this stage e2e tests could be run against real hardware. This is out of scope for current stage of research. e2e tests are not included in this software. That said, the front end integration tests could be run without MSW against a real evolver endpoint to achieve this whenever it becomes necessary.
