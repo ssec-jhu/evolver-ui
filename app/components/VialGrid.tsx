@@ -1,14 +1,24 @@
-import React from "react";
+import { Link } from "@remix-run/react";
+import clsx from "clsx";
 
-const DataTable = ({ data }) => {
+const DataTable = ({
+  data,
+  ip,
+  vialIndex,
+}: {
+  ip: string;
+  vialIndex: number;
+}) => {
   return (
     <div className="overflow-x-auto">
       <table className="table table-xs w-full">
         <thead>
           <tr>
-            <th>hardware</th>
-            <th>property</th>
-            <th>value</th>
+            <th>
+              <Link to={`/devices/${ip}/hardware`}>hardware</Link>{" "}
+            </th>
+            <th></th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -31,15 +41,29 @@ const DataTable = ({ data }) => {
                       rowSpan={Object.keys(data[mainKey]).length}
                       className="text-center"
                     >
-                      {mainKey}
+                      <Link
+                        className="link"
+                        to={`/devices/${ip}/hardware/${mainKey}/history?vials=${vialIndex}`}
+                      >
+                        {mainKey}
+                      </Link>
                     </td>
                   )}
-                  {renderSubKey && <td>{subKey}</td>}
                   {renderSubKey && (
                     <td>
-                      {data[mainKey][subKey] !== null
-                        ? data[mainKey][subKey].toString()
-                        : "null"}
+                      <Link
+                        className="link"
+                        to={`/devices/${ip}/hardware/${mainKey}/history?properties=${subKey}&vials=${vialIndex}`}
+                      >
+                        {subKey}
+                      </Link>
+                    </td>
+                  )}
+                  {renderSubKey && (
+                    <td>
+                      {data[mainKey][subKey] !== null &&
+                        data[mainKey][subKey].toString()}
+                      {data[mainKey][subKey] == null && "-"}
                     </td>
                   )}
                 </tr>
@@ -55,9 +79,11 @@ const DataTable = ({ data }) => {
 export function VialGrid({
   vialCount = 16,
   stateData,
+  ip,
 }: {
   vialCount: number;
   stateData: { [key: string]: { [key: string]: { [key: string]: number } } };
+  ip: string;
 }) {
   const gridItems = Array.from({ length: vialCount }, (_, index) => {
     const indexString = index.toString();
@@ -77,30 +103,24 @@ export function VialGrid({
     return { index, ...matchingData };
   });
   const cells = gridItems.map(({ index, ...data }) => {
-    // check if there's data for this vial
-    if (Object.keys(data).length === 0) {
-      return (
-        <div
-          key={index}
-          className="relative flex items-center justify-center aspect-square border border-gray-300 font-bold rounded-badge"
-        >
-          <div className="absolute inset-0 flex items-center justify-center text-neutral text-opacity-25">
-            <span className="block text-[8vw] leading-none">{index}</span>
-          </div>
-        </div>
-      );
-    }
+    const hasData = Object.keys(data).length > 0;
     return (
       <div
         key={index}
-        className="relative flex items-center justify-center aspect-square border border-4 border-accent font-bold rounded-badge"
+        className={clsx(
+          "relative flex items-center justify-center aspect-square border font-bold rounded-md",
+          !hasData && "border-2 border-gray-300",
+          hasData && "border-4 border-primary",
+        )}
       >
-        <div className="absolute inset-0 flex items-center justify-center text-neutral text-opacity-30">
+        <div className="absolute inset-0 flex items-center justify-center text-neutral text-opacity-25">
           <span className="block text-[8vw] leading-none">{index}</span>
         </div>
-        <div className="relative z-10">
-          <DataTable data={data} />
-        </div>
+        {hasData && (
+          <div className="relative z-10">
+            <DataTable data={data} ip={ip} vialIndex={index} />
+          </div>
+        )}
       </div>
     );
   });

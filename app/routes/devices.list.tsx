@@ -82,17 +82,19 @@ export const loader = async () => {
   const resolved = await Promise.allSettled(deviceStatusPromises);
   const results = resolved.map((result, index) => {
     return {
-      name: result.status === "fulfilled" ? result.value.name : "unknown",
+      name: result.status === "fulfilled" && result.value.name,
       ip_addr: devices[index].ip_addr,
       createdAt: devices[index].createdAt,
       status:
-        result.status === "fulfilled" && result.value ? "online" : "offline",
+        result.status === "fulfilled" && result.value.online
+          ? "online"
+          : "offline",
     };
   });
   return json(results);
 };
 
-export default function Devices() {
+export default function DevicesList() {
   const loaderData = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const submit = useSubmit();
@@ -165,11 +167,11 @@ export default function Devices() {
 
   return (
     <>
-      <div className="mt-4 flex flex-wrap justify-between gap-4 min-h-28">
+      <div className="mt-4 mb-4 flex flex-wrap justify-between gap-4">
         <h1 className="flex-none text-2xl">Devices</h1>
         <Form
           method="POST"
-          action="/devices"
+          action="/devices/list"
           className="flex flex-none w-100 space-x-4 items-baseline"
           {...getFormProps(form)}
         >

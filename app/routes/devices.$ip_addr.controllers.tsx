@@ -1,5 +1,4 @@
 import { Link, Outlet, useParams, useRouteLoaderData } from "@remix-run/react";
-
 import { HardwareTable } from "~/components/HardwareTable";
 import { loader } from "./devices.$ip_addr";
 import { EvolverConfigWithoutDefaults } from "client";
@@ -16,7 +15,7 @@ export const handle = {
   },
 };
 
-export default function Hardware() {
+export default function Controllers() {
   const { ip_addr } = useParams();
   // TODO: figure this out, should submit to nearest layout route with a loader
   const loaderData = useRouteLoaderData<typeof loader>(
@@ -31,20 +30,17 @@ export default function Hardware() {
     }
   }
 
-  if (
-    !evolverConfig.hardware ||
-    Object.keys(evolverConfig.hardware).length === 0
-  ) {
+  if (!evolverConfig.controllers || evolverConfig.controllers.length === 0) {
     return (
       <div className="flex flex-col items-center">
         <CogIcon className="h-20 w-20" />
-        <div>No hardware associated with this device.</div>
+        <div>No controllers associated with this device.</div>
         <div
           className="tooltip"
           data-tip="use the configuration editor to add hardware "
         >
           <Link className="link text-primary" to={`/devices/${ip_addr}/config`}>
-            add hardware
+            add controller
           </Link>
         </div>
       </div>

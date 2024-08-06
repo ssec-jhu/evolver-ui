@@ -11,74 +11,93 @@ import {
   useLocation,
   useMatches,
   useRouteError,
+  useSearchParams,
 } from "@remix-run/react";
 import { ReactNode } from "react";
-import "./tailwind.css";
-import Navbar from "./components/Navbar";
-import { GlobalLoading } from "./components/GlobalLoading";
-import { db } from "./utils/db.server";
-import { prefs } from "./prefs-cookie";
-import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { getEnv } from "~/utils/env.server";
+import "~/tailwind.css";
+import Navbar from "~/components/Navbar";
+import { GlobalLoading } from "~/components/GlobalLoading";
+import { db } from "~/utils/db.server";
+import { userPrefs } from "~/cookies.server";
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  redirect,
+} from "@remix-run/node";
+import { getClientEnv } from "~/utils/env.server";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-// write the state to the cookie
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request, params }: ActionFunctionArgs) {
   const cookieHeader = request.headers.get("Cookie");
-  const cookie = (await prefs.parse(cookieHeader)) || {};
-
+  const cookie = (await userPrefs.parse(cookieHeader)) || {};
   const formData = await request.formData();
+  let redirectTo = "./";
 
-  // If the form data has a theme key, update the theme
   if (formData.has("theme")) {
     const theme = formData.get("theme");
+    true;
+
+    if (formData.has("redirectTo")) {
+      redirectTo = formData.get("redirectTo") as string;
+    }
+
     cookie.theme = theme;
-    // Update the theme cookie
-    return json(
-      { theme: cookie.theme },
-      {
-        headers: {
-          "Set-Cookie": await prefs.serialize(cookie),
-        },
+    // Update the theme cookie, redirect to the page the user was on when they toggled the theme
+    return redirect(redirectTo, {
+      headers: {
+        "Set-Cookie": await userPrefs.serialize(cookie),
       },
-    );
+    });
   }
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  // read theme state from the cookie or fallback to dark
+  // read user preferences from the client's cookie, this means user preference can be persisted between refreshes.
   const cookieHeader = request.headers.get("Cookie");
-  const cookie: { theme: "dark" | "light" } = (await prefs.parse(
+  const cookie: { theme: "dark" | "light" } = (await userPrefs.parse(
     cookieHeader,
   )) || { theme: "dark" };
 
   try {
-    // automatically add the local (running on same rpi) device to the db
+    // automatically add the local (running on same raspberry pi) device to the db
     await db.device.create({ data: { ip_addr: "127.0.0.1" } });
   } catch (error) {
     // succeed anyway the local device is already in the db
   }
-  // make the theme available to the client side
-  return json({ theme: cookie.theme, ENV: getEnv() });
+  // make the theme available to the client side, daisy ui uses it to set the theme
+  return json({ theme: cookie.theme, ENV: getClientEnv() });
 }
 
 export default function App() {
   const { theme } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
+  const [queryParams] = useSearchParams();
   const matches = useMatches();
 
   const breadcrumbs = matches
     .filter((match) => match.handle && match.handle.breadcrumb)
-    .map((match, index) => (
-      <li key={index}>{match.handle.breadcrumb(match)}</li>
-    ));
+    .map((match, index) => {
+      return <li key={index}>{match.handle.breadcrumb(match, queryParams)}</li>;
+    });
 
   return (
     <Document theme={theme}>
       <Navbar pathname={pathname} />
-      <div className="mx-auto max-w-6xl px-4 ">
-        <div className="breadcrumbs text-sm">
+      <div className="mx-auto max-w-6xl flex flex-col gap-4">
+        <div className="breadcrumbs text-sm mt-4">
           <ul>{breadcrumbs}</ul>
         </div>
+        <ToastContainer
+          position="top-right"
+          autoClose={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          theme={theme === "dark" ? "dark" : "light"}
+        />
         <Outlet />
       </div>
     </Document>

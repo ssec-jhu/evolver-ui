@@ -1,15 +1,5 @@
-export enum VialProperty {
-  name = "name",
-  vial = "vial",
-  raw = "raw",
-  density = "density",
-}
-
 interface Vial {
-  [VialProperty.name]: string | null;
-  [VialProperty.vial]: number;
-  [VialProperty.raw]: number;
-  [VialProperty.density]: number | null;
+  [key: string]: string | number | null;
 }
 
 interface Vials {
@@ -23,7 +13,7 @@ export type SensorData = Map<number, Map<string, number | string | null>>;
 
 export function getSensorProperty(
   rawData: RawSensorData,
-  targetProperty: VialProperty = VialProperty.raw,
+  targetProperty: string = "raw",
   forVials: string[] = [],
 ): SensorData {
   const allData = new Map();

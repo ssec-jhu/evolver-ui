@@ -10,17 +10,17 @@ import {
 import { EditJson } from "~/components/EditJson.client";
 import { ClientOnly } from "remix-utils/client-only";
 import { useEffect, useState } from "react";
-import { SomeJSONSchema } from "ajv/dist/types/json-schema";
 import { exportData } from "~/utils/exportData";
-import { ErrorNotifs } from "~/components/ErrorNotifs";
-import { HardwareTable } from "~/components/HardwareTable";
-import {
-  UpdateDeviceIntentEnum,
-  action,
-  type loader,
-} from "./devices.$ip_addr";
+import { type loader } from "./devices.$ip_addr";
 import { handleFileUpload } from "~/utils/handleFileUpload";
 import { EvolverConfigWithoutDefaults } from "client";
+import { ActionFunctionArgs, redirect } from "@remix-run/node";
+import { parseWithZod } from "@conform-to/zod";
+import { z } from "zod";
+import { createClient } from "@hey-api/client-fetch";
+import * as Evolver from "client/services.gen";
+import { ENV } from "~/utils/env.server";
+import { toast as notify } from "react-toastify";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { ip_addr: string } }) => {
@@ -29,14 +29,94 @@ export const handle = {
   },
 };
 
+const UpdateDeviceIntentEnum = z.enum(["update_evolver"], {
+  required_error: "an intent is required",
+  invalid_type_error: "must be one of, update_device",
+});
+
+const schema = z.object({
+  intent: UpdateDeviceIntentEnum,
+  // The preprocess step is required for zod to perform the required check properly
+  // as the value of an empty input is usually an empty string
+  ip_addr: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string({ required_error: "an ip address is required" }),
+  ),
+  // Assume this is valid, client side AJV validation.
+  data: z.string({ required_error: "an evolver config is required" }),
+});
+
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+
+  // prelim validation, just checks request has intent, ip and a config.
+  const submission = parseWithZod(formData, { schema: schema });
+
+  if (submission.status !== "success") {
+    return submission.reply();
+  }
+  const { intent, ip_addr, data } = submission.value;
+
+  const evolverClient = createClient({
+    baseUrl: `http://${ip_addr}:${ENV.DEFAULT_DEVICE_PORT}`,
+  });
+
+  switch (intent) {
+    case UpdateDeviceIntentEnum.Enum.update_evolver:
+      try {
+        const { response, error } = await Evolver.update({
+          body: JSON.parse(data),
+          client: evolverClient,
+        });
+
+        if (error) {
+          const errors = {};
+          error.detail?.forEach(({ loc, msg }) => {
+            const errorKey = loc
+              .map((l) => {
+                switch (l) {
+                  case "body":
+                    return "config";
+                  default:
+                    return l;
+                }
+              })
+              .join(".");
+            errors[errorKey] = [msg];
+          });
+
+          if (errors) {
+            return submission.reply({ fieldErrors: errors });
+          }
+        }
+
+        if (response.status !== 200) {
+          throw new Error();
+        }
+        return redirect(`/devices/${ip_addr}/config?mode=view`);
+      } catch (error) {
+        return redirect(`/devices/${ip_addr}/config?mode=edit`);
+        // TODO add error handling
+      }
+    default:
+      return null;
+  }
+}
+
 export default function DeviceConfig() {
   const { ip_addr } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname } = useLocation();
+
+  // This should be what comes back from the action at /devices/:ip_addr that the form was submitted to.
+  const actionData = useActionData<typeof action>();
+  if (actionData?.error) {
+    console.log("idk", actionData.error);
+  }
+
   const submit = useSubmit();
   const mode = searchParams.get("mode") === "edit" ? "edit" : "view";
 
-  // TODO: figure this out, should submit to nearest layout route with a loader
   const loaderData = useRouteLoaderData<typeof loader>(
     "routes/devices.$ip_addr",
   );
@@ -50,13 +130,20 @@ export default function DeviceConfig() {
 
   const evolverConfig = description?.config as EvolverConfigWithoutDefaults;
   const configSchema = schema?.config;
-  const actionData = useActionData<typeof action>();
-  const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
   useEffect(() => {
     if (actionData?.error) {
       if (typeof actionData.error === "string") {
-        setErrorMessages([actionData?.error]);
+        notify.error(actionData.error);
+      }
+      if (typeof actionData.error === "object") {
+        const errorMessages: string[] = [];
+        Object.entries(actionData.error).forEach(([key, value]) => {
+          errorMessages.push(`${key}: ${value}`);
+        });
+        errorMessages.forEach((message) => {
+          notify.error(message);
+        });
       }
     }
   }, [actionData]);
@@ -73,82 +160,75 @@ export default function DeviceConfig() {
   }, [updatedEvolverConfig]);
 
   return (
-    <div>
-      <div className="flex gap-4">
-        {mode === "view" && (
-          <div className="flex gap-4">
-            <button
-              className="btn btn-neutral"
-              onClick={() => {
-                exportData(evolverConfig);
-              }}
-            >
-              Download
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                const params = new URLSearchParams();
-                params.set("mode", "edit");
-                setSearchParams(params);
-              }}
-            >
-              Edit
-            </button>
-          </div>
-        )}
+    <div className="flex flex-col gap-4">
+      {mode === "view" && (
+        <div className="flex gap-4">
+          <button
+            className="btn btn-neutral"
+            onClick={() => {
+              exportData(evolverConfig);
+            }}
+          >
+            Download
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              const params = new URLSearchParams();
+              params.set("mode", "edit");
+              setSearchParams(params);
+            }}
+          >
+            Edit
+          </button>
+        </div>
+      )}
 
-        {mode === "edit" && (
-          <div className="flex flex-wrap gap-4">
-            <input
-              onChange={(e) =>
-                handleFileUpload({
-                  e,
-                  setEvolverConfig,
-                  setErrorMessages,
-                  configSchema: configSchema as SomeJSONSchema,
-                })
-              }
-              type="file"
-              className="file-input w-full max-w-xs"
-              accept=".json"
-            />
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                setErrorMessages([]);
-                const formData = new FormData();
-                formData.append("ip_addr", ip_addr ?? "");
-                formData.append(
-                  "intent",
-                  UpdateDeviceIntentEnum.Enum.update_evolver,
-                );
-                formData.append("data", JSON.stringify(updatedEvolverConfig));
-                submit(formData, {
-                  method: "POST",
-                  // TODO: figure this out, should submit to nearest layout route with an action handler
-                  action: `/devices/${ip_addr}`,
-                });
-              }}
-            >
-              Save
-            </button>
-            <button
-              className="btn "
-              onClick={() => {
-                setErrorMessages([]);
-                setEvolverConfig(evolverConfig);
-                const params = new URLSearchParams();
-                params.set("mode", "view");
-                setSearchParams(params);
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-      </div>
-      <ErrorNotifs messages={errorMessages} />
+      {mode === "edit" && (
+        <div className="flex flex-wrap gap-4">
+          <input
+            onChange={(e) =>
+              handleFileUpload({
+                e,
+                setEvolverConfig,
+              })
+            }
+            type="file"
+            className="file-input w-full max-w-xs"
+            accept=".json"
+          />
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              notify.dismiss();
+              const formData = new FormData();
+              formData.append("ip_addr", ip_addr ?? "");
+              formData.append(
+                "intent",
+                UpdateDeviceIntentEnum.Enum.update_evolver,
+              );
+              formData.append("data", JSON.stringify(updatedEvolverConfig));
+              submit(formData, {
+                method: "POST",
+              });
+            }}
+          >
+            Save
+          </button>
+          <button
+            className="btn "
+            onClick={() => {
+              setEvolverConfig(evolverConfig);
+              const params = new URLSearchParams();
+              params.set("mode", "view");
+              setSearchParams(params);
+              notify.dismiss();
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
       <div className="mt-4 flex items-start gap-4 mb-8 justify-between">
         <ClientOnly fallback={<h1>...loading</h1>}>
           {() => (
@@ -156,7 +236,6 @@ export default function DeviceConfig() {
               key={pathname}
               data={updatedEvolverConfig}
               mode={mode}
-              schema={configSchema as SomeJSONSchema}
               setData={setEvolverConfig}
             />
           )}

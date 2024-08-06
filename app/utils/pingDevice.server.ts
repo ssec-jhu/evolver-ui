@@ -1,15 +1,16 @@
 import { createClient } from "@hey-api/client-fetch";
 import * as Evolver from "client/services.gen";
+import { ENV } from "~/utils/env.server";
 
 export async function pingDevice(
   ip: string,
-  timeout = 8000,
+  timeout = 4000,
 ): Promise<{ online: boolean; name: string }> {
   const controller = new AbortController();
   const { signal } = controller;
 
   const evolverClient = createClient({
-    baseUrl: `http://${ip}:${process.env.DEFAULT_DEVICE_PORT}`,
+    baseUrl: `http://${ip}:${ENV.DEFAULT_DEVICE_PORT}`,
   });
   // Set a timeout to abort the fetch request
   const timeoutId = setTimeout(() => controller.abort(), timeout);

@@ -12,10 +12,11 @@ import { RemixServer } from "@remix-run/react";
 import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 import { server } from "./mocks/server";
+import { ENV } from "./utils/env.server";
 
 const ABORT_DELAY = 5_000;
 
-if (process.env.NODE_ENV === "test") {
+if (ENV.NODE_ENV === "test") {
   server.listen();
 }
 

@@ -18,6 +18,7 @@ type TimestampData = {
   [key: string]: number;
 };
 
+// util function to transform the sensor data to a format that can be used by recharts, timestamp as x-axis
 function transformToTimestamp(data: SensorData): {
   formattedData: TimestampData[];
   keys: string[];

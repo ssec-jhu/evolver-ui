@@ -4,11 +4,11 @@ import clsx from "clsx";
 
 export default function Navbar({ pathname = "" as string }): JSX.Element {
   return (
-    <div className="mb-4">
-      <div className="px-4 mx-auto max-w-6xl flex flex-wrap justify-between gap-10 min-h-16 items-center">
+    <div className="">
+      <div className="mx-auto max-w-6xl flex flex-wrap justify-between gap-10 min-h-16 items-center">
         <div className="flex-1">
           <div className="flex items-center space-x-1">
-            <Link to="/" className="text-3xl">
+            <Link to="/" className="text-3xl text-primary">
               Evolver
             </Link>
           </div>
@@ -17,7 +17,10 @@ export default function Navbar({ pathname = "" as string }): JSX.Element {
           <Link
             tabIndex={0}
             role="button"
-            className={clsx("link", pathname !== "/devices" && "link-hover")}
+            className={clsx(
+              "link",
+              pathname !== "/devices/list" && "link-hover",
+            )}
             to="/devices/list"
           >
             Devices
@@ -27,7 +30,7 @@ export default function Navbar({ pathname = "" as string }): JSX.Element {
           <ThemeController />
         </div>
       </div>
-      <div className="divider divider-neutral h-0 m-0"></div>
+      <div className="divider h-0 m-0"></div>
     </div>
   );
 }

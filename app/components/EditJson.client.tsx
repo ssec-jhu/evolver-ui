@@ -1,6 +1,5 @@
 import { useRouteLoaderData } from "@remix-run/react";
 import clsx from "clsx";
-import Ajv from "ajv";
 import {
   FilterFunction,
   JsonData,
@@ -11,15 +10,12 @@ import {
 import { loader as rootLoader } from "~/root";
 import { checkType } from "~/utils/checkType";
 import { EvolverConfigWithoutDefaults } from "client";
-import { SomeJSONSchema } from "ajv/dist/types/json-schema";
 
 export function EditJson({
   data,
   mode,
-  schema,
   setData,
 }: {
-  schema: SomeJSONSchema;
   data: EvolverConfigWithoutDefaults;
   mode: "edit" | "view";
   setData: (arg0: EvolverConfigWithoutDefaults) => void;
@@ -27,9 +23,8 @@ export function EditJson({
   const { theme } = useRouteLoaderData<typeof rootLoader>("root") ?? {
     theme: "dark",
   };
+
   const editorTheme = theme === "dark" ? "githubDark" : "githubLight";
-  const ajv = new Ajv();
-  const validate = ajv.compile(schema);
 
   const customizeText = ({ key, value }: NodeData) => {
     switch (key) {
@@ -212,18 +207,6 @@ export function EditJson({
         restrictAdd={restrictAdd}
         restrictDelete={restrictDelete}
         onUpdate={({ newData }) => {
-          const valid = validate(newData);
-
-          if (!valid) {
-            const errorMessage = validate.errors
-              ?.map(
-                (error) =>
-                  `${error.instancePath}${error.instancePath ? ": " : ""}${error.message}`,
-              )
-              .join("\n");
-            // This string is returned to and displayed in json-edit-react UI
-            return errorMessage;
-          }
           // data is valid, do nothing
         }}
         setData={(data: JsonData) =>

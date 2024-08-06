@@ -6,6 +6,6 @@ export const handle = {
   },
 };
 
-export default function SomeParent() {
+export default function Devices() {
   return <Outlet />;
 }
