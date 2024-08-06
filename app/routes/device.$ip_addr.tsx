@@ -9,6 +9,7 @@ import { createClient } from "@hey-api/client-fetch";
 import * as Evolver from "client/services.gen";
 import {
   Link,
+  useActionData,
   useLoaderData,
   useLocation,
   useParams,
@@ -18,10 +19,13 @@ import {
 import clsx from "clsx";
 import { EditJson } from "~/components/EditJson.client";
 import { ClientOnly } from "remix-utils/client-only";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { parseWithZod } from "@conform-to/zod";
 import { EvolverConfigWithoutDefaults } from "client";
 import { SomeJSONSchema } from "ajv/dist/types/json-schema";
+import { exportData } from "~/utils/exportData";
+import Ajv from "ajv";
+import { ErrorNotifs } from "~/components/ErrorNotifs";
 
 const IntentEnum = z.enum(["update_evolver"], {
   required_error: "an intent is required",
@@ -56,10 +60,17 @@ export async function action({ request }: ActionFunctionArgs) {
   switch (intent) {
     case IntentEnum.Enum.update_evolver:
       try {
-        await Evolver.update({ body: JSON.parse(data), client: evolverClient });
+        const { response } = await Evolver.update({
+          body: JSON.parse(data),
+          client: evolverClient,
+        });
+        console.log("response", response);
+        if (response.status !== 200) {
+          throw new Error();
+        }
         return redirect(`/device/${ip_addr}`);
       } catch (error) {
-        return null;
+        return json({ error: "unable to update device" }, { status: 500 });
       }
     default:
       return null;
@@ -124,17 +135,56 @@ export default function DeviceConfig() {
   const { description, schema } = useLoaderData<typeof loader>();
   const evolverConfig = description.config;
   const configSchema = schema?.config;
+  const actionData = useActionData<typeof action>();
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
+  useEffect(() => {
+    if (actionData?.error) {
+      if (typeof actionData.error === "string") {
+        setErrorMessages([actionData?.error]);
+      }
+    }
+  }, [actionData]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+
+    if (e.target.files?.[0]) {
+      fileReader.readAsText(e.target.files[0], "UTF-8");
+
+      fileReader.onload = (event) => {
+        if (configSchema) {
+          const ajv = new Ajv();
+          const validate = ajv.compile(configSchema);
+          const uploadedConfig: EvolverConfigWithoutDefaults = JSON.parse(
+            event.target?.result as string,
+          );
+          const valid = validate(uploadedConfig);
+
+          if (!valid && validate.errors) {
+            const errorMessages = validate.errors
+              .filter((error) => !!error.message)
+              .map((error) => error.message as string);
+
+            setErrorMessages(errorMessages);
+          }
+          if (valid) {
+            setEvolverConfig(uploadedConfig);
+          }
+        }
+      };
+    }
+  };
   if (!configSchema) {
     throw new Error("unable to get device schema");
   }
 
-  const [updatedEvovlerConfig, setEvolverConfig] =
+  const [updatedEvolverConfig, setEvolverConfig] =
     useState<typeof evolverConfig>(evolverConfig);
 
   useEffect(() => {
-    setEvolverConfig(updatedEvovlerConfig);
-  }, [updatedEvovlerConfig]);
+    setEvolverConfig(updatedEvolverConfig);
+  }, [updatedEvolverConfig]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 ">
@@ -148,8 +198,17 @@ export default function DeviceConfig() {
           </div>
           <div className={clsx("badge text-sm", "badge-accent")}>online</div>
         </div>
+        <ErrorNotifs messages={errorMessages} />
         {mode === "view" && (
-          <div className="flex">
+          <div className="flex gap-4">
+            <button
+              className="btn btn-neutral"
+              onClick={() => {
+                exportData(evolverConfig);
+              }}
+            >
+              Download
+            </button>
             <button
               className="btn btn-primary"
               onClick={() => {
@@ -165,9 +224,29 @@ export default function DeviceConfig() {
 
         {mode === "edit" && (
           <div className="flex gap-4">
+            <input
+              onChange={handleFileUpload}
+              type="file"
+              className="file-input w-full max-w-xs"
+              accept=".json"
+            />
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setErrorMessages([]);
+                const formData = new FormData();
+                formData.append("ip_addr", ip_addr ?? "");
+                formData.append("intent", IntentEnum.Enum.update_evolver);
+                formData.append("data", JSON.stringify(updatedEvolverConfig));
+                submit(formData, { method: "POST" });
+              }}
+            >
+              Save
+            </button>
             <button
               className="btn "
               onClick={() => {
+                setErrorMessages([]);
                 setEvolverConfig(evolverConfig);
                 const params = new URLSearchParams();
                 params.set("mode", "view");
@@ -175,19 +254,6 @@ export default function DeviceConfig() {
               }}
             >
               Cancel
-            </button>
-
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                const formData = new FormData();
-                formData.append("ip_addr", ip_addr ?? "");
-                formData.append("intent", IntentEnum.Enum.update_evolver);
-                formData.append("data", JSON.stringify(updatedEvovlerConfig));
-                submit(formData, { method: "POST" });
-              }}
-            >
-              Save
             </button>
           </div>
         )}
@@ -197,7 +263,7 @@ export default function DeviceConfig() {
         {() => (
           <EditJson
             key={pathname}
-            data={updatedEvovlerConfig}
+            data={updatedEvolverConfig}
             mode={mode}
             schema={configSchema as SomeJSONSchema}
             setData={setEvolverConfig}

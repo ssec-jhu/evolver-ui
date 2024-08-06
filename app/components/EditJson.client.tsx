@@ -213,6 +213,7 @@ export function EditJson({
         restrictDelete={restrictDelete}
         onUpdate={({ newData }) => {
           const valid = validate(newData);
+
           if (!valid) {
             const errorMessage = validate.errors
               ?.map(

@@ -1,7 +1,7 @@
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 
-export function ErrorNotifs(messages: string[]) {
+export function ErrorNotifs({ messages }: { messages: string[] }) {
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
   useEffect(() => {
