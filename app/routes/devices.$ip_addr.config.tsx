@@ -9,6 +9,7 @@ import { createClient } from "@hey-api/client-fetch";
 import * as Evolver from "client/services.gen";
 import {
   Link,
+  Outlet,
   useActionData,
   useLoaderData,
   useLocation,
@@ -26,6 +27,14 @@ import { SomeJSONSchema } from "ajv/dist/types/json-schema";
 import { exportData } from "~/utils/exportData";
 import Ajv from "ajv";
 import { ErrorNotifs } from "~/components/ErrorNotifs";
+import { HardwareTable } from "~/components/HardwareTable";
+
+export const handle = {
+  Breadcrumb: () => {
+    const { ip_addr } = useParams();
+    return <Link to={`/devices/${ip_addr}`}>config</Link>;
+  },
+};
 
 const IntentEnum = z.enum(["update_evolver"], {
   required_error: "an intent is required",
@@ -187,8 +196,8 @@ export default function DeviceConfig() {
   }, [updatedEvolverConfig]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 ">
-      <div className="mt-4 flex items-center gap-4 mb-8 justify-between">
+    <div>
+      <div className="mt-4 flex items-center gap-4  justify-between">
         <div className="flex items-center gap-4">
           <div>
             <h1 className="text-2xl">{`${evolverConfig.name}`}</h1>
@@ -198,65 +207,80 @@ export default function DeviceConfig() {
           </div>
           <div className={clsx("badge text-sm", "badge-accent")}>online</div>
         </div>
-        <ErrorNotifs messages={errorMessages} />
-        {mode === "view" && (
-          <div className="flex gap-4">
-            <button
-              className="btn btn-neutral"
-              onClick={() => {
-                exportData(evolverConfig);
-              }}
-            >
-              Download
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                const params = new URLSearchParams();
-                params.set("mode", "edit");
-                setSearchParams(params);
-              }}
-            >
-              Edit
-            </button>
-          </div>
-        )}
+      </div>
+      <div className="divider" />
+      <div className="flex items-center gap-4">
+        <h1 className="text-xl">Hardware</h1>
+      </div>
+      <div>
+        <HardwareTable evolverConfig={evolverConfig} />
+      </div>
+      <div className="divider"></div>
+      <ErrorNotifs messages={errorMessages} />
+      <div className="mt-4 flex items-center gap-4 mb-8 justify-between">
+        <div>
+          <h1 className="text-xl">Configuration</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          {mode === "view" && (
+            <div className="flex gap-4">
+              <button
+                className="btn btn-neutral"
+                onClick={() => {
+                  exportData(evolverConfig);
+                }}
+              >
+                Download
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  params.set("mode", "edit");
+                  setSearchParams(params);
+                }}
+              >
+                Edit
+              </button>
+            </div>
+          )}
 
-        {mode === "edit" && (
-          <div className="flex gap-4">
-            <input
-              onChange={handleFileUpload}
-              type="file"
-              className="file-input w-full max-w-xs"
-              accept=".json"
-            />
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                setErrorMessages([]);
-                const formData = new FormData();
-                formData.append("ip_addr", ip_addr ?? "");
-                formData.append("intent", IntentEnum.Enum.update_evolver);
-                formData.append("data", JSON.stringify(updatedEvolverConfig));
-                submit(formData, { method: "POST" });
-              }}
-            >
-              Save
-            </button>
-            <button
-              className="btn "
-              onClick={() => {
-                setErrorMessages([]);
-                setEvolverConfig(evolverConfig);
-                const params = new URLSearchParams();
-                params.set("mode", "view");
-                setSearchParams(params);
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        )}
+          {mode === "edit" && (
+            <div className="flex gap-4">
+              <input
+                onChange={handleFileUpload}
+                type="file"
+                className="file-input w-full max-w-xs"
+                accept=".json"
+              />
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setErrorMessages([]);
+                  const formData = new FormData();
+                  formData.append("ip_addr", ip_addr ?? "");
+                  formData.append("intent", IntentEnum.Enum.update_evolver);
+                  formData.append("data", JSON.stringify(updatedEvolverConfig));
+                  submit(formData, { method: "POST" });
+                }}
+              >
+                Save
+              </button>
+              <button
+                className="btn "
+                onClick={() => {
+                  setErrorMessages([]);
+                  setEvolverConfig(evolverConfig);
+                  const params = new URLSearchParams();
+                  params.set("mode", "view");
+                  setSearchParams(params);
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <ClientOnly fallback={<h1>...loading</h1>}>

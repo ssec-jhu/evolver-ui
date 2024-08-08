@@ -9,6 +9,7 @@ import {
   json,
   useLoaderData,
   useLocation,
+  useMatches,
   useRouteError,
 } from "@remix-run/react";
 import { ReactNode } from "react";
@@ -63,11 +64,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function App() {
   const { theme } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
+  const matches = useMatches();
+
+  const breadcrumbs = matches
+    .filter((match) => match.handle && match.handle.Breadcrumb)
+    .map((match, index) => (
+      <li key={index}>{match.handle.Breadcrumb(match)}</li>
+    ));
 
   return (
     <Document theme={theme}>
       <Navbar pathname={pathname} />
-      <Outlet />
+      <div className="mx-auto max-w-6xl px-4 ">
+        <div className="breadcrumbs text-sm">
+          <ul>{breadcrumbs}</ul>
+        </div>
+        <Outlet />
+      </div>
     </Document>
   );
 }
@@ -84,7 +97,7 @@ export function ErrorBoundary() {
             {error.status} {error.statusText || error.data}
           </pre>
           <div className="flex flex-col">
-            <Link className="link" to="/" reloadDocument>
+            <Link className="link" to="/devices" reloadDocument>
               home
             </Link>
             <Link className="link" to="https://evolver.bio">

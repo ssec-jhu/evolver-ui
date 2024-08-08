@@ -4,7 +4,7 @@ import clsx from "clsx";
 
 export default function Navbar({ pathname = "" as string }): JSX.Element {
   return (
-    <div className="mb-8">
+    <div className="mb-4">
       <div className="px-4 mx-auto max-w-6xl flex flex-wrap justify-between gap-10 min-h-16 items-center">
         <div className="flex-1">
           <div className="flex items-center space-x-1">
@@ -18,7 +18,7 @@ export default function Navbar({ pathname = "" as string }): JSX.Element {
             tabIndex={0}
             role="button"
             className={clsx("link", pathname !== "/devices" && "link-hover")}
-            to="/devices"
+            to="/devices/list"
           >
             Devices
           </Link>
