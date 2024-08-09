@@ -16,7 +16,7 @@ import { ErrorNotifs } from "~/components/ErrorNotifs";
 import { HardwareTable } from "~/components/HardwareTable";
 import {
   UpdateDeviceIntentEnum,
-  type action,
+  action,
   type loader,
 } from "./devices.$ip_addr";
 import { handleFileUpload } from "~/utils/handleFileUpload";
@@ -35,6 +35,7 @@ export default function DeviceConfig() {
   const submit = useSubmit();
   const mode = searchParams.get("mode") === "edit" ? "edit" : "view";
 
+  // TODO: figure this out, should submit to nearest layout route with a loader
   const { description, schema } = useRouteLoaderData<typeof loader>(
     "routes/devices.$ip_addr",
   );
@@ -127,7 +128,11 @@ export default function DeviceConfig() {
                     UpdateDeviceIntentEnum.Enum.update_evolver,
                   );
                   formData.append("data", JSON.stringify(updatedEvolverConfig));
-                  submit(formData, { method: "POST" });
+                  submit(formData, {
+                    method: "POST",
+                    // TODO: figure this out, should submit to nearest layout route with an action handler
+                    action: `/devices/${ip_addr}`,
+                  });
                 }}
               >
                 Save
