@@ -8,6 +8,8 @@ import {
 } from "@remix-run/react";
 
 import * as Evolver from "client/services.gen";
+import { RawChart } from "~/components/RawChart";
+import { formatSensorData } from "~/utils/formatSensorData";
 
 export const handle = {
   breadcrumb: ({ params }) => {
@@ -44,9 +46,11 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 export default function Hardware() {
   const { data } = useLoaderData<typeof loader>();
-  const [searchParams] = useSearchParams();
-  const classinfo = searchParams.get("classinfo");
-  const { hardware_name, ip_addr } = useParams();
-  console.log(data);
-  return <h1>foo</h1>;
+  const chartData = formatSensorData(data);
+  console.log(chartData);
+  return (
+    <div>
+      <RawChart data={chartData} />
+    </div>
+  );
 }
