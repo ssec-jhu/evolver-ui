@@ -67,9 +67,9 @@ export default function App() {
   const matches = useMatches();
 
   const breadcrumbs = matches
-    .filter((match) => match.handle && match.handle.Breadcrumb)
+    .filter((match) => match.handle && match.handle.breadcrumb)
     .map((match, index) => (
-      <li key={index}>{match.handle.Breadcrumb(match)}</li>
+      <li key={index}>{match.handle.breadcrumb(match)}</li>
     ));
 
   return (

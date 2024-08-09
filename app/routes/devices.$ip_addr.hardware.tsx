@@ -1,9 +1,9 @@
 import { Outlet, Link, useParams } from "@remix-run/react";
 
 export const handle = {
-  Breadcrumb: () => {
-    const { ip_addr } = useParams();
-    return <Link to={`/devices/${ip_addr}/hardware`}>hardware</Link>;
+  breadcrumb: ({ params }) => {
+    const { ip_addr } = params;
+    return <Link to={`/devices/${ip_addr}/config`}>hardware</Link>;
   },
 };
 

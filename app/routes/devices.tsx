@@ -1,7 +1,7 @@
 import { Outlet, Link } from "@remix-run/react";
 
 export const handle = {
-  Breadcrumb: () => {
+  breadcrumb: () => {
     return <Link to={`/devices/list`}>devices</Link>;
   },
 };

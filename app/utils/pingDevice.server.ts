@@ -1,7 +1,10 @@
 import { createClient } from "@hey-api/client-fetch";
 import * as Evolver from "client/services.gen";
 
-export async function pingDevice(ip: string, timeout = 4000) {
+export async function pingDevice(
+  ip: string,
+  timeout = 8000,
+): Promise<{ online: boolean; name: string }> {
   const controller = new AbortController();
   const { signal } = controller;
 
@@ -16,17 +19,24 @@ export async function pingDevice(ip: string, timeout = 4000) {
       client: evolverClient,
       signal,
     });
+
     clearTimeout(timeoutId); // Clear the timeout if fetch is successful
     if (response && response.status && response.status !== 200) {
-      return false;
+      return { online: false, name: "unknown" };
     }
-    return true;
+    // get the evolver name too.
+    const evolverDescription = await Evolver.describe({
+      client: evolverClient,
+    });
+    const name = evolverDescription.data.config.name;
+
+    return { online: true, name };
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       console.info(
         `request to device ${ip} timed out after ${timeout}ms, now designated offline`,
       );
     }
-    return false;
+    return { online: false, name: "unknown" };
   }
 }

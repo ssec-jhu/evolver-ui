@@ -43,7 +43,7 @@ export async function action({ request }: ActionFunctionArgs) {
   switch (intent) {
     case IntentEnum.Enum.add_device:
       try {
-        const isOnline = await pingDevice(ip_addr as string);
+        const { online: isOnline, name } = await pingDevice(ip_addr as string);
         if (isOnline) {
           await db.device.create({ data: { ip_addr } });
         } else {
@@ -80,12 +80,15 @@ export const loader = async () => {
     pingDevice(ip_addr),
   );
   const resolved = await Promise.allSettled(deviceStatusPromises);
-  const results = resolved.map((result, index) => ({
-    ip_addr: devices[index].ip_addr,
-    createdAt: devices[index].createdAt,
-    status:
-      result.status === "fulfilled" && result.value ? "online" : "offline",
-  }));
+  const results = resolved.map((result, index) => {
+    return {
+      name: result.status === "fulfilled" ? result.value.name : "unknown",
+      ip_addr: devices[index].ip_addr,
+      createdAt: devices[index].createdAt,
+      status:
+        result.status === "fulfilled" && result.value ? "online" : "offline",
+    };
+  });
   return json(results);
 };
 
@@ -115,11 +118,12 @@ export default function Devices() {
   };
 
   const deviceTableItems = loaderData.map(
-    ({ ip_addr, status, createdAt }, ix) => {
+    ({ ip_addr, status, createdAt, name }, ix) => {
       return (
         <tr key={ip_addr}>
           <th>{ix + 1}</th>
           <td>{new Date(createdAt).toDateString()}</td>
+          <td>{name}</td>
           <td>
             {status === "online" && (
               <Link to={`/devices/${ip_addr}/config`}>
@@ -234,6 +238,7 @@ export default function Devices() {
               <tr>
                 <th></th>
                 <th>Added</th>
+                <th>Name</th>
                 <th>Address</th>
                 <th>Status</th>
                 <th>Forget</th>

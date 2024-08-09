@@ -23,10 +23,9 @@ export function HardwareTable({
             className="link tooltip text-primary"
             data-tip="edit hardware config"
           >
-            edit
+            view
           </Link>
         </td>
-        <td>view</td>
       </tr>
     );
   });
@@ -38,7 +37,6 @@ export function HardwareTable({
           <th>Name</th>
           <th>Classinfo</th>
           <th>Vials</th>
-          <th>Config</th>
           <th>History</th>
         </tr>
       </thead>
