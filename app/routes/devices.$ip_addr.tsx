@@ -169,7 +169,7 @@ export default function Device() {
         </div>
       </div>
       <div className="divider" />
-      <Outlet />;
+      <Outlet />
     </div>
   );
 }

@@ -8,13 +8,16 @@ import {
 } from "@remix-run/react";
 
 import * as Evolver from "client/services.gen";
-import { RawChart } from "~/components/RawChart";
-import { formatSensorData } from "~/utils/formatSensorData";
+import { SensorChart } from "~/components/SensorChart";
+import {
+  RawSensorData,
+  VialProperty,
+  getSensorProperty,
+} from "~/utils/getSensorProperty";
 
 export const handle = {
   breadcrumb: ({ params }) => {
     const { ip_addr, hardware_name } = params;
-
     return (
       <Link to={`/devices/${ip_addr}/hardware/${hardware_name}`}>
         {hardware_name}
@@ -25,7 +28,6 @@ export const handle = {
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const { ip_addr, hardware_name } = params;
-  const hardwareClassinfo = new URL(request.url).searchParams.get("classinfo");
   const searchParams = new URLSearchParams(request.url.split("?")[1]);
   console.log("searchParams", searchParams);
 
@@ -37,20 +39,21 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     path: { name: hardware_name ?? "" },
     client: evolverClient,
   });
-  console.log("RESPONSE", data);
-
-  // get the history for this hardware device
 
   return json({ data });
 }
 
 export default function Hardware() {
   const { data } = useLoaderData<typeof loader>();
-  const chartData = formatSensorData(data);
-  console.log(chartData);
+  const allVialsRaw = getSensorProperty(
+    data as RawSensorData,
+    VialProperty.raw,
+  );
+
   return (
-    <div>
-      <RawChart data={chartData} />
+    <div className="mt-8">
+      <div>Raw</div>
+      <SensorChart data={allVialsRaw} />
     </div>
   );
 }

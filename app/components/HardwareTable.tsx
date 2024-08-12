@@ -21,7 +21,7 @@ export function HardwareTable({
           <Link
             to={`../hardware/${key}?classinfo=${classinfo}`}
             className="link tooltip text-primary"
-            data-tip="edit hardware config"
+            data-tip="view hardware readings"
           >
             view
           </Link>
