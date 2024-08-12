@@ -126,7 +126,7 @@ export default function Devices() {
           <td>{name}</td>
           <td>
             {status === "online" && (
-              <Link to={`/devices/${ip_addr}/config`}>
+              <Link to={`/devices/${ip_addr}/state`}>
                 <div
                   className={clsx(status === "online" && "link link-primary")}
                 >

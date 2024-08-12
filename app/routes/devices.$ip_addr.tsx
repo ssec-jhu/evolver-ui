@@ -28,7 +28,7 @@ export const UpdateDeviceIntentEnum = z.enum(["update_evolver"], {
 export const handle = {
   breadcrumb: ({ params }: { params: { ip_addr: string } }) => {
     const { ip_addr } = params;
-    return <Link to={`/devices/${ip_addr}/config`}>{ip_addr}</Link>;
+    return <Link to={`/devices/${ip_addr}/state`}>{ip_addr}</Link>;
   },
 };
 
@@ -67,7 +67,7 @@ export async function action({ request }: ActionFunctionArgs) {
         if (response.status !== 200) {
           throw new Error();
         }
-        return redirect(`/devices/${ip_addr}/config`);
+        return redirect(`/devices/${ip_addr}`);
       } catch (error) {
         return json({ error: "unable to update device" }, { status: 500 });
       }
@@ -176,6 +176,13 @@ export default function Device() {
       </div>
       <div role="tablist" className="mt-8 mb-8 tabs tabs-bordered">
         <Link
+          to={"./state"}
+          role="tab"
+          className={clsx("tab", currentPath === "state" && "tab-active")}
+        >
+          State
+        </Link>
+        <Link
           role="tab"
           to={"./config"}
           className={clsx("tab", currentPath === "config" && "tab-active")}
@@ -192,13 +199,6 @@ export default function Device() {
           )}
         >
           Hardware
-        </Link>
-        <Link
-          to={"./state"}
-          role="tab"
-          className={clsx("tab", currentPath === "state" && "tab-active")}
-        >
-          State
         </Link>
       </div>
       <Outlet />

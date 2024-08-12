@@ -75,11 +75,19 @@ export default function DeviceConfig() {
   return (
     <div>
       <ErrorNotifs messages={errorMessages} />
-      <div className="mt-4 flex items-center gap-4 mb-8 justify-between">
-        <div>
-          <h1 className="text-xl">Configuration</h1>
-        </div>
-        <div className="flex items-center gap-4">
+      <div className="mt-4 flex items-start gap-4 mb-8 justify-between">
+        <ClientOnly fallback={<h1>...loading</h1>}>
+          {() => (
+            <EditJson
+              key={pathname}
+              data={updatedEvolverConfig}
+              mode={mode}
+              schema={configSchema as SomeJSONSchema}
+              setData={setEvolverConfig}
+            />
+          )}
+        </ClientOnly>
+        <div className="flex gap-4">
           {mode === "view" && (
             <div className="flex gap-4">
               <button
@@ -104,7 +112,7 @@ export default function DeviceConfig() {
           )}
 
           {mode === "edit" && (
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <input
                 onChange={(e) =>
                   handleFileUpload({
@@ -154,18 +162,6 @@ export default function DeviceConfig() {
           )}
         </div>
       </div>
-
-      <ClientOnly fallback={<h1>...loading</h1>}>
-        {() => (
-          <EditJson
-            key={pathname}
-            data={updatedEvolverConfig}
-            mode={mode}
-            schema={configSchema as SomeJSONSchema}
-            setData={setEvolverConfig}
-          />
-        )}
-      </ClientOnly>
     </div>
   );
 }

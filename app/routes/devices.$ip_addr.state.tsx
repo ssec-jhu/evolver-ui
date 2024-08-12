@@ -107,8 +107,8 @@ export const handle = {
   }: {
     params: { ip_addr: string; hardware_name: string };
   }) => {
-    const { ip_addr, hardware_name } = params;
-    return <Link to={`/devices/${ip_addr}/hardware/state`}>state</Link>;
+    const { ip_addr } = params;
+    return <Link to={`/devices/${ip_addr}/state`}>state</Link>;
   },
 };
 
