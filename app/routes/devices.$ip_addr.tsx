@@ -4,8 +4,8 @@ import {
   useParams,
   useLoaderData,
   useSearchParams,
+  useLocation,
 } from "@remix-run/react";
-
 import { z } from "zod";
 import {
   ActionFunctionArgs,
@@ -26,7 +26,7 @@ export const UpdateDeviceIntentEnum = z.enum(["update_evolver"], {
 });
 
 export const handle = {
-  breadcrumb: ({ params }) => {
+  breadcrumb: ({ params }: { params: { ip_addr: string } }) => {
     const { ip_addr } = params;
     return <Link to={`/devices/${ip_addr}/config`}>{ip_addr}</Link>;
   },
@@ -78,27 +78,21 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { ip_addr } = params;
-
   const evolverClient = createClient({
     baseUrl: `http://${ip_addr}:${process.env.DEFAULT_DEVICE_PORT}`,
   });
-
-  try {
-    const describeEvolver = await Evolver.describe({ client: evolverClient });
-    const rootClassSchema = await Evolver.getSchemaSchemaGet({
-      query: { classinfo: "evolver.device.Evolver" },
-      client: evolverClient,
-    });
-    return json({
-      description: describeEvolver.data as {
-        config: EvolverConfigWithoutDefaults;
-      },
-      schema: rootClassSchema.data,
-      ok: true,
-    });
-  } catch (error) {
-    throw new Error("unable to load device config");
-  }
+  const describeEvolver = await Evolver.describe({ client: evolverClient });
+  const rootClassSchema = await Evolver.getSchemaSchemaGet({
+    query: { classinfo: "evolver.device.Evolver" },
+    client: evolverClient,
+  });
+  return json({
+    description: describeEvolver.data as {
+      config: EvolverConfigWithoutDefaults;
+    },
+    schema: rootClassSchema.data,
+    ok: true,
+  });
 }
 
 export function ErrorBoundary() {
@@ -129,6 +123,9 @@ export default function Device() {
   const { ip_addr, hardware_name } = useParams();
   const { description } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const currentPath = pathname.split("/").pop();
+  console.log(currentPath);
   const classinfo = searchParams.get("classinfo");
   const hardwareClass = classinfo?.split(".").pop();
   const evolverConfig = description.config;
@@ -143,7 +140,8 @@ export default function Device() {
             </div>
           </div>
         </div>
-        {classinfo && (
+        {/**TODO: this title attribute should probably be in the handle */}
+        {currentPath === "history" && (
           <div className="flex flex-wrap">
             <div className="text-xl">
               <div>{`${hardware_name}`}</div>
@@ -155,10 +153,18 @@ export default function Device() {
           </div>
         )}
 
-        {!classinfo && (
+        {currentPath === "config" && (
           <div className="flex">
             <div className="text-xl">
               <div>Config</div>
+            </div>
+          </div>
+        )}
+
+        {currentPath === "hardware" && (
+          <div className="flex">
+            <div className="text-xl">
+              <div>Hardware</div>
             </div>
           </div>
         )}
@@ -168,7 +174,33 @@ export default function Device() {
           <div className={clsx("badge text-sm", "badge-accent")}>online</div>
         </div>
       </div>
-      <div className="divider" />
+      <div role="tablist" className="mt-8 mb-8 tabs tabs-bordered">
+        <Link
+          role="tab"
+          to={"./config"}
+          className={clsx("tab", currentPath === "config" && "tab-active")}
+        >
+          Config
+        </Link>
+        <Link
+          to={"./hardware"}
+          role="tab"
+          className={clsx(
+            "tab",
+            currentPath === "hardware" && "tab-active",
+            currentPath === "history" && "tab-active",
+          )}
+        >
+          Hardware
+        </Link>
+        <Link
+          to={"./state"}
+          role="tab"
+          className={clsx("tab", currentPath === "state" && "tab-active")}
+        >
+          State
+        </Link>
+      </div>
       <Outlet />
     </div>
   );

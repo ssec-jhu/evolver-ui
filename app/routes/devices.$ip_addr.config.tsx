@@ -20,6 +20,7 @@ import {
   type loader,
 } from "./devices.$ip_addr";
 import { handleFileUpload } from "~/utils/handleFileUpload";
+import { EvolverConfigWithoutDefaults } from "client";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { ip_addr: string } }) => {
@@ -36,11 +37,18 @@ export default function DeviceConfig() {
   const mode = searchParams.get("mode") === "edit" ? "edit" : "view";
 
   // TODO: figure this out, should submit to nearest layout route with a loader
-  const { description, schema } = useRouteLoaderData<typeof loader>(
+  const loaderData = useRouteLoaderData<typeof loader>(
     "routes/devices.$ip_addr",
   );
+  let description;
+  let schema;
 
-  const evolverConfig = description.config;
+  if (loaderData?.description?.config && loaderData?.schema?.config) {
+    description = loaderData.description;
+    schema = loaderData.schema;
+  }
+
+  const evolverConfig = description?.config as EvolverConfigWithoutDefaults;
   const configSchema = schema?.config;
   const actionData = useActionData<typeof action>();
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
@@ -66,13 +74,6 @@ export default function DeviceConfig() {
 
   return (
     <div>
-      <div className="flex items-center gap-4">
-        <h1 className="text-xl">Hardware</h1>
-      </div>
-      <div>
-        <HardwareTable evolverConfig={evolverConfig} />
-      </div>
-      <div className="divider"></div>
       <ErrorNotifs messages={errorMessages} />
       <div className="mt-4 flex items-center gap-4 mb-8 justify-between">
         <div>
@@ -110,7 +111,7 @@ export default function DeviceConfig() {
                     e,
                     setEvolverConfig,
                     setErrorMessages,
-                    configSchema,
+                    configSchema: configSchema as SomeJSONSchema,
                   })
                 }
                 type="file"

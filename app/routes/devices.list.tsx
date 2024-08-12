@@ -43,7 +43,7 @@ export async function action({ request }: ActionFunctionArgs) {
   switch (intent) {
     case IntentEnum.Enum.add_device:
       try {
-        const { online: isOnline, name } = await pingDevice(ip_addr as string);
+        const { online: isOnline } = await pingDevice(ip_addr as string);
         if (isOnline) {
           await db.device.create({ data: { ip_addr } });
         } else {

@@ -19,7 +19,7 @@ export function HardwareTable({
         <td>{vialsString}</td>
         <td>
           <Link
-            to={`../hardware/${key}?classinfo=${classinfo}`}
+            to={`../hardware/${key}/history?classinfo=${classinfo}`}
             className="link tooltip text-primary"
             data-tip="view hardware readings"
           >
