@@ -121,17 +121,18 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     baseUrl: `http://${ip_addr}:${process.env.DEFAULT_DEVICE_PORT}`,
   });
   // TODO GET THE STATE HERE>>>>
-  const { data } = await Evolver.getHistory({
-    path: { name: hardware_name ?? "" },
-    client: evolverClient,
-  });
-
-  return json({ data });
+  const {
+    data: { state },
+  } = await Evolver.getStateStateGet({ client: evolverClient });
+  return json({ evolverState: state });
 }
 
 export default function Hardware() {
+  const { evolverState } = useLoaderData<typeof loader>();
+  console.log(evolverState);
   return (
     <div className="mt-8">
+      <div className="mb-8 text-xl">vials</div>
       <VialGrid stateData={stateData.state} />
     </div>
   );

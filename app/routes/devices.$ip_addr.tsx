@@ -122,12 +122,8 @@ export function ErrorBoundary() {
 export default function Device() {
   const { ip_addr, hardware_name } = useParams();
   const { description } = useLoaderData<typeof loader>();
-  const [searchParams] = useSearchParams();
   const { pathname } = useLocation();
   const currentPath = pathname.split("/").pop();
-  console.log(currentPath);
-  const classinfo = searchParams.get("classinfo");
-  const hardwareClass = classinfo?.split(".").pop();
   const evolverConfig = description.config;
   return (
     <div>
@@ -144,11 +140,11 @@ export default function Device() {
         {currentPath === "history" && (
           <div className="flex flex-wrap">
             <div className="text-xl">
-              <div>{`${hardware_name}`}</div>
+              <div>hardware</div>
             </div>
             <div className="divider divider-horizontal"></div>
             <div className="text-xl">
-              <div>{hardwareClass}</div>
+              <div>{`${hardware_name}`}</div>
             </div>
           </div>
         )}
@@ -156,7 +152,7 @@ export default function Device() {
         {currentPath === "config" && (
           <div className="flex">
             <div className="text-xl">
-              <div>Config</div>
+              <div>configuration</div>
             </div>
           </div>
         )}
@@ -164,7 +160,15 @@ export default function Device() {
         {currentPath === "hardware" && (
           <div className="flex">
             <div className="text-xl">
-              <div>Hardware</div>
+              <div>hardware</div>
+            </div>
+          </div>
+        )}
+
+        {currentPath === "state" && (
+          <div className="flex">
+            <div className="text-xl">
+              <div>state</div>
             </div>
           </div>
         )}
@@ -174,20 +178,20 @@ export default function Device() {
           <div className={clsx("badge text-sm", "badge-accent")}>online</div>
         </div>
       </div>
-      <div role="tablist" className="mt-8 mb-8 tabs tabs-bordered">
+      <div role="tablist" className="mt-8 mb-10 tabs tabs-bordered tabs-lg">
         <Link
           to={"./state"}
           role="tab"
           className={clsx("tab", currentPath === "state" && "tab-active")}
         >
-          State
+          state
         </Link>
         <Link
           role="tab"
           to={"./config"}
           className={clsx("tab", currentPath === "config" && "tab-active")}
         >
-          Config
+          configuration
         </Link>
         <Link
           to={"./hardware"}
@@ -198,8 +202,16 @@ export default function Device() {
             currentPath === "history" && "tab-active",
           )}
         >
-          Hardware
+          hardware
         </Link>
+
+        <div
+          to={"./controllers"}
+          role="tab"
+          className={clsx("tab", currentPath === "controllers" && "tab-active")}
+        >
+          controllers
+        </div>
       </div>
       <Outlet />
     </div>

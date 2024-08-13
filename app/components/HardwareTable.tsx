@@ -1,11 +1,13 @@
-import { Link } from "@remix-run/react";
+import { Link, useParams } from "@remix-run/react";
 import { EvolverConfigWithoutDefaults } from "client";
+import clsx from "clsx";
 
 export function HardwareTable({
   evolverConfig,
 }: {
   evolverConfig: EvolverConfigWithoutDefaults;
 }) {
+  const { hardware_name } = useParams();
   const evolverHardware = evolverConfig.hardware;
 
   const TableRows = Object.keys(evolverHardware).map((key, ix) => {
@@ -13,7 +15,7 @@ export function HardwareTable({
     const { vials, name } = config;
     const vialsString = vials.join(", ");
     return (
-      <tr key={key}>
+      <tr key={key} className={clsx(hardware_name === key && "bg-base-300")}>
         <td>{key}</td>
         <td>{classinfo}</td>
         <td>{vialsString}</td>
@@ -31,7 +33,7 @@ export function HardwareTable({
   });
 
   return (
-    <table className="table table-zebra">
+    <table className="table">
       <thead>
         <tr>
           <th>Name</th>
