@@ -12,7 +12,7 @@ export function HardwareTable({
 
   const TableRows = Object.keys(evolverHardware).map((key, ix) => {
     const { classinfo, config } = evolverHardware[key];
-    const { vials, name } = config;
+    const { vials } = config;
     const vialsString = vials.join(", ");
     return (
       <tr key={key} className={clsx(hardware_name === key && "bg-base-300")}>
@@ -21,7 +21,7 @@ export function HardwareTable({
         <td>{vialsString}</td>
         <td>
           <Link
-            to={`../hardware/${key}/history?classinfo=${classinfo}`}
+            to={`../hardware/${key}/history`}
             className="link tooltip text-primary"
             data-tip="view hardware readings"
           >

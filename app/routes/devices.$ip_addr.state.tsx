@@ -131,8 +131,7 @@ export default function Hardware() {
   const { evolverState } = useLoaderData<typeof loader>();
   console.log(evolverState);
   return (
-    <div className="mt-8">
-      <div className="mb-8 text-xl">vials</div>
+    <div>
       <VialGrid stateData={stateData.state} />
     </div>
   );

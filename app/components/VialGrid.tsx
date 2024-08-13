@@ -77,12 +77,25 @@ export function VialGrid({
     return { index, ...matchingData };
   });
   const cells = gridItems.map(({ index, ...data }) => {
+    // check if there's data for this vial
+    if (Object.keys(data).length === 0) {
+      return (
+        <div
+          key={index}
+          className="relative flex items-center justify-center aspect-square border border-gray-300 font-bold rounded-badge"
+        >
+          <div className="absolute inset-0 flex items-center justify-center text-neutral text-opacity-25">
+            <span className="block text-[8vw] leading-none">{index}</span>
+          </div>
+        </div>
+      );
+    }
     return (
       <div
         key={index}
-        className="relative flex items-center justify-center aspect-square border border-gray-300 font-bold rounded-badge"
+        className="relative flex items-center justify-center aspect-square border border-4 border-accent font-bold rounded-badge"
       >
-        <div className="absolute inset-0 flex items-center justify-center text-neutral text-opacity-25">
+        <div className="absolute inset-0 flex items-center justify-center text-neutral text-opacity-30">
           <span className="block text-[8vw] leading-none">{index}</span>
         </div>
         <div className="relative z-10">

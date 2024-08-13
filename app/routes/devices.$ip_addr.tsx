@@ -178,7 +178,7 @@ export default function Device() {
           <div className={clsx("badge text-sm", "badge-accent")}>online</div>
         </div>
       </div>
-      <div role="tablist" className="mt-8 mb-10 tabs tabs-bordered tabs-lg">
+      <div role="tablist" className="mt-4 mb-4 tabs tabs-bordered tabs-lg">
         <Link
           to={"./state"}
           role="tab"
