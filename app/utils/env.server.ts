@@ -5,7 +5,6 @@ const schema = z.object({
   DATABASE_URL: z.string(),
   DEFAULT_DEVICE_PORT: z.string(),
   VITEST: z.string().optional(),
-  SESSION_SECRET: z.string(),
 });
 
 const env = schema.parse(process.env);
