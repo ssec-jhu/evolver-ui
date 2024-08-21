@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { createRemixStub } from "@remix-run/testing";
 import { json } from "@remix-run/node";
-import { data, schema } from "./testData";
+import { data } from "./testData";
 import { EditJson } from "../../EditJson.client";
 
 const RemixStub = createRemixStub([

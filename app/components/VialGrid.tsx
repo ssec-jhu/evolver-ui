@@ -8,6 +8,7 @@ const DataTable = ({
 }: {
   ip: string;
   vialIndex: number;
+  data: { [key: string]: number | null };
 }) => {
   return (
     <div className="overflow-x-auto">
@@ -22,7 +23,7 @@ const DataTable = ({
           </tr>
         </thead>
         <tbody>
-          {Object.keys(data).map((mainKey, index) =>
+          {Object.keys(data).map((mainKey) =>
             Object.keys(data[mainKey]).map((subKey, subIndex) => {
               let renderSubKey = true;
               switch (subKey) {

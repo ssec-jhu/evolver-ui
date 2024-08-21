@@ -206,9 +206,6 @@ export function EditJson({
         restrictEdit={restrictEdit}
         restrictAdd={restrictAdd}
         restrictDelete={restrictDelete}
-        onUpdate={({ newData }) => {
-          // data is valid, do nothing
-        }}
         setData={(data: JsonData) =>
           setData(data as EvolverConfigWithoutDefaults)
         }
