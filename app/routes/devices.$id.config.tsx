@@ -11,7 +11,7 @@ import { EditJson } from "~/components/EditJson.client";
 import { ClientOnly } from "remix-utils/client-only";
 import { useEffect, useState } from "react";
 import { exportData } from "~/utils/exportData";
-import { type loader } from "./devices.$ip_addr";
+import { type loader } from "./devices.$id";
 import { handleFileUpload } from "~/utils/handleFileUpload";
 import { EvolverConfigWithoutDefaults } from "client";
 import { ActionFunctionArgs, redirect } from "@remix-run/node";
@@ -19,13 +19,13 @@ import { parseWithZod } from "@conform-to/zod";
 import { z } from "zod";
 import { createClient } from "@hey-api/client-fetch";
 import * as Evolver from "client/services.gen";
-import { ENV } from "~/utils/env.server";
 import { toast as notify } from "react-toastify";
+import { db } from "~/utils/db.server";
 
 export const handle = {
-  breadcrumb: ({ params }: { params: { ip_addr: string } }) => {
-    const { ip_addr } = params;
-    return <Link to={`/devices/${ip_addr}/config`}>config</Link>;
+  breadcrumb: ({ params }: { params: { id: string } }) => {
+    const { id } = params;
+    return <Link to={`/devices/${id}/config`}>config</Link>;
   },
 };
 
@@ -38,9 +38,9 @@ const schema = z.object({
   intent: UpdateDeviceIntentEnum,
   // The preprocess step is required for zod to perform the required check properly
   // as the value of an empty input is usually an empty string
-  ip_addr: z.preprocess(
+  id: z.preprocess(
     (value) => (value === "" ? undefined : value),
-    z.string({ required_error: "an ip address is required" }),
+    z.string({ required_error: "an id is required" }),
   ),
   // Assume this is valid, client side AJV validation.
   data: z.string({ required_error: "an evolver config is required" }),
@@ -55,10 +55,18 @@ export async function action({ request }: ActionFunctionArgs) {
   if (submission.status !== "success") {
     return submission.reply();
   }
-  const { intent, ip_addr, data } = submission.value;
+  const { intent, id, data } = submission.value;
 
+  // use the db to get the url for that device id...
+  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+
+  if (!targetDevice) {
+    return submission.reply({ formErrors: ["device not found"] });
+  }
+
+  const { url } = targetDevice;
   const evolverClient = createClient({
-    baseUrl: `http://${ip_addr}:${ENV.DEFAULT_DEVICE_PORT}`,
+    baseUrl: url,
   });
 
   switch (intent) {
@@ -89,14 +97,12 @@ export async function action({ request }: ActionFunctionArgs) {
             return submission.reply({ fieldErrors: errors });
           }
         }
-
         if (response.status !== 200) {
           throw new Error();
         }
-        return redirect(`/devices/${ip_addr}/config?mode=view`);
+        return redirect(`/devices/${id}/config?mode=view`);
       } catch (error) {
-        return redirect(`/devices/${ip_addr}/config?mode=edit`);
-        // TODO add error handling
+        return submission.reply({ formErrors: ["unable to update device"] });
       }
     default:
       return null;
@@ -104,11 +110,11 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function DeviceConfig() {
-  const { ip_addr } = useParams();
+  const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname } = useLocation();
 
-  // This should be what comes back from the action at /devices/:ip_addr that the form was submitted to.
+  // This should be what comes back from the action at /devices/:id that the form was submitted to.
   const actionData = useActionData<typeof action>();
   if (actionData?.error) {
     console.log("idk", actionData.error);
@@ -117,19 +123,15 @@ export default function DeviceConfig() {
   const submit = useSubmit();
   const mode = searchParams.get("mode") === "edit" ? "edit" : "view";
 
-  const loaderData = useRouteLoaderData<typeof loader>(
-    "routes/devices.$ip_addr",
-  );
+  const loaderData = useRouteLoaderData<typeof loader>("routes/devices.$id");
   let description;
-  let schema;
+  console.log("loaderData", loaderData);
 
-  if (loaderData?.description?.config && loaderData?.schema?.config) {
+  if (loaderData?.description?.config) {
     description = loaderData.description;
-    schema = loaderData.schema;
   }
 
   const evolverConfig = description?.config as EvolverConfigWithoutDefaults;
-  const configSchema = schema?.config;
 
   useEffect(() => {
     if (actionData?.error) {
@@ -147,10 +149,6 @@ export default function DeviceConfig() {
       }
     }
   }, [actionData]);
-
-  if (!configSchema) {
-    throw new Error("unable to get device schema");
-  }
 
   const [updatedEvolverConfig, setEvolverConfig] =
     useState<typeof evolverConfig>(evolverConfig);
@@ -202,7 +200,7 @@ export default function DeviceConfig() {
             onClick={() => {
               notify.dismiss();
               const formData = new FormData();
-              formData.append("ip_addr", ip_addr ?? "");
+              formData.append("id", id ?? "");
               formData.append(
                 "intent",
                 UpdateDeviceIntentEnum.Enum.update_evolver,
@@ -216,7 +214,7 @@ export default function DeviceConfig() {
             Save
           </button>
           <button
-            className="btn "
+            className="btn"
             onClick={() => {
               setEvolverConfig(evolverConfig);
               const params = new URLSearchParams();

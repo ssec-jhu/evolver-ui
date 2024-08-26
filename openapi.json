@@ -58,7 +58,7 @@
     "/state": {
       "get": {
         "summary": "Get State",
-        "operationId": "get_state_state_get",
+        "operationId": "state",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -74,7 +74,7 @@
     "/schema/": {
       "get": {
         "summary": "Get Schema",
-        "operationId": "get_schema_schema__get",
+        "operationId": "schema",
         "parameters": [
           {
             "name": "classinfo",
@@ -119,15 +119,189 @@
         }
       }
     },
-    "/history/{name}": {
-      "get": {
+    "/history/": {
+      "post": {
         "summary": "Get History",
-        "operationId": "get_history",
+        "operationId": "history",
         "parameters": [
           {
             "name": "name",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "t_start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "title": "T Start"
+            }
+          },
+          {
+            "name": "t_stop",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "title": "T Stop"
+            }
+          },
+          {
+            "name": "n_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "title": "N Max"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Body_history"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get History",
+        "operationId": "history",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "t_start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "title": "T Start"
+            }
+          },
+          {
+            "name": "t_stop",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "title": "T Stop"
+            }
+          },
+          {
+            "name": "n_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "title": "N Max"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Body_history"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "summary": "Healthz",
+        "operationId": "healthcheck",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/calibration_status/": {
+      "get": {
+        "summary": "Calibration Status",
+        "operationId": "calibration_status_calibration_status__get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string",
               "title": "Name"
@@ -156,16 +330,47 @@
         }
       }
     },
-    "/healthz": {
-      "get": {
-        "summary": "Healthz",
-        "operationId": "healthz_healthz_get",
+    "/calibrate/{name}": {
+      "post": {
+        "summary": "Calibrate",
+        "operationId": "calibrate_calibrate__name__post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "title": "Data"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -175,6 +380,40 @@
   },
   "components": {
     "schemas": {
+      "Body_history": {
+        "properties": {
+          "vials": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vials"
+          },
+          "properties": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Properties"
+          }
+        },
+        "type": "object",
+        "title": "Body_history"
+      },
       "ConfigDescriptor": {
         "properties": {
           "classinfo": {
@@ -199,6 +438,10 @@
           "name": {
             "type": "string",
             "title": "Name"
+          },
+          "experiment": {
+            "type": "string",
+            "title": "Experiment"
           },
           "vials": {
             "items": {},
@@ -250,7 +493,7 @@
                 "$ref": "#/components/schemas/ConfigDescriptor"
               },
               {
-                "$ref": "#/components/schemas/evolver__history__HistoryServer__Config"
+                "$ref": "#/components/schemas/evolver__history__interface__History__Config"
               }
             ],
             "title": "History"
@@ -271,6 +514,7 @@
         "type": "object",
         "required": [
           "name",
+          "experiment",
           "vials",
           "hardware",
           "controllers",
@@ -294,6 +538,42 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HistoricDatum": {
+        "properties": {
+          "timestamp": {
+            "type": "number",
+            "title": "Timestamp"
+          },
+          "data": {
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "timestamp",
+          "data"
+        ],
+        "title": "HistoricDatum"
+      },
+      "HistoryResult": {
+        "properties": {
+          "data": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/HistoricDatum"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "HistoryResult"
       },
       "SchemaResponse": {
         "properties": {
@@ -375,6 +655,136 @@
         ],
         "title": "ValidationError"
       },
+      "evolver__calibration__interface__Calibrator__Config": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "dir": {
+            "type": "string",
+            "format": "path",
+            "title": "Dir",
+            "description": "Directory for saving new configuration files to.",
+            "default": "calibration_files"
+          },
+          "created": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created",
+            "description": "The creation timestamp"
+          },
+          "expire": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "duration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expire",
+            "description": "The amount of time after which the associated object is considered stale. `datetime.timedelta.max` := forever (the default).",
+            "default": "P168D"
+          },
+          "input_transformer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfigDescriptor"
+              },
+              {
+                "$ref": "#/components/schemas/evolver__calibration__interface__Transformer__Config"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Transformer"
+          },
+          "output_transformer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfigDescriptor"
+              },
+              {
+                "$ref": "#/components/schemas/evolver__calibration__interface__Transformer__Config"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Transformer"
+          }
+        },
+        "type": "object",
+        "title": "Config"
+      },
+      "evolver__calibration__interface__Transformer__Config": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "dir": {
+            "type": "string",
+            "format": "path",
+            "title": "Dir",
+            "description": "Directory for saving new configuration files to.",
+            "default": "calibration_files"
+          },
+          "created": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created",
+            "description": "The creation timestamp"
+          },
+          "expire": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "duration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expire",
+            "description": "The amount of time after which the associated object is considered stale. `datetime.timedelta.max` := forever (the default).",
+            "default": "P168D"
+          }
+        },
+        "type": "object",
+        "title": "Config"
+      },
       "evolver__connection__interface__Connection__Config": {
         "properties": {
           "name": {
@@ -421,17 +831,38 @@
               }
             ],
             "title": "Name"
+          },
+          "calibrator": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfigDescriptor"
+              },
+              {
+                "$ref": "#/components/schemas/evolver__calibration__interface__Calibrator__Config"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibrator",
+            "description": "The calibrator used to both calibrate and transform Input and/or Output data."
           }
         },
         "type": "object",
         "title": "Config"
       },
-      "evolver__history__HistoryServer__Config": {
+      "evolver__history__interface__History__Config": {
         "properties": {
           "name": {
-            "type": "string",
-            "title": "Name",
-            "default": "HistoryServer"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
           }
         },
         "type": "object",

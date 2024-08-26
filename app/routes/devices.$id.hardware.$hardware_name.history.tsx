@@ -4,19 +4,19 @@ import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import * as Evolver from "client/services.gen";
 import { SensorChart } from "~/components/SensorChart";
 import { RawSensorData, getSensorProperty } from "~/utils/getSensorProperty";
-import { ENV } from "~/utils/env.server";
+import { db } from "~/utils/db.server";
 
 export const handle = {
   breadcrumb: (
     {
       params,
     }: {
-      params: { ip_addr: string; hardware_name: string };
+      params: { id: string; hardware_name: string };
     },
     queryParams?: URLSearchParams,
   ) => {
-    const { ip_addr, hardware_name } = params;
-    const linkTo = `/devices/${ip_addr}/hardware/${hardware_name}/history`;
+    const { id, hardware_name } = params;
+    const linkTo = `/devices/${id}/hardware/${hardware_name}/history`;
     if (queryParams !== undefined) {
       linkTo.concat(`?${queryParams.toString()}`);
     }
@@ -25,13 +25,14 @@ export const handle = {
 };
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  const { ip_addr, hardware_name } = params;
-
+  const { id, hardware_name } = params;
+  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+  const { url } = targetDevice;
   const evolverClient = createClient({
-    baseUrl: `http://${ip_addr}:${ENV.DEFAULT_DEVICE_PORT}`,
+    baseUrl: url,
   });
 
-  const { data } = await Evolver.getHistory({
+  const { data } = await Evolver.history({
     path: { name: hardware_name ?? "" },
     client: evolverClient,
   });

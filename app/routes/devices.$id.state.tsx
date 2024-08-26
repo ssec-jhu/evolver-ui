@@ -3,25 +3,23 @@ import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { Link, useLoaderData, useParams } from "@remix-run/react";
 import * as Evolver from "client/services.gen";
 import { VialGrid } from "~/components/VialGrid";
-import { ENV } from "~/utils/env.server";
+import { db } from "~/utils/db.server";
 
 export const handle = {
-  breadcrumb: ({
-    params,
-  }: {
-    params: { ip_addr: string; hardware_name: string };
-  }) => {
-    const { ip_addr } = params;
-    return <Link to={`/devices/${ip_addr}/state`}>state</Link>;
+  breadcrumb: ({ params }: { params: { id: string } }) => {
+    const { id } = params;
+    return <Link to={`/devices/${id}/state`}>state</Link>;
   },
 };
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  const { ip_addr } = params;
+  const { id } = params;
+  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+  const { url } = targetDevice;
   const evolverClient = createClient({
-    baseUrl: `http://${ip_addr}:${ENV.DEFAULT_DEVICE_PORT}`,
+    baseUrl: url,
   });
-  const { data } = await Evolver.getStateStateGet({ client: evolverClient });
+  const { data } = await Evolver.state({ client: evolverClient });
   return json({ evolverState: data });
 }
 

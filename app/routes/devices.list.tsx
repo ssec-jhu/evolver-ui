@@ -13,24 +13,29 @@ import {
   useSubmit,
 } from "@remix-run/react";
 import clsx from "clsx";
-import { BeakerIcon } from "@heroicons/react/16/solid";
+import { CloudIcon } from "@heroicons/react/24/outline";
+import { generateDeviceId } from "~/utils/generateDeviceId.server";
+import { toast as notify } from "react-toastify";
+import { useEffect } from "react";
 
 const IntentEnum = z.enum(["add_device", "delete_device"], {
   required_error: "intent is required",
   invalid_type_error: "must be one of, add_device or delete_device",
 });
 
-const schema = z.object({
-  intent: IntentEnum,
-  // The preprocess step is required for zod to perform the required check properly
-  // as the value of an empty input is usually an empty string
-  ip_addr: z.preprocess(
-    (value) => (value === "" ? undefined : value),
-    z
-      .string({ required_error: "ip address is required" })
-      .ip("ip address is invalid"),
-  ),
-});
+const schema = z.discriminatedUnion("intent", [
+  z.object({
+    intent: z.literal(IntentEnum.Enum.add_device),
+    url: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().url(),
+    ),
+  }),
+  z.object({
+    intent: z.literal(IntentEnum.Enum.delete_device),
+    id: z.string(),
+  }),
+]);
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
@@ -38,32 +43,39 @@ export async function action({ request }: ActionFunctionArgs) {
   if (submission.status !== "success") {
     return submission.reply();
   }
-  const { intent, ip_addr } = submission.value;
+  const { intent } = submission.value;
 
+  let id = "";
   switch (intent) {
     case IntentEnum.Enum.add_device:
       try {
-        const { online: isOnline } = await pingDevice(ip_addr as string);
+        const { url } = submission.value;
+        const { online: isOnline } = await pingDevice(url as string);
         if (isOnline) {
-          await db.device.create({ data: { ip_addr } });
+          id = await generateDeviceId(url);
+          await db.device.create({ data: { url, device_id: id } });
         } else {
-          throw Error("no evolver detected at that ip");
+          throw Error("no evolver detected at that address");
         }
       } catch (error) {
+        const { url } = submission.value;
         const errorMessages = ["unable to add device"];
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           if (error.code === "P2002") {
-            errorMessages.push(`${ip_addr} already exists`);
+            errorMessages.push(`device at ${url} already exists`);
           }
         } else if (error instanceof Error) {
           errorMessages.push(error.message);
         }
         return submission.reply({ formErrors: errorMessages });
       }
-      return redirect(`/devices/${ip_addr}`);
+
+      return redirect(`/devices/${id}`);
     case IntentEnum.Enum.delete_device:
       try {
-        await db.device.delete({ where: { ip_addr } });
+        const { id } = submission.value;
+        await db.device.delete({ where: { device_id: id } });
+        return redirect("/devices/list");
       } catch (error) {
         const errorMessages = ["unable to delete device"];
         return submission.reply({ formErrors: errorMessages });
@@ -76,14 +88,13 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export const loader = async () => {
   const devices = await db.device.findMany();
-  const deviceStatusPromises = devices.map(({ ip_addr }) =>
-    pingDevice(ip_addr),
-  );
+  const deviceStatusPromises = devices.map(({ url }) => pingDevice(url));
   const resolved = await Promise.allSettled(deviceStatusPromises);
   const results = resolved.map((result, index) => {
     return {
       name: result.status === "fulfilled" && result.value.name,
-      ip_addr: devices[index].ip_addr,
+      device_id: devices[index].device_id,
+      url: devices[index].url,
       createdAt: devices[index].createdAt,
       status:
         result.status === "fulfilled" && result.value.online
@@ -112,31 +123,49 @@ export default function DevicesList() {
     },
   });
 
-  const removeDevice = (ip_addr: string) => {
+  useEffect(() => {
+    if (form?.errors) {
+      notify.dismiss();
+      form.errors.forEach((message) => {
+        notify.error(message);
+      });
+    }
+  }, [form.errors]);
+
+  const removeDevice = (id: string) => {
     const formData = new FormData();
-    formData.append("ip_addr", ip_addr);
+    formData.append("id", id);
     formData.append("intent", IntentEnum.Enum.delete_device);
     submit(formData, { method: "delete" });
   };
 
   const deviceTableItems = loaderData.map(
-    ({ ip_addr, status, createdAt, name }, ix) => {
+    ({ device_id, url, status, createdAt, name }, ix) => {
       return (
-        <tr key={ip_addr}>
+        <tr key={device_id}>
           <th>{ix + 1}</th>
           <td>{new Date(createdAt).toDateString()}</td>
           <td>{name}</td>
           <td>
             {status === "online" && (
-              <Link to={`/devices/${ip_addr}/state`}>
+              <Link to={`/devices/${device_id}/state`}>
                 <div
                   className={clsx(status === "online" && "link link-primary")}
                 >
-                  {ip_addr}
+                  {device_id}
                 </div>
               </Link>
             )}
-            {status === "offline" && <div className={clsx("")}>{ip_addr}</div>}
+            {status === "offline" && (
+              <div className={clsx("")}>{device_id}</div>
+            )}
+          </td>
+
+          <td>
+            {status === "online" && <div>{url}</div>}
+            {status === "offline" && (
+              <div className={clsx("")}>{device_id}</div>
+            )}
           </td>
           <td>
             <div
@@ -150,15 +179,7 @@ export default function DevicesList() {
             </div>
           </td>
           <td>
-            <button
-              onClick={() => removeDevice(ip_addr)}
-              className={clsx(
-                ip_addr !== "127.0.0.1" && "link",
-                ip_addr === "127.0.0.1" && "hidden",
-              )}
-            >
-              forget
-            </button>
+            <button onClick={() => removeDevice(device_id)}>forget</button>
           </td>
         </tr>
       );
@@ -181,56 +202,46 @@ export default function DevicesList() {
             className="hidden"
           ></input>
           <div className="join">
-            <div className="flex flex-col space-y-1">
+            <div className="flex flex-col">
               <input
-                {...getInputProps(fields.ip_addr, { type: "text" })}
+                placeholder="url address"
+                {...getInputProps(fields.url, { type: "text" })}
                 className={clsx(
-                  "join-item input input-bordered  max-w-xs",
-                  fields.ip_addr.errors && "input-error",
+                  "input input-bordered  max-w-xs join-item",
+                  fields.url.errors && "input-error",
                 )}
               />
-              {fields.ip_addr.errors &&
-                fields.ip_addr.errors.map(
-                  (message) =>
-                    message && (
-                      <div
-                        key={message}
-                        className="text-error text-wrap max-w-xs"
-                        id={fields.ip_addr.errorId}
-                        role="alert"
-                      >
-                        {message.toLocaleLowerCase()}
-                      </div>
-                    ),
+              <div className="text-error">
+                {fields.url.errors && (
+                  <div>
+                    {fields.url.errors.map((message) =>
+                      message.toLocaleLowerCase(),
+                    )}
+                  </div>
                 )}
-              {form.errors &&
-                form.errors.map(
-                  (message) =>
-                    message && (
-                      <div
-                        key={message}
-                        className="text-error text-wrap max-w-xs"
-                        id={form.errorId}
-                        role="alert"
-                      >
-                        {message.toLocaleLowerCase()}
-                      </div>
-                    ),
-                )}
+              </div>
             </div>
-            <button
-              type="submit"
-              className="btn btn-primary join-item rounded-r-md pr-6 pl-6"
-            >
+            <button type="submit" className="btn btn-primary join-item ">
               Add
             </button>
           </div>
         </Form>
       </div>
       {deviceTableItems.length === 0 && (
-        <div className="flex flex-col justify-center items-center">
-          <BeakerIcon className="max-h-20 max-w-2010" />
-          <div>Enter an ip address to get started...</div>
+        <div className="flex flex-col justify-center items-center gap-4">
+          <CloudIcon className="w-16 h-16 text-gray-500" />
+          <div>
+            Enter the url where an instance of the{" "}
+            <a
+              href="https://github.com/ssec-jhu/evolver-ng"
+              className="link link-primary"
+              target="_blank"
+              rel="noreferrer"
+            >
+              evolver-ng service
+            </a>{" "}
+            is running to get started.
+          </div>
         </div>
       )}
       {deviceTableItems.length > 0 && (
@@ -241,7 +252,8 @@ export default function DevicesList() {
                 <th></th>
                 <th>Added</th>
                 <th>Name</th>
-                <th>Address</th>
+                <th>Id</th>
+                <th>Url</th>
                 <th>Status</th>
                 <th>Forget</th>
               </tr>
