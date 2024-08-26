@@ -78,13 +78,13 @@ const DataTable = ({
 };
 
 export function VialGrid({
-  vialCount = 16,
+  vialCount,
   stateData,
-  ip,
+  id,
 }: {
   vialCount: number;
   stateData: { [key: string]: { [key: string]: { [key: string]: number } } };
-  ip: string;
+  id: string;
 }) {
   const gridItems = Array.from({ length: vialCount }, (_, index) => {
     const indexString = index.toString();
@@ -115,7 +115,7 @@ export function VialGrid({
         )}
       >
         <div className="absolute inset-0 flex items-center justify-center text-neutral text-opacity-25">
-          <span className="block text-[8vw] leading-none">{index}</span>
+          <span className="block text-[5vw] leading-none">{index}</span>
         </div>
         {hasData && (
           <div className="relative z-10">

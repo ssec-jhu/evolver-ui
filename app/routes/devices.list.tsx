@@ -227,41 +227,43 @@ export default function DevicesList() {
           </div>
         </Form>
       </div>
-      {deviceTableItems.length === 0 && (
-        <div className="flex flex-col justify-center items-center gap-4">
-          <CloudIcon className="w-16 h-16 text-gray-500" />
-          <div>
-            Enter the url where an instance of the{" "}
-            <a
-              href="https://github.com/ssec-jhu/evolver-ng"
-              className="link link-primary"
-              target="_blank"
-              rel="noreferrer"
-            >
-              evolver-ng service
-            </a>{" "}
-            is running to get started.
+      <div className="bg-base-300 rounded-box p-8">
+        {deviceTableItems.length === 0 && (
+          <div className="flex flex-col justify-center items-center gap-4">
+            <CloudIcon className="w-16 h-16 text-gray-500" />
+            <div>
+              Enter the url where an instance of the{" "}
+              <a
+                href="https://github.com/ssec-jhu/evolver-ng"
+                className="link link-primary"
+                target="_blank"
+                rel="noreferrer"
+              >
+                evolver-ng service
+              </a>{" "}
+              is running to get started.
+            </div>
           </div>
-        </div>
-      )}
-      {deviceTableItems.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="table table-zebra">
-            <thead>
-              <tr>
-                <th></th>
-                <th>Added</th>
-                <th>Name</th>
-                <th>Id</th>
-                <th>Url</th>
-                <th>Status</th>
-                <th>Forget</th>
-              </tr>
-            </thead>
-            <tbody>{deviceTableItems}</tbody>
-          </table>
-        </div>
-      )}
+        )}
+        {deviceTableItems.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="table table-zebra">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Added</th>
+                  <th>Name</th>
+                  <th>Id</th>
+                  <th>Url</th>
+                  <th>Status</th>
+                  <th>Forget</th>
+                </tr>
+              </thead>
+              <tbody>{deviceTableItems}</tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </>
   );
 }

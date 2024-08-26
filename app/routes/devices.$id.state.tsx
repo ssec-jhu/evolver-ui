@@ -1,6 +1,7 @@
 import { createClient } from "@hey-api/client-fetch";
 import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { Link, useLoaderData, useParams } from "@remix-run/react";
+import { EvolverConfigWithoutDefaults } from "client";
 import * as Evolver from "client/services.gen";
 import { VialGrid } from "~/components/VialGrid";
 import { db } from "~/utils/db.server";
@@ -20,15 +21,25 @@ export async function loader({ params }: LoaderFunctionArgs) {
     baseUrl: url,
   });
   const { data } = await Evolver.state({ client: evolverClient });
-  return json({ evolverState: data });
+  const describeEvolver = await Evolver.describe({ client: evolverClient });
+  const vials = describeEvolver?.data?.config?.vials;
+  return json({
+    vials: vials,
+    evolverState: data,
+  });
 }
 
 export default function Hardware() {
-  const { ip_addr } = useParams();
-  const { evolverState } = useLoaderData<typeof loader>();
+  const { id } = useParams();
+  const { evolverState, vials } = useLoaderData<typeof loader>();
+  console.log("evo", evolverState.state);
   return (
     <div>
-      <VialGrid stateData={evolverState.state} ip={ip_addr} />
+      <VialGrid
+        stateData={evolverState.state}
+        id={id}
+        vialCount={vials.length}
+      />
     </div>
   );
 }

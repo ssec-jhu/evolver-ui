@@ -11,7 +11,7 @@ export const handle = {
     params: { id: string; hardware_name: string };
   }) => {
     const { id } = params;
-    return <Link to={`/devices/${id}/hardware`}>hardware</Link>;
+    return <Link to={`/devices/${id}/controllers`}>controllers</Link>;
   },
 };
 
