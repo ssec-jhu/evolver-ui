@@ -3,10 +3,10 @@ import clsx from "clsx";
 
 const DataTable = ({
   data,
-  ip,
+  id,
   vialIndex,
 }: {
-  ip: string;
+  id: string;
   vialIndex: number;
   data: { [key: string]: number | null };
 }) => {
@@ -16,7 +16,7 @@ const DataTable = ({
         <thead>
           <tr>
             <th>
-              <Link to={`/devices/${ip}/hardware`}>hardware</Link>{" "}
+              <Link to={`/devices/${id}/hardware`}>hardware</Link>{" "}
             </th>
             <th></th>
             <th></th>
@@ -44,7 +44,7 @@ const DataTable = ({
                     >
                       <Link
                         className="link"
-                        to={`/devices/${ip}/hardware/${mainKey}/history?vials=${vialIndex}`}
+                        to={`/devices/${id}/hardware/${mainKey}/history?vials=${vialIndex}`}
                       >
                         {mainKey}
                       </Link>
@@ -54,7 +54,7 @@ const DataTable = ({
                     <td>
                       <Link
                         className="link"
-                        to={`/devices/${ip}/hardware/${mainKey}/history?properties=${subKey}&vials=${vialIndex}`}
+                        to={`/devices/${id}/hardware/${mainKey}/history?properties=${subKey}&vials=${vialIndex}`}
                       >
                         {subKey}
                       </Link>
@@ -119,7 +119,7 @@ export function VialGrid({
         </div>
         {hasData && (
           <div className="relative z-10">
-            <DataTable data={data} ip={ip} vialIndex={index} />
+            <DataTable data={data} id={id} vialIndex={index} />
           </div>
         )}
       </div>

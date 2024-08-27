@@ -116,16 +116,12 @@ export default function DeviceConfig() {
 
   // This should be what comes back from the action at /devices/:id that the form was submitted to.
   const actionData = useActionData<typeof action>();
-  if (actionData?.error) {
-    console.log("idk", actionData.error);
-  }
 
   const submit = useSubmit();
   const mode = searchParams.get("mode") === "edit" ? "edit" : "view";
 
   const loaderData = useRouteLoaderData<typeof loader>("routes/devices.$id");
   let description;
-  console.log("loaderData", loaderData);
 
   if (loaderData?.description?.config) {
     description = loaderData.description;

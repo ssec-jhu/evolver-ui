@@ -1,14 +1,18 @@
-import { Link, useParams, useSearchParams } from "@remix-run/react";
+import { Link } from "@remix-run/react";
 import { EvolverConfigWithoutDefaults } from "client";
 import clsx from "clsx";
 
 export function HardwareTable({
   evolverConfig,
+  id,
+  hardwareName,
+  queryParams,
 }: {
   evolverConfig: EvolverConfigWithoutDefaults;
+  id: string;
+  hardwareName: string;
+  queryParams: URLSearchParams;
 }) {
-  const { hardware_name, ip_addr } = useParams();
-  const [queryParams] = useSearchParams();
   let currentVials: string[] = [];
   let allVials = false;
   if (queryParams.has("vials")) {
@@ -24,9 +28,9 @@ export function HardwareTable({
     } = evolverHardware[key];
 
     const vialsWithLinks = vials.map((vial) => {
-      const linkTo = `/devices/${ip_addr}/hardware/${key}/history?vials=${vial}`;
+      const linkTo = `/devices/${id}/hardware/${key}/history?vials=${vial}`;
       const activeVial =
-        currentVials.includes(vial.toString()) && hardware_name === key;
+        currentVials.includes(vial.toString()) && hardwareName === key;
       const vialButtons = (
         <Link
           key={vial}
@@ -50,10 +54,10 @@ export function HardwareTable({
           "btn",
           "btn-xs",
           "btn-outline",
-          allVials && key === hardware_name && "btn-active",
+          allVials && key === hardwareName && "btn-active",
         )}
         key={"all"}
-        to={`/devices/${ip_addr}/hardware/${key}/history`}
+        to={`/devices/${id}/hardware/${key}/history`}
       >
         {" "}
         all
@@ -61,7 +65,7 @@ export function HardwareTable({
     );
 
     return (
-      <tr key={key} className={clsx(hardware_name === key && "bg-base-300")}>
+      <tr key={key} className={clsx(hardwareName === key && "bg-base-300")}>
         <td>{key}</td>
         <td className="flex gap-2">
           {vialsWithLinks}

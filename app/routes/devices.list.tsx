@@ -70,7 +70,7 @@ export async function action({ request }: ActionFunctionArgs) {
         return submission.reply({ formErrors: errorMessages });
       }
 
-      return redirect(`/devices/${id}`);
+      return redirect(`/devices/${id}/state`);
     case IntentEnum.Enum.delete_device:
       try {
         const { id } = submission.value;

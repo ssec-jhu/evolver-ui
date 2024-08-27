@@ -141,7 +141,7 @@ export function EditJson({
     }
     if (mode === "edit") {
       if (level === 0) {
-        return true;
+        return false;
       }
       switch (key) {
         case "vials":

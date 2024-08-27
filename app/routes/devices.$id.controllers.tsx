@@ -1,4 +1,10 @@
-import { Link, Outlet, useParams, useRouteLoaderData } from "@remix-run/react";
+import {
+  Link,
+  Outlet,
+  useParams,
+  useRouteLoaderData,
+  useSearchParams,
+} from "@remix-run/react";
 import { HardwareTable } from "~/components/HardwareTable";
 import { loader } from "./devices.$id";
 import { EvolverConfigWithoutDefaults } from "client";
@@ -16,7 +22,9 @@ export const handle = {
 };
 
 export default function Controllers() {
-  const { id } = useParams();
+  const { id, hardware_name } = useParams();
+
+  const [queryParams] = useSearchParams();
   const loaderData = useRouteLoaderData<typeof loader>("routes/devices.$id");
   let evolverConfig = {} as EvolverConfigWithoutDefaults;
 
@@ -46,7 +54,12 @@ export default function Controllers() {
 
   return (
     <div>
-      <HardwareTable evolverConfig={evolverConfig} />
+      <HardwareTable
+        evolverConfig={evolverConfig}
+        id={id ?? ""}
+        queryParams={queryParams}
+        hardwareName={hardware_name ?? ""}
+      />
       <Outlet />
     </div>
   );

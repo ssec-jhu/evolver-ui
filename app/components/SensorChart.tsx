@@ -10,7 +10,6 @@ import {
   Brush,
 } from "recharts";
 import { vialColors } from "~/utils/chart/colors";
-import { SensorData } from "~/utils/getSensorProperty";
 
 type TimestampData = {
   timestamp: number;
@@ -18,8 +17,22 @@ type TimestampData = {
   [key: string]: number;
 };
 
+const processData = (data, vials) => {
+  return data.map((entry) => {
+    const processedEntry = {
+      timestamp: entry.timestamp,
+    };
+
+    vials.forEach((vial) => {
+      processedEntry[`vial_${vial}`] = entry.data[vial]?.raw;
+    });
+
+    return processedEntry;
+  });
+};
+
 // util function to transform the sensor data to a format that can be used by recharts, timestamp as x-axis
-function transformToTimestamp(data: SensorData): {
+function transformToTimestamp(data): {
   formattedData: TimestampData[];
   keys: string[];
 } {
@@ -35,6 +48,8 @@ function transformToTimestamp(data: SensorData): {
     );
     return chartable;
   });
+
+  console.log("formattedData", formattedData);
   return { formattedData, keys: Array.from(keys) };
 }
 
@@ -88,16 +103,16 @@ const tickFormatter = (
   return `${hours}:${minutes}:${seconds}.${milliseconds}`;
 };
 
-export const SensorChart = ({ data }: { data: SensorData }) => {
-  const { formattedData, keys } = transformToTimestamp(data);
+export const SensorChart = ({ rawData, vials }) => {
+  const formattedData = processData(rawData, vials);
 
-  const chartLines = keys.map((key, ix) => (
-    // random color for each linechartColors
+  const chartLines = vials.map((vial, ix) => (
     <Line
-      key={key}
+      key={vial}
       type="monotone"
-      dataKey={key}
+      dataKey={`vial_${vial}`}
       stroke={vialColors[ix % vialColors.length]}
+      name={`Vial ${vial}`}
     />
   ));
 

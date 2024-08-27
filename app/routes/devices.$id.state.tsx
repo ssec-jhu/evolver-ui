@@ -32,7 +32,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
 export default function Hardware() {
   const { id } = useParams();
   const { evolverState, vials } = useLoaderData<typeof loader>();
-  console.log("evo", evolverState.state);
   return (
     <div>
       <VialGrid

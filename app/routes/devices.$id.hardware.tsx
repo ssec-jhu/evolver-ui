@@ -1,4 +1,10 @@
-import { Link, Outlet, useParams, useRouteLoaderData } from "@remix-run/react";
+import {
+  Link,
+  Outlet,
+  useParams,
+  useRouteLoaderData,
+  useSearchParams,
+} from "@remix-run/react";
 
 import { HardwareTable } from "~/components/HardwareTable";
 import { loader } from "./devices.$id";
@@ -17,7 +23,8 @@ export const handle = {
 };
 
 export default function Hardware() {
-  const { id } = useParams();
+  const { id, hardware_name } = useParams();
+  const [queryParams] = useSearchParams();
   // TODO: figure this out, should submit to nearest layout route with a loader
   const loaderData = useRouteLoaderData<typeof loader>("routes/devices.$id");
   let evolverConfig = {} as EvolverConfigWithoutDefaults;
@@ -51,7 +58,12 @@ export default function Hardware() {
 
   return (
     <div>
-      <HardwareTable evolverConfig={evolverConfig} />
+      <HardwareTable
+        evolverConfig={evolverConfig}
+        hardwareName={hardware_name ?? ""}
+        queryParams={queryParams}
+        id={id ?? ""}
+      />
       <Outlet />
     </div>
   );

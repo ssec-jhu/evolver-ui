@@ -1,10 +1,14 @@
 import { createClient } from "@hey-api/client-fetch";
 import { LoaderFunctionArgs, json } from "@remix-run/node";
-import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
+import {
+  Link,
+  useLoaderData,
+  useParams,
+  useSearchParams,
+} from "@remix-run/react";
 import * as Evolver from "client/services.gen";
-import { SensorChart } from "~/components/SensorChart";
-import { RawSensorData, getSensorProperty } from "~/utils/getSensorProperty";
 import { db } from "~/utils/db.server";
+import { HardwareLineChart } from "~/components/LineChart";
 
 export const handle = {
   breadcrumb: (
@@ -24,16 +28,32 @@ export const handle = {
   },
 };
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ params, request }: LoaderFunctionArgs) {
   const { id, hardware_name } = params;
+  const { searchParams } = new URL(request.url);
   const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+
   const { url } = targetDevice;
   const evolverClient = createClient({
     baseUrl: url,
   });
 
-  const { data } = await Evolver.history({
-    path: { name: hardware_name ?? "" },
+  const vials = searchParams
+    .get("vials")
+    ?.split(",")
+    .map((str) => Number(str));
+
+  const properties = searchParams.get("properties")?.split(",");
+
+  // TODO History api is in flux.
+  const {
+    data: { data },
+  } = await Evolver.history({
+    body: {
+      vials,
+      properties,
+    },
+    query: { name: hardware_name },
     client: evolverClient,
   });
 
@@ -43,53 +63,52 @@ export async function loader({ params }: LoaderFunctionArgs) {
 export default function Hardware() {
   const { data } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
+  const { hardware_name } = useParams();
 
-  let selectedVials: string[] = [];
+  console.log("data", data);
+
+  if (!hardware_name) {
+    return <div>Hardware not found</div>;
+  }
+
+  const hardwareHistory = data[hardware_name];
+
+  console.log("hardwareHistory", hardwareHistory);
+
+  const allHardwareVials = Object.keys(hardwareHistory[0].data);
+  const allHardwareVialsProperties = Object.keys(
+    hardwareHistory[0].data[allHardwareVials[0]],
+  ).filter((property) => property !== "name" && property !== "vial");
+
+  let selectedProperties: string[] = allHardwareVialsProperties;
+  let selectedVials: string[] = allHardwareVials;
 
   if (searchParams.has("vials")) {
     selectedVials = [...new Set(searchParams.get("vials")?.split(",") ?? [])];
   }
 
-  let selectedProperties: string[] = [];
-
-  let properties: string[] = [];
   if (searchParams.has("properties")) {
-    properties = [...new Set(searchParams.get("properties")?.split(",") ?? [])];
-  }
-
-  if (
-    properties.length === 0 &&
-    Array.isArray(data) &&
-    data.length > 0 &&
-    data[0].length > 1
-  ) {
-    // Just take properties for all vials from the first timestamp, assume they are the same for all timestamps
-    const readingsAtFirstTimestamp = data[0][1];
-    properties = [
-      ...new Set(
-        Object.values(readingsAtFirstTimestamp).flatMap((vialProperties) =>
-          Object.keys(vialProperties),
-        ),
-      ),
+    selectedProperties = [
+      ...new Set(searchParams.get("properties")?.split(",") ?? []),
     ];
   }
 
-  selectedProperties = properties.filter(
-    (property) => property !== "name" && property !== "vial",
-  );
+  console.log("selectedProperties", selectedProperties);
+  console.log("selectedVials", selectedVials);
 
-  const charts = selectedProperties.map((property) => {
-    const chartData = getSensorProperty(
-      data as RawSensorData,
-      property,
-      selectedVials,
+  // now want to create a chart for each vial and each property.
+
+  // so first loop through the selected vials
+  const charts = [];
+  selectedProperties.forEach((property) => {
+    const chart = (
+      <HardwareLineChart
+        rawData={hardwareHistory}
+        vials={selectedVials}
+        property={property}
+      />
     );
-    return (
-      <div key={property}>
-        <div>{property}</div>
-        <SensorChart data={chartData} />
-      </div>
-    );
+    charts.push(chart);
   });
 
   return <div className="mt-4">{charts}</div>;
