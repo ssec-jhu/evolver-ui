@@ -31,28 +31,6 @@ const processData = (data, vials) => {
   });
 };
 
-// util function to transform the sensor data to a format that can be used by recharts, timestamp as x-axis
-function transformToTimestamp(data): {
-  formattedData: TimestampData[];
-  keys: string[];
-} {
-  const keys = new Set<string>();
-  const formattedData = Array.from(data).map(([timestamp, vials]) => {
-    const chartable = Array.from(vials).reduce(
-      (acc, [vial, value]) => {
-        keys.add(`vial-${vial}`);
-        acc[`vial-${vial}`] = value as number;
-        return acc;
-      },
-      { timestamp: timestamp } as TimestampData,
-    );
-    return chartable;
-  });
-
-  console.log("formattedData", formattedData);
-  return { formattedData, keys: Array.from(keys) };
-}
-
 // Helper function to format timestamp to a human-readable format with ms precision
 const formatTimestamp = (timestamp: number) => {
   const date = new Date(timestamp);

@@ -6,6 +6,8 @@ import * as Evolver from "client/services.gen";
 import { VialGrid } from "~/components/VialGrid";
 import { db } from "~/utils/db.server";
 
+const VIAL_COUNT = 16;
+
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string } }) => {
     const { id } = params;
@@ -31,14 +33,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export default function Hardware() {
   const { id } = useParams();
-  const { evolverState, vials } = useLoaderData<typeof loader>();
+  const { evolverState } = useLoaderData<typeof loader>();
   return (
     <div>
-      <VialGrid
-        stateData={evolverState.state}
-        id={id}
-        vialCount={vials.length}
-      />
+      <VialGrid stateData={evolverState.state} id={id} vialCount={VIAL_COUNT} />
     </div>
   );
 }

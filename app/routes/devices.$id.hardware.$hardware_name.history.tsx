@@ -64,17 +64,10 @@ export default function Hardware() {
   const { data } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const { hardware_name } = useParams();
-
-  console.log("data", data);
-
   if (!hardware_name) {
     return <div>Hardware not found</div>;
   }
-
   const hardwareHistory = data[hardware_name];
-
-  console.log("hardwareHistory", hardwareHistory);
-
   const allHardwareVials = Object.keys(hardwareHistory[0].data);
   const allHardwareVialsProperties = Object.keys(
     hardwareHistory[0].data[allHardwareVials[0]],
@@ -82,23 +75,15 @@ export default function Hardware() {
 
   let selectedProperties: string[] = allHardwareVialsProperties;
   let selectedVials: string[] = allHardwareVials;
-
   if (searchParams.has("vials")) {
     selectedVials = [...new Set(searchParams.get("vials")?.split(",") ?? [])];
   }
-
   if (searchParams.has("properties")) {
     selectedProperties = [
       ...new Set(searchParams.get("properties")?.split(",") ?? []),
     ];
   }
 
-  console.log("selectedProperties", selectedProperties);
-  console.log("selectedVials", selectedVials);
-
-  // now want to create a chart for each vial and each property.
-
-  // so first loop through the selected vials
   const charts = [];
   selectedProperties.forEach((property) => {
     const chart = (

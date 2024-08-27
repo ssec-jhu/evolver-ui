@@ -84,20 +84,20 @@ export default function App() {
   return (
     <Document theme={theme}>
       <Navbar pathname={pathname} />
+      <ToastContainer
+        position="top-right"
+        autoClose={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        theme={theme === "dark" ? "dark" : "light"}
+      />
       <div className="mx-auto max-w-6xl flex flex-col gap-4">
-        <div className="breadcrumbs text-sm mt-4">
+        <div className="breadcrumbs text-sm">
           <ul>{breadcrumbs}</ul>
         </div>
-        <ToastContainer
-          position="top-right"
-          autoClose={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          theme={theme === "dark" ? "dark" : "light"}
-        />
         <Outlet />
       </div>
     </Document>
