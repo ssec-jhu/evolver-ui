@@ -251,12 +251,12 @@ export default function DevicesList() {
               <thead>
                 <tr>
                   <th></th>
-                  <th>Added</th>
-                  <th>Name</th>
-                  <th>Id</th>
-                  <th>Url</th>
-                  <th>Status</th>
-                  <th>Forget</th>
+                  <th>added</th>
+                  <th>name</th>
+                  <th>id</th>
+                  <th>url</th>
+                  <th>status</th>
+                  <th>forget</th>
                 </tr>
               </thead>
               <tbody>{deviceTableItems}</tbody>
