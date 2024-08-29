@@ -1,11 +1,4 @@
-import {
-  Link,
-  Outlet,
-  useParams,
-  useRouteLoaderData,
-  useSearchParams,
-} from "@remix-run/react";
-import { HardwareTable } from "~/components/HardwareTable";
+import { Link, Outlet, useParams, useRouteLoaderData } from "@remix-run/react";
 import { loader } from "./devices.$id";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
@@ -18,9 +11,8 @@ export const handle = {
 };
 
 export default function Controllers() {
-  const { id, hardware_name } = useParams();
+  const { id } = useParams();
 
-  const [queryParams] = useSearchParams();
   const loaderData = useRouteLoaderData<typeof loader>("routes/devices.$id");
   let evolverConfig = {} as EvolverConfigWithoutDefaults;
 
