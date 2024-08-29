@@ -12,7 +12,7 @@ import { vialColors } from "~/utils/chart/colors";
 
 const processData = (data, vials, property) => {
   return data.map((entry) => {
-    const processedEntry = {
+    const processedEntry: { [key: string]: string } = {
       timestamp: new Date(entry.timestamp * 1000).toLocaleTimeString(), // Convert timestamp to readable time
     };
 
@@ -40,7 +40,7 @@ export const HardwareLineChart = ({ vials, rawData, property = "raw" }) => {
           <YAxis />
           <Tooltip />
           <Legend />
-          {vials.map((vial, index) => (
+          {vials.map((vial: number, index: number) => (
             <Line
               key={vial}
               type="monotone"
