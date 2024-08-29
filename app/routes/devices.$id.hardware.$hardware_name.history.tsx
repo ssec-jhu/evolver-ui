@@ -45,7 +45,6 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   const properties = searchParams.get("properties")?.split(",");
 
-  // TODO History api is in flux.
   const {
     data: { data },
   } = await Evolver.history({

@@ -28,19 +28,16 @@ export async function pingDevice(
     const evolverDescription = await Evolver.describe({
       client: evolverClient,
     });
-    // TODO: Confirm this is all accessible
     const {
       config: { name },
-      id,
     } = evolverDescription.data;
-
-    return { online: true, name, id };
+    return { online: true, name };
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       console.info(
         `request to device ${evolver_url_addr} timed out after ${timeout}ms, now designated offline`,
       );
     }
-    return { online: false, name: "unknown", id: "unknown" };
+    return { online: false, name: "unknown" };
   }
 }
