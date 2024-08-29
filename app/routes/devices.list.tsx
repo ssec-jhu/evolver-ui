@@ -163,9 +163,7 @@ export default function DevicesList() {
 
           <td>
             {status === "online" && <div>{url}</div>}
-            {status === "offline" && (
-              <div className={clsx("")}>{device_id}</div>
-            )}
+            {status === "offline" && <div className={clsx("")}>{url}</div>}
           </td>
           <td>
             <div
