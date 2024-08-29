@@ -12,7 +12,6 @@ import clsx from "clsx";
 import { EvolverConfigWithoutDefaults } from "client";
 import { BeakerIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 import { db } from "~/utils/db.server";
-import { BellAlertIcon } from "@heroicons/react/24/solid";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string } }) => {

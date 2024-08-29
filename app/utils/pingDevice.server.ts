@@ -1,6 +1,5 @@
 import { createClient } from "@hey-api/client-fetch";
 import * as Evolver from "client/services.gen";
-import { ENV } from "~/utils/env.server";
 
 export async function pingDevice(
   evolver_url_addr: string,

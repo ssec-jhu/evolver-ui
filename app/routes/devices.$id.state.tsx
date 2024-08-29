@@ -1,7 +1,6 @@
 import { createClient } from "@hey-api/client-fetch";
 import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { Link, useLoaderData, useParams } from "@remix-run/react";
-import { EvolverConfigWithoutDefaults } from "client";
 import * as Evolver from "client/services.gen";
 import { VialGrid } from "~/components/VialGrid";
 import { db } from "~/utils/db.server";
