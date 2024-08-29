@@ -5,13 +5,18 @@ const schema = z.object({
   DATABASE_URL: z.string(),
   DEFAULT_DEVICE_PORT: z.string(),
   VITEST: z.string().optional(),
+  EXCLUDED_PROPERTIES: z.string().optional(),
 });
 
 const env = schema.parse(process.env);
 export const ENV = env;
 
 // Pick env variables that will be publically visible
-const clientSchema = schema.pick({ VITEST: true, NODE_ENV: true });
+const clientSchema = schema.pick({
+  VITEST: true,
+  NODE_ENV: true,
+  EXCLUDED_PROPERTIES: true,
+});
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -46,6 +51,7 @@ export function getClientEnv() {
   /*⛔️ env vars added here will be visible to the client*/
   const clientEnv = {
     NODE_ENV: process.env.NODE_ENV,
+    EXCLUDED_PROPERTIES: process.env.EXCLUDED_PROPERTIES,
   };
   const parsed = clientSchema.safeParse(clientEnv);
   if (parsed.success === false) {

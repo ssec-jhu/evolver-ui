@@ -1,9 +1,15 @@
 import { createClient } from "@hey-api/client-fetch";
 import { LoaderFunctionArgs, json } from "@remix-run/node";
-import { Link, useLoaderData, useParams } from "@remix-run/react";
+import {
+  Link,
+  useLoaderData,
+  useParams,
+  useRouteLoaderData,
+} from "@remix-run/react";
 import * as Evolver from "client/services.gen";
 import { VialGrid } from "~/components/VialGrid";
 import { db } from "~/utils/db.server";
+import { loader as rootLoader } from "~/root";
 
 const VIAL_COUNT = 16;
 
@@ -33,9 +39,21 @@ export async function loader({ params }: LoaderFunctionArgs) {
 export default function Hardware() {
   const { id } = useParams();
   const { evolverState } = useLoaderData<typeof loader>();
+
+  const {
+    ENV: { EXCLUDED_PROPERTIES },
+  } = useRouteLoaderData<typeof rootLoader>("root");
+
+  const excludedProperties = EXCLUDED_PROPERTIES?.split(",") ?? [];
+
   return (
     <div>
-      <VialGrid stateData={evolverState.state} id={id} vialCount={VIAL_COUNT} />
+      <VialGrid
+        stateData={evolverState.state}
+        id={id}
+        vialCount={VIAL_COUNT}
+        excludedProperties={excludedProperties}
+      />
     </div>
   );
 }

@@ -1,20 +1,18 @@
-import { EvolverConfigWithoutDefaults } from "client";
+import React from "react";
 
-export const handleFileUpload = ({
+export function handleFileUpload<T>({
   e,
-  setEvolverConfig,
+  setData,
 }: {
   e: React.ChangeEvent<HTMLInputElement>;
-  setEvolverConfig: (evolverConfig: EvolverConfigWithoutDefaults) => void;
-}) => {
+  setData: React.Dispatch<React.SetStateAction<T>>;
+}) {
   const fileReader = new FileReader();
   if (e.target.files?.[0]) {
     fileReader.readAsText(e.target.files[0], "UTF-8");
     fileReader.onload = (event) => {
-      const uploadedConfig: EvolverConfigWithoutDefaults = JSON.parse(
-        event.target?.result as string,
-      );
-      setEvolverConfig(uploadedConfig);
+      const uploadedConfig = JSON.parse(event.target?.result as string);
+      setData(uploadedConfig);
     };
   }
-};
+}

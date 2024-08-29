@@ -29,6 +29,12 @@ export const handle = {
   },
 };
 
+// The action function is typically responsible for handling the form submission at the route.
+// Since the action function can handle different form submissions, we use intent to determine the action to take.
+// Branching on the intent field of the submitted form.
+// In this case, the intent is to update the evolver config. Later there may be an intent to delete a config, or undo a change etc...
+// Refs: https://sergiodxa.com/articles/multiple-forms-per-route-in-remix
+
 const UpdateDeviceIntentEnum = z.enum(["update_evolver"], {
   required_error: "an intent is required",
   invalid_type_error: "must be one of, update_device",
@@ -98,7 +104,11 @@ export async function action({ request }: ActionFunctionArgs) {
           }
         }
         if (response.status !== 200) {
-          throw new Error();
+          return submission.reply({
+            formErrors: [
+              `Got an unexpected response: ${response.status}. ${JSON.stringify(response)}`,
+            ],
+          });
         }
         return redirect(`/devices/${id}/config?mode=view`);
       } catch (error) {
@@ -184,7 +194,7 @@ export default function DeviceConfig() {
             onChange={(e) =>
               handleFileUpload({
                 e,
-                setEvolverConfig,
+                setData: setEvolverConfig,
               })
             }
             type="file"

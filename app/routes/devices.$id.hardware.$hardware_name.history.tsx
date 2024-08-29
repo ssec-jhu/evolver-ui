@@ -4,11 +4,13 @@ import {
   Link,
   useLoaderData,
   useParams,
+  useRouteLoaderData,
   useSearchParams,
 } from "@remix-run/react";
 import * as Evolver from "client/services.gen";
 import { db } from "~/utils/db.server";
 import { HardwareLineChart } from "~/components/LineChart";
+import { loader as rootLoader } from "~/root";
 
 export const handle = {
   breadcrumb: (
@@ -61,6 +63,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 export default function Hardware() {
   const { data } = useLoaderData<typeof loader>();
+  const {
+    ENV: { EXCLUDED_PROPERTIES },
+  } = useRouteLoaderData<typeof rootLoader>("root");
+  const excludedProperties = EXCLUDED_PROPERTIES?.split(",") ?? [];
   const [searchParams] = useSearchParams();
   const { hardware_name } = useParams();
   if (!hardware_name) {
@@ -70,7 +76,7 @@ export default function Hardware() {
   const allHardwareVials = Object.keys(hardwareHistory[0].data);
   const allHardwareVialsProperties = Object.keys(
     hardwareHistory[0].data[allHardwareVials[0]],
-  ).filter((property) => property !== "name" && property !== "vial");
+  ).filter((property) => excludedProperties.includes(property) === false);
 
   let selectedProperties: string[] = allHardwareVialsProperties;
   let selectedVials: string[] = allHardwareVials;

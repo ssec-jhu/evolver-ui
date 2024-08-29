@@ -11,11 +11,7 @@ import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 
 export const handle = {
-  breadcrumb: ({
-    params,
-  }: {
-    params: { id: string; hardware_name: string };
-  }) => {
+  breadcrumb: ({ params }: { params: { id: string } }) => {
     const { id } = params;
     return <Link to={`/devices/${id}/controllers`}>controllers</Link>;
   },
@@ -54,12 +50,6 @@ export default function Controllers() {
 
   return (
     <div>
-      <HardwareTable
-        evolverConfig={evolverConfig}
-        id={id ?? ""}
-        queryParams={queryParams}
-        hardwareName={hardware_name ?? ""}
-      />
       <Outlet />
     </div>
   );

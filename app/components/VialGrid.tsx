@@ -5,10 +5,12 @@ const DataTable = ({
   data,
   id,
   vialIndex,
+  excludedProperties = [],
 }: {
   id: string;
   vialIndex: number;
   data: { [key: string]: number | null };
+  excludedProperties?: string[];
 }) => {
   return (
     <div className="overflow-x-auto">
@@ -26,14 +28,8 @@ const DataTable = ({
           {Object.keys(data).map((mainKey) =>
             Object.keys(data[mainKey]).map((subKey, subIndex) => {
               let renderSubKey = true;
-              switch (subKey) {
-                case "vial":
-                case "name":
-                  renderSubKey = false;
-                  break;
-
-                default:
-                  break;
+              if (excludedProperties.includes(subKey)) {
+                renderSubKey = false;
               }
               return (
                 <tr key={`${mainKey}-${subKey}`}>
@@ -81,10 +77,12 @@ export function VialGrid({
   vialCount,
   stateData,
   id,
+  excludedProperties = [],
 }: {
   vialCount: number;
   stateData: { [key: string]: { [key: string]: { [key: string]: number } } };
   id: string;
+  excludedProperties?: string[];
 }) {
   const gridItems = Array.from({ length: vialCount }, (_, index) => {
     const indexString = index.toString();
@@ -119,7 +117,12 @@ export function VialGrid({
         </div>
         {hasData && (
           <div className="relative z-10">
-            <DataTable data={data} id={id} vialIndex={index} />
+            <DataTable
+              data={data}
+              id={id}
+              vialIndex={index}
+              excludedProperties={excludedProperties}
+            />
           </div>
         )}
       </div>
