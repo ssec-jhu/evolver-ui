@@ -1,6 +1,6 @@
 import { expect, describe, it } from "vitest";
 import { loader, action } from "~/root";
-import { prefs } from "~/prefs-cookie";
+import { userPrefs } from "~/cookies.server";
 
 describe("root loader", () => {
   it("should return an object with the default theme and publically visible (to the client) env variables", async () => {
@@ -10,11 +10,11 @@ describe("root loader", () => {
       context: {},
     });
     const data = await response.json();
-    expect(data).toEqual({ theme: "dark", ENV: { VITEST: true } });
+    expect(data).toEqual({ theme: "dark", ENV: { NODE_ENV: "test" } });
   });
 
   it("should return the theme from the request cookie", async () => {
-    const prefsCookie = await prefs.serialize({ theme: "light" });
+    const prefsCookie = await userPrefs.serialize({ theme: "light" });
     const request = new Request("http://127.0.0.1:8000", {
       headers: { Cookie: prefsCookie },
     });
@@ -44,6 +44,7 @@ describe("root action", () => {
   it("should return valid json if theme form data is included in the request", async () => {
     const formData = new FormData();
     formData.set("theme", "dark");
+
     const request = new Request("http://127.0.0.1:8000", {
       method: "POST",
       body: formData,
@@ -51,7 +52,9 @@ describe("root action", () => {
 
     const response = await action({ request, params: {}, context: {} });
     const cookie = response?.headers.get("Set-Cookie");
-    const setCookieValue = await prefs.parse(cookie ?? null);
+
+    const setCookieValue = await userPrefs.parse(cookie ?? null);
+
     expect(setCookieValue).toEqual({ theme: "dark" });
   });
 });

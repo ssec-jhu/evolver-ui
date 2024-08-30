@@ -7,7 +7,7 @@ import { json } from "@remix-run/node";
 const RemixStub = createRemixStub([
   {
     path: "/",
-    Component: () => <Navbar pathname="/devices" />,
+    Component: () => <Navbar pathname="/devices/list" />,
     loader() {
       return json({ theme: "dark" });
     },
@@ -21,5 +21,5 @@ test("shows the devices link", async () => {
 
 test("shows the theme toggle", async () => {
   await render(<RemixStub />);
-  expect(await screen.findAllByText("switch theme")).toHaveLength(1);
+  expect(await screen.findAllByText("sun")).toHaveLength(1);
 });

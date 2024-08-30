@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { createRemixStub } from "@remix-run/testing";
 import { json } from "@remix-run/node";
-import ThemeController from "../../ThemeController";
+import ThemeController from "~/components/ThemeController";
 
 const RemixStub = createRemixStub([
   {

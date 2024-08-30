@@ -1,2 +1,2 @@
 import { createCookie } from "@remix-run/node";
-export const prefs = createCookie("prefs");
+export const userPrefs = createCookie("prefs");

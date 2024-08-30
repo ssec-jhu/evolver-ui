@@ -1,6 +1,8 @@
 {
-  "name": "evolver-ui",
-  "private": true,
+  "name": "@jhu-software/evolver-ui",
+  "version": "1.0.0",
+  "description": "reference web app implementation for the evolver, an opensource bio reactor produced by fynchbio.com",
+  "license": "BSD-3-Clause",
   "sideEffects": false,
   "type": "module",
   "scripts": {
@@ -15,8 +17,7 @@
     "coverage": "vitest run --coverage",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "remix-serve ./build/server/index.js",
-    "typecheck": "tsc",
-    "postinstall": "npm exec playwright install"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@conform-to/react": "^1.1.5",
@@ -30,13 +31,14 @@
     "@remix-run/node": "^2.10.2",
     "@remix-run/react": "^2.10.2",
     "@remix-run/serve": "^2.10.2",
-    "ajv": "^8.17.1",
     "clsx": "^2.1.1",
     "isbot": "^4.1.0",
     "json-edit-react": "^1.15.4",
     "njv": "^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-toastify": "^10.0.5",
+    "recharts": "^2.12.7",
     "remix-utils": "^7.6.0",
     "zod": "^3.23.8"
   },

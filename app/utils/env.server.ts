@@ -3,12 +3,20 @@ import { z } from "zod";
 const schema = z.object({
   NODE_ENV: z.enum(["production", "development", "test"] as const),
   DATABASE_URL: z.string(),
-  SESSION_SECRET: z.string(),
   DEFAULT_DEVICE_PORT: z.string(),
-  VITEST: z.boolean().optional(),
+  VITEST: z.string().optional(),
+  EXCLUDED_PROPERTIES: z.string().optional(),
 });
 
-const clientSchema = schema.pick({ VITEST: true });
+const env = schema.parse(process.env);
+export const ENV = env;
+
+// Pick env variables that will be publically visible
+const clientSchema = schema.pick({
+  VITEST: true,
+  NODE_ENV: true,
+  EXCLUDED_PROPERTIES: true,
+});
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -39,10 +47,11 @@ export function init() {
  * be included in the client.
  * @returns all public ENV variables
  */
-export function getEnv() {
+export function getClientEnv() {
   /*⛔️ env vars added here will be visible to the client*/
   const clientEnv = {
-    VITEST: !!process.env.VITEST,
+    NODE_ENV: process.env.NODE_ENV,
+    EXCLUDED_PROPERTIES: process.env.EXCLUDED_PROPERTIES,
   };
   const parsed = clientSchema.safeParse(clientEnv);
   if (parsed.success === false) {
@@ -52,14 +61,5 @@ export function getEnv() {
   }
   if (parsed.success === true) {
     return clientEnv;
-  }
-}
-
-type ENV = ReturnType<typeof getEnv>;
-
-declare global {
-  let ENV: ENV;
-  interface Window {
-    ENV: ENV;
   }
 }

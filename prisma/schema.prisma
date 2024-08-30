@@ -14,5 +14,6 @@ model Device {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  ip_addr   String   @unique
+  url       String   @unique
+  device_id String   @unique
 }
