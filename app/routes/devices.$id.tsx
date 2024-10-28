@@ -84,6 +84,7 @@ export default function Device() {
             <BeakerIcon className="h-9 w-9 text-accent" />
             <div className={clsx("badge text-sm", "badge-accent")}>online</div>
           </div>
+          {/*eslint-disable-next-line jsx-a11y/label-has-associated-control*/}
           <label className="swap">
             <input type="checkbox" />
             <div className="swap-off">
