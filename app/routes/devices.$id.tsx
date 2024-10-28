@@ -12,6 +12,7 @@ import clsx from "clsx";
 import { EvolverConfigWithoutDefaults } from "client";
 import { BeakerIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 import { db } from "~/utils/db.server";
+import { PauseIcon, PlayIcon } from "@heroicons/react/24/solid";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string } }) => {
@@ -78,10 +79,26 @@ export default function Device() {
             </div>
           </div>
         </div>
-
-        <div className="flex flex-col items-center">
-          <BeakerIcon className="h-9 w-9 text-accent" />
-          <div className={clsx("badge text-sm", "badge-accent")}>online</div>
+        <div className=" flex items-center gap-4 justify-end">
+          <div className="flex flex-col items-center">
+            <BeakerIcon className="h-9 w-9 text-accent" />
+            <div className={clsx("badge text-sm", "badge-accent")}>online</div>
+          </div>
+          <label className="swap">
+            <input type="checkbox" />
+            <div className="swap-off">
+              <div className="flex flex-col items-center">
+                <PauseIcon title="moon" className="h-9 w-9 text-accent" />
+                <div className="badge text-sm badge-accent">running</div>
+              </div>
+            </div>
+            <div className="swap-on">
+              <div className="flex flex-col items-center">
+                <PlayIcon title="sun" className="h-9 w-9 fill-current " />
+                <div className="badge text-sm badge-current">paused</div>
+              </div>
+            </div>
+          </label>
         </div>
       </div>
       <div role="tablist" className="tabs tabs-lg tabs-boxed">
