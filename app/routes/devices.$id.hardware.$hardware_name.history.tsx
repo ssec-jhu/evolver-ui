@@ -69,7 +69,7 @@ export default function Hardware() {
   const [searchParams] = useSearchParams();
   const { hardware_name } = useParams();
 
-  if (!hardware_name || !data[hardware_name]) {
+  if (!data || !hardware_name || !data[hardware_name]) {
     return (
       <div className="flex flex-col items-center justify-center  p-10">
         <XCircleIcon className="w-6 h-6" />
