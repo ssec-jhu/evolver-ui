@@ -180,42 +180,52 @@ export default function Device() {
             <div className={clsx("badge text-sm", "badge-accent")}>online</div>
           </div>
           {state.active && (
-            <div className="flex flex-col items-center">
-              <PauseIcon
-                title="pause device"
-                className="h-9 w-9 text-accent"
-                onClick={() => {
-                  notify.dismiss();
-                  const formData = new FormData();
-                  formData.append("redirectTo", currentPath ?? "");
-                  formData.append("id", id ?? "");
-                  formData.append("intent", Intent.Enum.stop);
-                  submit(formData, {
-                    method: "POST",
-                  });
-                }}
-              />
-              <div className="badge text-sm badge-accent">active</div>
+            <div
+              className="tooltip"
+              data-tip="Click to abort the evolver control loop"
+            >
+              <div className="flex flex-col items-center">
+                <PauseIcon
+                  title="pause device"
+                  className="h-9 w-9 text-accent"
+                  onClick={() => {
+                    notify.dismiss();
+                    const formData = new FormData();
+                    formData.append("redirectTo", currentPath ?? "");
+                    formData.append("id", id ?? "");
+                    formData.append("intent", Intent.Enum.stop);
+                    submit(formData, {
+                      method: "POST",
+                    });
+                  }}
+                />
+                <div className="badge text-sm badge-accent">active</div>
+              </div>
             </div>
           )}
           {!state.active && (
-            <div className="flex flex-col items-center">
-              <PlayIcon
-                title="start device"
-                className="h-9 w-9 fill-current "
-                onClick={() => {
-                  notify.dismiss();
-                  const formData = new FormData();
+            <div
+              className="tooltip"
+              data-tip="Click to resume running the evolver control loop"
+            >
+              <div className="flex flex-col items-center">
+                <PlayIcon
+                  title="start device"
+                  className="h-9 w-9 fill-current "
+                  onClick={() => {
+                    notify.dismiss();
+                    const formData = new FormData();
 
-                  formData.append("redirectTo", currentPath ?? "");
-                  formData.append("id", id ?? "");
-                  formData.append("intent", Intent.Enum.start);
-                  submit(formData, {
-                    method: "POST",
-                  });
-                }}
-              />
-              <div className="badge text-sm badge-current">paused</div>
+                    formData.append("redirectTo", currentPath ?? "");
+                    formData.append("id", id ?? "");
+                    formData.append("intent", Intent.Enum.start);
+                    submit(formData, {
+                      method: "POST",
+                    });
+                  }}
+                />
+                <div className="badge text-sm badge-current">paused</div>
+              </div>
             </div>
           )}
         </div>
