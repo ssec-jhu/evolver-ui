@@ -182,7 +182,7 @@ export default function Device() {
           {state.active && (
             <div
               className="tooltip"
-              data-tip="Click to abort the evolver control loop"
+              data-tip="Click to stop device hardware and stop the control loop"
             >
               <div className="flex flex-col items-center">
                 <PauseIcon
@@ -199,14 +199,14 @@ export default function Device() {
                     });
                   }}
                 />
-                <div className="badge text-sm badge-accent">active</div>
+                <div className="badge text-sm badge-accent">running</div>
               </div>
             </div>
           )}
           {!state.active && (
             <div
               className="tooltip"
-              data-tip="Click to resume running the evolver control loop"
+              data-tip="Click to start running the device hardware and the control loop"
             >
               <div className="flex flex-col items-center">
                 <PlayIcon
@@ -224,7 +224,7 @@ export default function Device() {
                     });
                   }}
                 />
-                <div className="badge text-sm badge-current">paused</div>
+                <div className="badge text-sm badge-current">stopped</div>
               </div>
             </div>
           )}
