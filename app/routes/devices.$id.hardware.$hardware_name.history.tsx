@@ -11,6 +11,7 @@ import * as Evolver from "client/services.gen";
 import { db } from "~/utils/db.server";
 import { HardwareLineChart } from "~/components/LineChart";
 import { loader as rootLoader } from "~/root";
+import { XCircleIcon } from "@heroicons/react/24/solid";
 
 export const handle = {
   breadcrumb: (
@@ -47,18 +48,16 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   const properties = searchParams.get("properties")?.split(",");
 
-  const {
-    data: { data },
-  } = await Evolver.history({
-    body: {
+  const { data } = await Evolver.history({
+    query: {
+      name: hardware_name,
       vials,
       properties,
     },
-    query: { name: hardware_name },
     client: evolverClient,
   });
 
-  return json({ data });
+  return json({ data: data?.data });
 }
 
 export default function Hardware() {
@@ -69,8 +68,14 @@ export default function Hardware() {
   const excludedProperties = EXCLUDED_PROPERTIES?.split(",") ?? [];
   const [searchParams] = useSearchParams();
   const { hardware_name } = useParams();
-  if (!hardware_name) {
-    return <div>Hardware not found</div>;
+
+  if (!data || !hardware_name || !data[hardware_name]) {
+    return (
+      <div className="flex flex-col items-center justify-center  p-10">
+        <XCircleIcon className="w-6 h-6" />
+        <div>Data not found</div>
+      </div>
+    );
   }
   const hardwareHistory = data[hardware_name];
   const allHardwareVials = Object.keys(hardwareHistory[0].data);

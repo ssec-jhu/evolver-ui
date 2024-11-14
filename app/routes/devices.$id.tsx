@@ -52,7 +52,7 @@ export function ErrorBoundary() {
         </div>
       </div>
 
-      <Link to="/" className="link">
+      <Link to="/devices" className="link">
         home
       </Link>
     </div>
