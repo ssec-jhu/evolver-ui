@@ -5,6 +5,457 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/hardware/": {
+      "get": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Get All Hardware",
+        "operationId": "get_all_hardware_hardware__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/hardware/{hardware_name}": {
+      "get": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Get Hardware",
+        "operationId": "get_hardware_hardware__hardware_name__get",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hardware/{hardware_name}/set": {
+      "post": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Hardware Set",
+        "operationId": "hardware_set_hardware__hardware_name__set_post",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
+            }
+          },
+          {
+            "name": "commit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Commit"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                ],
+                "title": "Data"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hardware/{hardware_name}/commit": {
+      "post": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Hardware Commit",
+        "operationId": "hardware_commit_hardware__hardware_name__commit_post",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hardware/{hardware_name}/calibrator/procedure/start": {
+      "post": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Start Calibration Procedure",
+        "operationId": "start_calibration_procedure_hardware__hardware_name__calibrator_procedure_start_post",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hardware/{hardware_name}/calibrator/procedure/actions": {
+      "get": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Get Calibrator Actions",
+        "operationId": "get_calibrator_actions_hardware__hardware_name__calibrator_procedure_actions_get",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hardware/{hardware_name}/calibrator/procedure/dispatch": {
+      "post": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Dispatch Calibrator Action",
+        "operationId": "dispatch_calibrator_action_hardware__hardware_name__calibrator_procedure_dispatch_post",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "title": "Action"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hardware/{hardware_name}/calibrator/procedure/state": {
+      "get": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Get Calibrator State",
+        "operationId": "get_calibrator_state_hardware__hardware_name__calibrator_procedure_state_get",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hardware/{hardware_name}/calibrator/data": {
+      "get": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Get Calibration Data",
+        "operationId": "get_calibration_data_hardware__hardware_name__calibrator_data_get",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hardware/{hardware_name}/calibrator/output_transformer": {
+      "get": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Get Calibration Output Transformer",
+        "operationId": "get_calibration_output_transformer_hardware__hardware_name__calibrator_output_transformer_get",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Describe Evolver",
@@ -165,90 +616,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/Body_history"
-                  }
-                ],
-                "title": "Body"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HistoryResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "summary": "Get History",
-        "operationId": "history",
-        "parameters": [
-          {
-            "name": "name",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Name"
-            }
-          },
-          {
-            "name": "t_start",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "title": "T Start"
-            }
-          },
-          {
-            "name": "t_stop",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "title": "T Stop"
-            }
-          },
-          {
-            "name": "n_max",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "title": "N Max"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/Body_history"
-                  }
-                ],
-                "title": "Body"
+                "$ref": "#/components/schemas/Body_history"
               }
             }
           }
@@ -371,6 +739,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/abort": {
+      "post": {
+        "summary": "Abort",
+        "operationId": "abort_abort_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/start": {
+      "post": {
+        "summary": "Start",
+        "operationId": "start_start_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }
@@ -502,10 +902,6 @@
             "type": "boolean",
             "title": "Enable Control"
           },
-          "enable_commit": {
-            "type": "boolean",
-            "title": "Enable Commit"
-          },
           "interval": {
             "type": "integer",
             "title": "Interval"
@@ -521,7 +917,6 @@
           "serial",
           "history",
           "enable_control",
-          "enable_commit",
           "interval"
         ],
         "title": "EvolverConfigWithoutDefaults"
@@ -672,8 +1067,7 @@
             "type": "string",
             "format": "path",
             "title": "Dir",
-            "description": "Directory for saving new configuration files to.",
-            "default": "calibration_files"
+            "description": "Directory for saving new configuration files to."
           },
           "created": {
             "anyOf": [
@@ -729,6 +1123,17 @@
               }
             ],
             "title": "Output Transformer"
+          },
+          "calibration_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibration File"
           }
         },
         "type": "object",
@@ -751,8 +1156,7 @@
             "type": "string",
             "format": "path",
             "title": "Dir",
-            "description": "Directory for saving new configuration files to.",
-            "default": "calibration_files"
+            "description": "Directory for saving new configuration files to."
           },
           "created": {
             "anyOf": [
