@@ -4,8 +4,15 @@ import {
   useParams,
   useLoaderData,
   useLocation,
+  useActionData,
+  useSubmit,
 } from "@remix-run/react";
-import { LoaderFunctionArgs, json } from "@remix-run/node";
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  json,
+  redirect,
+} from "@remix-run/node";
 import { createClient } from "@hey-api/client-fetch";
 import * as Evolver from "client/services.gen";
 import clsx from "clsx";
@@ -13,6 +20,10 @@ import { EvolverConfigWithoutDefaults } from "client";
 import { BeakerIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 import { db } from "~/utils/db.server";
 import { PauseIcon, PlayIcon } from "@heroicons/react/24/solid";
+import { z } from "zod";
+import { parseWithZod } from "@conform-to/zod";
+import { toast as notify } from "react-toastify";
+import { useEffect } from "react";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string } }) => {
@@ -20,6 +31,68 @@ export const handle = {
     return <Link to={`/devices/${id}/state`}>{id}</Link>;
   },
 };
+
+const Intent = z.enum(["start", "stop"], {
+  required_error: "intent is required",
+  invalid_type_error: "must be one of, start or stop",
+});
+
+const schema = z.discriminatedUnion("intent", [
+  z.object({
+    intent: z.literal(Intent.Enum.start),
+    id: z.string(),
+    redirectTo: z.string(),
+  }),
+  z.object({
+    intent: z.literal(Intent.Enum.stop),
+    id: z.string(),
+    redirectTo: z.string(),
+  }),
+]);
+
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+
+  // prelim validation, just checks request has proper intent and an id for the device to start or stop
+  const submission = parseWithZod(formData, { schema: schema });
+
+  if (submission.status !== "success") {
+    return submission.reply();
+  }
+  const { intent, id, redirectTo } = submission.value;
+
+  // use the db to get the url for that device id...
+  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+
+  if (!targetDevice) {
+    return submission.reply({ formErrors: ["device not found"] });
+  }
+
+  const { url } = targetDevice;
+  const evolverClient = createClient({
+    baseUrl: url,
+  });
+
+  switch (intent) {
+    case Intent.Enum.start:
+      try {
+        await Evolver.startStartPost({ client: evolverClient });
+      } catch (error) {
+        return submission.reply({ formErrors: ["unable to start device"] });
+      }
+      break;
+    case Intent.Enum.stop:
+      try {
+        await Evolver.abortAbortPost({ client: evolverClient });
+      } catch (error) {
+        return submission.reply({ formErrors: ["unable to stop device"] });
+      }
+      break;
+    default:
+      return submission.reply();
+  }
+  return redirect(redirectTo);
+}
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
@@ -32,12 +105,15 @@ export async function loader({ params }: LoaderFunctionArgs) {
     baseUrl: url,
   });
   const describeEvolver = await Evolver.describe({ client: evolverClient });
+  const evolverState = await Evolver.state({ client: evolverClient });
+
   return json({
     description: describeEvolver.data as {
       config: EvolverConfigWithoutDefaults;
     },
     url,
     ok: true,
+    state: evolverState.data,
   });
 }
 
@@ -61,8 +137,27 @@ export function ErrorBoundary() {
 
 export default function Device() {
   const { id } = useParams();
-  const { description, url } = useLoaderData<typeof loader>();
+  const { description, url, state } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
+  const actionData = useActionData<typeof action>();
+  const submit = useSubmit();
+
+  useEffect(() => {
+    if (actionData?.error) {
+      if (typeof actionData.error === "string") {
+        notify.error(actionData.error);
+      }
+      if (typeof actionData.error === "object") {
+        const errorMessages: string[] = [];
+        Object.entries(actionData.error).forEach(([key, value]) => {
+          errorMessages.push(`${key}: ${value}`);
+        });
+        errorMessages.forEach((message) => {
+          notify.error(message);
+        });
+      }
+    }
+  }, [actionData]);
   const currentPath = pathname.split("/").pop();
   const evolverConfig = description.config;
 
@@ -84,22 +179,55 @@ export default function Device() {
             <BeakerIcon className="h-9 w-9 text-accent" />
             <div className={clsx("badge text-sm", "badge-accent")}>online</div>
           </div>
-          {/*eslint-disable-next-line jsx-a11y/label-has-associated-control*/}
-          <label className="swap">
-            <input type="checkbox" />
-            <div className="swap-off">
+          {state.active && (
+            <div
+              className="tooltip"
+              data-tip="Click to stop device hardware and stop the control loop"
+            >
               <div className="flex flex-col items-center">
-                <PauseIcon title="moon" className="h-9 w-9 text-accent" />
+                <PauseIcon
+                  title="pause device"
+                  className="h-9 w-9 text-accent"
+                  onClick={() => {
+                    notify.dismiss();
+                    const formData = new FormData();
+                    formData.append("redirectTo", currentPath ?? "");
+                    formData.append("id", id ?? "");
+                    formData.append("intent", Intent.Enum.stop);
+                    submit(formData, {
+                      method: "POST",
+                    });
+                  }}
+                />
                 <div className="badge text-sm badge-accent">running</div>
               </div>
             </div>
-            <div className="swap-on">
+          )}
+          {!state.active && (
+            <div
+              className="tooltip"
+              data-tip="Click to start running the device hardware and the control loop"
+            >
               <div className="flex flex-col items-center">
-                <PlayIcon title="sun" className="h-9 w-9 fill-current " />
-                <div className="badge text-sm badge-current">paused</div>
+                <PlayIcon
+                  title="start device"
+                  className="h-9 w-9 fill-current "
+                  onClick={() => {
+                    notify.dismiss();
+                    const formData = new FormData();
+
+                    formData.append("redirectTo", currentPath ?? "");
+                    formData.append("id", id ?? "");
+                    formData.append("intent", Intent.Enum.start);
+                    submit(formData, {
+                      method: "POST",
+                    });
+                  }}
+                />
+                <div className="badge text-sm badge-current">stopped</div>
               </div>
             </div>
-          </label>
+          )}
         </div>
       </div>
       <div role="tablist" className="tabs tabs-lg tabs-boxed">
