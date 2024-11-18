@@ -24,7 +24,7 @@ export function HardwareTable({
   const TableRows = Object.keys(evolverHardware).map((key) => {
     const vials = evolverHardware[key]?.config?.vials;
 
-    const vialsWithLinks = vials.map((vial) => {
+    const vialsWithLinks = vials?.map((vial) => {
       const linkTo = `/devices/${id}/hardware/${key}/history?vials=${vial}`;
       const activeVial =
         currentVials.includes(vial.toString()) && hardwareName === key;
@@ -52,11 +52,15 @@ export function HardwareTable({
           "btn-xs",
           "btn-outline",
           key === hardwareName &&
-            vials.length === currentVials.length &&
+            vials?.length === currentVials?.length &&
             "btn-active",
         )}
         key={"all"}
-        to={`/devices/${id}/hardware/${key}/history?vials=${vials.join(",")}`}
+        to={
+          vials
+            ? `/devices/${id}/hardware/${key}/history?vials=${vials?.join(",")}`
+            : `/devices/${id}/hardware/${key}/history`
+        }
       >
         {" "}
         all
