@@ -82,32 +82,36 @@ export async function action({ request }: ActionFunctionArgs) {
   switch (intent) {
     case Intent.Enum.dispatch_action:
       try {
-        await Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
-          {
-            body: {
-              action_name: submission.value.action_name,
-              payload: JSON.parse(submission.value.payload),
+        const procedureState =
+          await Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
+            {
+              body: {
+                action_name: submission.value.action_name,
+                payload: JSON.parse(submission.value.payload),
+              },
+              path: {
+                hardware_name: submission.value.hardware_name,
+              },
+              client: evolverClient,
             },
-            path: {
-              hardware_name: submission.value.hardware_name,
-            },
-            client: evolverClient,
-          },
-        );
+          );
+        return json(procedureState.data);
       } catch (error) {
         return submission.reply({ formErrors: ["unable to dispatch action"] });
       }
       break;
     case Intent.Enum.start_calibration_procedure:
       try {
-        await Evolver.startCalibrationProcedureHardwareHardwareNameCalibratorProcedureStartPost(
-          {
-            path: {
-              hardware_name: submission.value.hardware_name,
+        const procedureState =
+          await Evolver.startCalibrationProcedureHardwareHardwareNameCalibratorProcedureStartPost(
+            {
+              path: {
+                hardware_name: submission.value.hardware_name,
+              },
+              client: evolverClient,
             },
-            client: evolverClient,
-          },
-        );
+          );
+        return json(procedureState.data);
       } catch (error) {
         return submission.reply({
           formErrors: ["unable to start calibration"],
@@ -130,7 +134,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
   const evolverClient = createClient({
     baseUrl: url,
   });
-  const { data } =
+  const { data: procedureActions } =
     await Evolver.getCalibratorActionsHardwareHardwareNameCalibratorProcedureActionsGet(
       {
         path: {
@@ -140,14 +144,27 @@ export async function loader({ params }: LoaderFunctionArgs) {
       },
     );
 
-  return json({ actions: data?.actions });
+  const { data: procedureState } =
+    await Evolver.getCalibratorStateHardwareHardwareNameCalibratorProcedureStateGet(
+      {
+        path: {
+          hardware_name: hardware_name ?? "",
+        },
+        client: evolverClient,
+      },
+    );
+  return json({
+    actions: procedureActions?.actions,
+    state: procedureState,
+  });
 }
 
-const CalibrationProcedure = ({ actions }) => {
+const CalibrationProcedure = ({ actions, state }) => {
   const submit = useSubmit();
   const { id, hardware_name } = useParams();
 
   return actions.map((action, ix) => {
+    const isComplete = state?.completed_actions?.includes(action.name) ?? false;
     const dispatchAction = (actionFormData: object) => {
       const formData = new FormData();
       formData.append("id", id ?? "");
@@ -166,7 +183,7 @@ const CalibrationProcedure = ({ actions }) => {
       >
         {() => (
           <CalibratorActionForm
-            action={action}
+            action={{ ...action, is_complete: isComplete }}
             index={ix}
             dispatchAction={dispatchAction}
           />
@@ -176,8 +193,25 @@ const CalibrationProcedure = ({ actions }) => {
   });
 };
 
+const CalibrationProcedureProgress = ({ state, actions }) => {
+  const completed = state.completed_actions.length;
+  const total = actions.length;
+  return (
+    <div className="flex flex-col">
+      <progress
+        className="progress progress-accent w-full"
+        value={completed}
+        max={total}
+      />
+      <div className="flex justify-end">
+        {completed}/{total}
+      </div>
+    </div>
+  );
+};
+
 export default function CalibrateHardware() {
-  const { actions } = useLoaderData<typeof loader>();
+  const { actions, state } = useLoaderData<typeof loader>();
   const { id, hardware_name } = useParams();
   const hasActions = actions && actions.length > 0;
   const calibrationButtonCopy = hasActions ? "restart" : "start";
@@ -231,8 +265,13 @@ export default function CalibrateHardware() {
             </button>
           </div>
         </div>
+        <div>
+          <CalibrationProcedureProgress state={state} actions={actions} />
+        </div>
         <div className="grid grid-cols-2 gap-4">
-          {hasActions && <CalibrationProcedure actions={actions} />}
+          {hasActions && (
+            <CalibrationProcedure state={state} actions={actions} />
+          )}
         </div>
         {!hasActions && (
           <div className="card bg-base-100  shadow-xl">

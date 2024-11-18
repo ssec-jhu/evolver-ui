@@ -203,6 +203,16 @@
               "type": "string",
               "title": "Hardware Name"
             }
+          },
+          {
+            "name": "resume",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Resume"
+            }
           }
         ],
         "responses": {
@@ -334,6 +344,49 @@
         ],
         "summary": "Get Calibrator State",
         "operationId": "get_calibrator_state_hardware__hardware_name__calibrator_procedure_state_get",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hardware/{hardware_name}/calibrator/procedure/undo": {
+      "post": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Undo Calibration Procedure Action",
+        "operationId": "undo_calibration_procedure_action_hardware__hardware_name__calibrator_procedure_undo_post",
         "parameters": [
           {
             "name": "hardware_name",

@@ -201,7 +201,6 @@ export default function Device() {
                     notify.dismiss();
                     const formData = new FormData();
                     formData.append("redirectTo", pathname);
-                    console.log("FORM DAata", formData);
                     formData.append("id", id ?? "");
                     formData.append("intent", Intent.Enum.stop);
                     submit(formData, {

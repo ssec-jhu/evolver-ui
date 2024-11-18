@@ -93,7 +93,11 @@ function CustomSubmitButton(props: SubmitButtonProps) {
   const { uiSchema } = props;
   const { norender } = getSubmitButtonOptions(uiSchema);
   if (norender) {
-    return null;
+    return (
+      <div className="card-actions justify-end align-bottom">
+        <div className={`btn btn-disabled`}>done</div>
+      </div>
+    );
   }
 
   return (
@@ -113,6 +117,7 @@ export default function CalibratorActionForm({
   action: {
     input_schema: { properties: object } | RJSFSchema;
     description: string;
+    is_complete: boolean;
   };
   index: number;
   dispatchAction: (action: FormData) => void;
@@ -125,6 +130,12 @@ export default function CalibratorActionForm({
     description: "",
   };
 
+  const uiSchema = {
+    "ui:submitButtonOptions": {
+      norender: action.is_complete,
+    },
+  };
+
   return (
     <div className="card bg-base-100 shadow-xl">
       <div className="card-body flex-1">
@@ -132,6 +143,7 @@ export default function CalibratorActionForm({
           className="flex flex-col gap-4 flex-1 justify-between"
           validator={validator}
           schema={schemaToUse}
+          uiSchema={uiSchema}
           onSubmit={({ formData }) => {
             dispatchAction(formData);
           }}
