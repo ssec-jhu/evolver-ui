@@ -1,4 +1,4 @@
-import { Link } from "@remix-run/react";
+import { Link, useLocation } from "@remix-run/react";
 import { EvolverConfigWithoutDefaults } from "client";
 import clsx from "clsx";
 
@@ -13,19 +13,16 @@ export function HardwareTable({
   hardwareName: string;
   queryParams: URLSearchParams;
 }) {
+  const { pathname } = useLocation();
+  const currentPath = pathname.split("/").pop();
   let currentVials: string[] = [];
-  let allVials = false;
   if (queryParams.has("vials")) {
     currentVials = queryParams.get("vials")?.split(",");
-  } else {
-    allVials = true;
   }
   const evolverHardware = evolverConfig.hardware;
 
   const TableRows = Object.keys(evolverHardware).map((key) => {
-    const {
-      config: { vials },
-    } = evolverHardware[key];
+    const vials = evolverHardware[key]?.config?.vials;
 
     const vialsWithLinks = vials.map((vial) => {
       const linkTo = `/devices/${id}/hardware/${key}/history?vials=${vial}`;
@@ -54,10 +51,12 @@ export function HardwareTable({
           "btn",
           "btn-xs",
           "btn-outline",
-          allVials && key === hardwareName && "btn-active",
+          key === hardwareName &&
+            vials.length === currentVials.length &&
+            "btn-active",
         )}
         key={"all"}
-        to={`/devices/${id}/hardware/${key}/history`}
+        to={`/devices/${id}/hardware/${key}/history?vials=${vials.join(",")}`}
       >
         {" "}
         all
@@ -71,6 +70,19 @@ export function HardwareTable({
           {vialsWithLinks}
           {allButton}
         </td>
+        <td>
+          <Link
+            className={clsx(
+              "btn btn-xs btn-outline",
+              key === hardwareName &&
+                currentPath === "calibrate" &&
+                "btn-active",
+            )}
+            to={`/devices/${id}/hardware/${key}/calibrate`}
+          >
+            calibrate
+          </Link>
+        </td>
       </tr>
     );
   });
@@ -80,7 +92,8 @@ export function HardwareTable({
       <thead>
         <tr>
           <th>name</th>
-          <th>vials</th>
+          <th>vial history</th>
+          <th>action</th>
         </tr>
       </thead>
       <tbody>{TableRows}</tbody>

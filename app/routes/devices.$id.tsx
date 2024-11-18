@@ -260,6 +260,7 @@ export default function Device() {
             "tab",
             currentPath === "hardware" && "tab-active",
             currentPath === "history" && "tab-active",
+            currentPath === "calibrate" && "tab-active",
             "tab-border-3",
           )}
         >

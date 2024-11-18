@@ -23,11 +23,11 @@ export const handle = {
     queryParams?: URLSearchParams,
   ) => {
     const { id, hardware_name } = params;
-    const linkTo = `/devices/${id}/hardware/${hardware_name}/history`;
+    const linkTo = `/devices/${id}/hardware/${hardware_name}/`;
     if (queryParams !== undefined) {
       linkTo.concat(`?${queryParams.toString()}`);
     }
-    return <Link to={linkTo}>history</Link>;
+    return <Link to={linkTo}>calibrate</Link>;
   },
 };
 
@@ -61,6 +61,8 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 }
 
 export default function Hardware() {
+  return <div>HELLO WORLD</div>;
+  /*
   const { data } = useLoaderData<typeof loader>();
   const {
     ENV: { EXCLUDED_PROPERTIES },
@@ -78,22 +80,15 @@ export default function Hardware() {
     );
   }
   const hardwareHistory = data[hardware_name];
+  const allHardwareVials = Object.keys(hardwareHistory[0].data);
   const allHardwareVialsProperties = Object.keys(
-    hardwareHistory[0].data,
+    hardwareHistory[0].data[allHardwareVials[0]],
   ).filter((property) => excludedProperties.includes(property) === false);
 
   let selectedProperties: string[] = allHardwareVialsProperties;
-  let selectedVials: string[] = [];
+  let selectedVials: string[] = allHardwareVials;
   if (searchParams.has("vials")) {
     selectedVials = [...new Set(searchParams.get("vials")?.split(",") ?? [])];
-  } else {
-    Array.from(
-      new Set(hardwareHistory.map((entry) => entry.vial?.toString())),
-    ).forEach((vial) => {
-      if (vial) {
-        selectedVials.push(vial);
-      }
-    });
   }
   if (searchParams.has("properties")) {
     selectedProperties = [
@@ -114,4 +109,5 @@ export default function Hardware() {
   });
 
   return <div className="mt-4">{charts}</div>;
+*/
 }
