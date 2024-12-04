@@ -616,7 +616,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Body_history"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Body_history"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -782,6 +787,23 @@
     "schemas": {
       "Body_history": {
         "properties": {
+          "kinds": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kinds",
+            "default": [
+              "sensor"
+            ]
+          },
           "vials": {
             "anyOf": [
               {
@@ -905,6 +927,26 @@
           "interval": {
             "type": "integer",
             "title": "Interval"
+          },
+          "raise_loop_exceptions": {
+            "type": "boolean",
+            "title": "Raise Loop Exceptions"
+          },
+          "abort_on_control_errors": {
+            "type": "boolean",
+            "title": "Abort On Control Errors"
+          },
+          "abort_on_commit_errors": {
+            "type": "boolean",
+            "title": "Abort On Commit Errors"
+          },
+          "skip_control_on_read_failure": {
+            "type": "boolean",
+            "title": "Skip Control On Read Failure"
+          },
+          "log_level": {
+            "type": "integer",
+            "title": "Log Level"
           }
         },
         "type": "object",
@@ -917,7 +959,12 @@
           "serial",
           "history",
           "enable_control",
-          "interval"
+          "interval",
+          "raise_loop_exceptions",
+          "abort_on_control_errors",
+          "abort_on_commit_errors",
+          "skip_control_on_read_failure",
+          "log_level"
         ],
         "title": "EvolverConfigWithoutDefaults"
       },
@@ -940,6 +987,21 @@
             "type": "number",
             "title": "Timestamp"
           },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "vial": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vial"
+          },
           "data": {
             "title": "Data"
           }
@@ -947,6 +1009,8 @@
         "type": "object",
         "required": [
           "timestamp",
+          "kind",
+          "vial",
           "data"
         ],
         "title": "HistoricDatum"
