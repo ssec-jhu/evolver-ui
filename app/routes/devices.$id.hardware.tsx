@@ -10,6 +10,7 @@ import { HardwareTable } from "~/components/HardwareTable";
 import { loader } from "./devices.$id";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
+import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 
 export const handle = {
   breadcrumb: ({
@@ -57,6 +58,8 @@ export default function Hardware() {
 
   return (
     <div>
+      <div className="font-mono">device hardware</div>
+      <div className="divider"></div>
       <HardwareTable
         evolverConfig={evolverConfig}
         hardwareName={hardware_name ?? ""}

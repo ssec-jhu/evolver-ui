@@ -8,7 +8,7 @@ export default function Navbar({ pathname = "" as string }): JSX.Element {
       <div className="mx-auto max-w-6xl flex flex-wrap justify-between gap-10 min-h-16 items-center">
         <div className="flex-1">
           <div className="flex items-center space-x-1">
-            <Link to="/" className="text-3xl text-primary">
+            <Link to="/" className="text-primary">
               Evolver
             </Link>
           </div>

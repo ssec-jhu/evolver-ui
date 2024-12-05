@@ -162,15 +162,24 @@ export default function Device() {
   const evolverConfig = description.config;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4">
       <div className=" flex items-center gap-4 justify-between">
         <div className="flex items-center">
           <div>
-            <h1 className="text-2xl">{`${evolverConfig.name}`}</h1>
+            <h1>{`${evolverConfig.name}`}</h1>
             <div className="flex w-full">
               <h1 className="font-mono">{`${id}`}</h1>
               <div className="divider divider-horizontal"></div>
-              <h1 className="font-mono">{`${url}`}</h1>
+              <h1 className="font-sans">
+                <span className="font-mono">
+                  <a
+                    className="link"
+                    href={`${url}/docs`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >{`${url}/docs`}</a>
+                </span>
+              </h1>
             </div>
           </div>
         </div>
@@ -230,7 +239,7 @@ export default function Device() {
           )}
         </div>
       </div>
-      <div role="tablist" className="tabs tabs-lg tabs-boxed">
+      <div role="tablist" className="tabs  tabs-boxed">
         <Link
           to={"./state"}
           role="tab"

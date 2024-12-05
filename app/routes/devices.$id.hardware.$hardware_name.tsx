@@ -17,11 +17,11 @@ export const handle = {
 
 export default function Hardware() {
   const { hardware_name } = useParams();
-
   return (
     <div>
       <div className="divider"></div>
-      <div className="stat-value font-mono text-center">{hardware_name}</div>
+      <div className="font-mono">{hardware_name}</div>
+      <div className="divider"></div>
       <Outlet />
     </div>
   );

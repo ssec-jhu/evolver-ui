@@ -1,6 +1,7 @@
 import { Link, useLocation } from "@remix-run/react";
 import { EvolverConfigWithoutDefaults } from "client";
 import clsx from "clsx";
+import { M } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 
 export function HardwareTable({
   evolverConfig,
@@ -32,8 +33,10 @@ export function HardwareTable({
         <Link
           key={vial}
           className={clsx(
+            "font-mono",
+            "font-extralight",
             "btn",
-            "btn-xs",
+            "join-item",
             "btn-outline",
             activeVial && "btn-active",
           )}
@@ -49,11 +52,13 @@ export function HardwareTable({
       <Link
         className={clsx(
           "btn",
-          "btn-xs",
+          "join-item",
           "btn-outline",
           key === hardwareName &&
             vials?.length === currentVials?.length &&
             "btn-active",
+          "font-mono",
+          "font-extralight",
         )}
         key={"all"}
         to={
@@ -63,21 +68,30 @@ export function HardwareTable({
         }
       >
         {" "}
-        all
+        select all
       </Link>
     );
 
     return (
-      <tr key={key} className={clsx(hardwareName === key && "bg-base-300")}>
-        <td>{key}</td>
-        <td className="flex gap-2">
-          {vialsWithLinks}
-          {allButton}
+      <tr
+        key={key}
+        className={clsx(
+          hardwareName === key && "bg-base-100",
+          hardwareName !== key && "hover",
+          "font-mono",
+        )}
+      >
+        <td className="font-mono">{key}</td>
+        <td>
+          <div className="join">
+            {vialsWithLinks}
+            {allButton}
+          </div>
         </td>
         <td>
           <Link
             className={clsx(
-              "btn btn-xs btn-outline",
+              "btn btn-outline ",
               key === hardwareName &&
                 currentPath === "calibrate" &&
                 "btn-active",
@@ -97,7 +111,7 @@ export function HardwareTable({
         <tr>
           <th>name</th>
           <th>vial history</th>
-          <th>action</th>
+          <th>actions</th>
         </tr>
       </thead>
       <tbody>{TableRows}</tbody>

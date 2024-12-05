@@ -110,7 +110,7 @@ export function ErrorBoundary() {
     return (
       <Document title={error.statusText}>
         <section className="w-full h-svh bg-red-100 text-red-600">
-          <h1 className="text-3xl">Oops!</h1>
+          <h1>Oops!</h1>
           <p>There was an error:</p>
           <pre>
             {error.status} {error.statusText || error.data}

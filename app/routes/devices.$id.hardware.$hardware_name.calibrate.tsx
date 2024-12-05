@@ -1,8 +1,42 @@
 import { createClient } from "@hey-api/client-fetch";
-import { LoaderFunctionArgs, json } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { toast as notify } from "react-toastify";
+import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
+import {
+  Link,
+  useActionData,
+  useLoaderData,
+  useParams,
+  useSubmit,
+} from "@remix-run/react";
 import * as Evolver from "client/services.gen";
+import CalibratorActionForm from "~/components/CalibratorActionForm.client";
+import { ClientOnly } from "remix-utils/client-only";
 import { db } from "~/utils/db.server";
+import clsx from "clsx";
+import { z } from "zod";
+import { parseWithZod } from "@conform-to/zod";
+import { useEffect } from "react";
+
+const Intent = z.enum(["dispatch_action", "start_calibration_procedure"], {
+  required_error: "intent is required",
+  invalid_type_error:
+    "must be one of, dispatch_action or start_calibration_procedure",
+});
+
+const schema = z.discriminatedUnion("intent", [
+  z.object({
+    intent: z.literal(Intent.Enum.dispatch_action),
+    id: z.string(),
+    hardware_name: z.string(),
+    action_name: z.string(),
+    payload: z.object({}),
+  }),
+  z.object({
+    intent: z.literal(Intent.Enum.start_calibration_procedure),
+    id: z.string(),
+    hardware_name: z.string(),
+  }),
+]);
 
 export const handle = {
   breadcrumb: (
@@ -22,15 +56,80 @@ export const handle = {
   },
 };
 
-export async function loader({ params, request }: LoaderFunctionArgs) {
-  const { id, hardware_name } = params;
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+
+  // prelim validation, just checks request has proper intent and fields for that action intent
+  const submission = parseWithZod(formData, { schema: schema });
+
+  if (submission.status !== "success") {
+    return submission.reply();
+  }
+  const { intent, id } = submission.value;
+
+  // use the db to get the url for that device id...(used to init the client)
   const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+
+  if (!targetDevice) {
+    return submission.reply({ formErrors: ["device not found"] });
+  }
 
   const { url } = targetDevice;
   const evolverClient = createClient({
     baseUrl: url,
   });
 
+  switch (intent) {
+    case Intent.Enum.dispatch_action:
+      try {
+        await Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
+          {
+            body: {
+              action_name: submission.value.action_name,
+              payload: submission.value.payload,
+            },
+            path: {
+              hardware_name: submission.value.hardware_name,
+            },
+            client: evolverClient,
+          },
+        );
+      } catch (error) {
+        return submission.reply({ formErrors: ["unable to dispatch action"] });
+      }
+      break;
+    case Intent.Enum.start_calibration_procedure:
+      try {
+        await Evolver.startCalibrationProcedureHardwareHardwareNameCalibratorProcedureStartPost(
+          {
+            path: {
+              hardware_name: submission.value.hardware_name,
+            },
+            client: evolverClient,
+          },
+        );
+      } catch (error) {
+        return submission.reply({
+          formErrors: ["unable to start calibration"],
+        });
+      }
+      break;
+    default:
+      return submission.reply();
+  }
+  return null;
+}
+
+export async function loader({ params }: LoaderFunctionArgs) {
+  const { id, hardware_name } = params;
+  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+  if (!targetDevice) {
+    return json({ actions: [] });
+  }
+  const { url } = targetDevice;
+  const evolverClient = createClient({
+    baseUrl: url,
+  });
   const { data } =
     await Evolver.getCalibratorActionsHardwareHardwareNameCalibratorProcedureActionsGet(
       {
@@ -44,65 +143,89 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   return json({ actions: data?.actions });
 }
 
-export default function Hardware() {
-  const { actions } = useLoaderData<typeof loader>();
-  console.log("GOT SOME actions:!", actions);
+const CalibrationProcedure = ({ actions }) => {
+  return actions.map((action, ix) => {
+    return (
+      <ClientOnly
+        key={action.description}
+        fallback={<span className="skeleton h-32"></span>}
+      >
+        {() => <CalibratorActionForm action={action} index={ix} />}
+      </ClientOnly>
+    );
+  });
+};
 
+export default function CalibrateHardware() {
+  const { actions } = useLoaderData<typeof loader>();
+  const { id, hardware_name } = useParams();
+  const hasActions = actions && actions.length > 0;
+  const calibrationButtonCopy = hasActions ? "restart" : "start";
+
+  const actionData = useActionData<typeof action>();
+  const submit = useSubmit();
+
+  useEffect(() => {
+    if (actionData?.error) {
+      if (typeof actionData.error === "string") {
+        notify.error(actionData.error);
+      }
+      if (typeof actionData.error === "object") {
+        const errorMessages: string[] = [];
+        Object.entries(actionData.error).forEach(([key, value]) => {
+          errorMessages.push(`${key}: ${value}`);
+        });
+        errorMessages.forEach((message) => {
+          notify.error(message);
+        });
+      }
+    }
+  }, [actionData]);
   return (
     <div>
-      <progress
-        className="progress w-full"
-        value={0}
-        max={actions.length}
-      ></progress>
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-center">
+            <div>
+              <div className="flex w-full font-mono">calibration procedure</div>
+            </div>
+          </div>
+          <div>
+            <button
+              className={clsx(
+                "btn",
+                hasActions && "btn-error",
+                !hasActions && "btn-accent",
+              )}
+              onClick={() => {
+                const formData = new FormData();
+                formData.append("id", id ?? "");
+                formData.append(
+                  "intent",
+                  Intent.Enum.start_calibration_procedure,
+                );
+                formData.append("hardware_name", hardware_name ?? "");
+                submit(formData, {
+                  method: "POST",
+                });
+              }}
+            >
+              {calibrationButtonCopy}
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          {hasActions && <CalibrationProcedure actions={actions} />}
+        </div>
+        {!hasActions && (
+          <div className="card bg-base-100  shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">no calibration procedure</h2>
+              <p>start a calibration procedure to begin</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
-  /*
-  const { data } = useLoaderData<typeof loader>();
-  const {
-    ENV: { EXCLUDED_PROPERTIES },
-  } = useRouteLoaderData<typeof rootLoader>("root");
-  const excludedProperties = EXCLUDED_PROPERTIES?.split(",") ?? [];
-  const [searchParams] = useSearchParams();
-  const { hardware_name } = useParams();
-
-  if (!data || !hardware_name || !data[hardware_name]) {
-    return (
-      <div className="flex flex-col items-center justify-center  p-10">
-        <XCircleIcon className="w-6 h-6" />
-        <div>Data not found</div>
-      </div>
-    );
-  }
-  const hardwareHistory = data[hardware_name];
-  const allHardwareVials = Object.keys(hardwareHistory[0].data);
-  const allHardwareVialsProperties = Object.keys(
-    hardwareHistory[0].data[allHardwareVials[0]],
-  ).filter((property) => excludedProperties.includes(property) === false);
-
-  let selectedProperties: string[] = allHardwareVialsProperties;
-  let selectedVials: string[] = allHardwareVials;
-  if (searchParams.has("vials")) {
-    selectedVials = [...new Set(searchParams.get("vials")?.split(",") ?? [])];
-  }
-  if (searchParams.has("properties")) {
-    selectedProperties = [
-      ...new Set(searchParams.get("properties")?.split(",") ?? []),
-    ];
-  }
-
-  const charts = [];
-  selectedProperties.forEach((property) => {
-    const chart = (
-      <HardwareLineChart
-        rawData={hardwareHistory}
-        vials={selectedVials}
-        property={property}
-      />
-    );
-    charts.push(chart);
-  });
-
-  return <div className="mt-4">{charts}</div>;
-*/
 }
