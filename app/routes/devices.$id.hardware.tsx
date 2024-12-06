@@ -58,15 +58,19 @@ export default function Hardware() {
 
   return (
     <div>
-      <div className="font-mono">device hardware</div>
-      <div className="divider"></div>
-      <HardwareTable
-        evolverConfig={evolverConfig}
-        hardwareName={hardware_name ?? ""}
-        queryParams={queryParams}
-        id={id ?? ""}
-      />
-      <Outlet />
+      <div>
+        <div className="font-mono">device hardware</div>
+        <div className="divider"></div>
+        <HardwareTable
+          evolverConfig={evolverConfig}
+          hardwareName={hardware_name ?? ""}
+          queryParams={queryParams}
+          id={id ?? ""}
+        />
+      </div>
+      <div>
+        <Outlet />
+      </div>
     </div>
   );
 }

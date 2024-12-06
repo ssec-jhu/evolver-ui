@@ -1,13 +1,12 @@
 import Form from "@rjsf/core";
 import {
   BaseInputTemplateProps,
-  ErrorListProps,
+  FieldTemplateProps,
   getInputProps,
   getSubmitButtonOptions,
+  ObjectFieldTemplateProps,
   RJSFSchema,
-  RJSFValidationError,
   SubmitButtonProps,
-  TitleFieldProps,
 } from "@rjsf/utils";
 import validator from "@rjsf/validator-ajv8";
 import { ChangeEvent, FocusEvent } from "react";
@@ -15,6 +14,42 @@ import { ChangeEvent, FocusEvent } from "react";
 // RJSF template to swallow form error list
 function ErrorListTemplate() {
   return;
+}
+function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
+  const { action_index } = props.schema;
+  return (
+    <div className="flex flex-col gap-4 flex-1">
+      <div className="flex flex-col gap-4">
+        <div className="card-title">{action_index + 1}.</div>
+        <p>{props.title}</p>
+      </div>
+      {props.properties.map((element) => {
+        return <div className="property-wrapper">{element.content}</div>;
+      })}
+    </div>
+  );
+}
+
+function CustomFieldTemplate(props: FieldTemplateProps) {
+  const {
+    classNames,
+    style,
+    help,
+    description,
+    errors,
+    children,
+    label,
+    required,
+    id,
+  } = props;
+  return (
+    <div className={`${classNames} flex flex-col gap-2`} style={style}>
+      {children}
+      {description}
+      {errors}
+      {help}
+    </div>
+  );
 }
 
 function BaseInputTemplate(props: BaseInputTemplateProps) {
@@ -26,6 +61,7 @@ function BaseInputTemplate(props: BaseInputTemplateProps) {
     value,
     type,
     placeholder,
+    required,
     disabled,
     readonly,
     autofocus,
@@ -35,6 +71,9 @@ function BaseInputTemplate(props: BaseInputTemplateProps) {
     onFocus,
     rawErrors,
     hideError,
+    uiSchema,
+    registry,
+    formContext,
     ...rest
   } = props;
   const onTextChange = ({
@@ -51,7 +90,7 @@ function BaseInputTemplate(props: BaseInputTemplateProps) {
   }: FocusEvent<HTMLInputElement>) => onFocus(id, val);
 
   const inputProps = { ...rest, ...getInputProps(schema, type, options) };
-  const hasError = rawErrors?.length && rawErrors.length > 0 && !hideError;
+  const hasError = rawErrors && rawErrors.length > 0 && !hideError;
 
   return (
     <input
@@ -73,17 +112,6 @@ function BaseInputTemplate(props: BaseInputTemplateProps) {
   );
 }
 
-function TitleFieldTemplate(props: TitleFieldProps & {}) {
-  const { title, schema } = props;
-  const { action_index } = schema;
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="card-title">{action_index + 1}.</div>
-      <p>{title}</p>
-    </div>
-  );
-}
-
 function CurriedCustomSubmitButton(buttonCopy: string) {
   return function CustomSubmitButton(props: SubmitButtonProps) {
     const { uiSchema } = props;
@@ -93,7 +121,7 @@ function CurriedCustomSubmitButton(buttonCopy: string) {
     }
 
     return (
-      <div className="card-actions justify-end">
+      <div className="card-actions justify-end align-bottom">
         <button className={`btn btn-primary`} type="submit">
           {buttonCopy}
         </button>
@@ -117,17 +145,19 @@ export default function CalibratorActionForm({
   };
   return (
     <div className="card bg-base-100 shadow-xl">
-      <div className="card-body">
+      <div className="card-body flex-1">
         <Form
+          className="flex flex-col gap-4 flex-1 justify-between"
           validator={validator}
           schema={schemaToUse}
           templates={{
             ButtonTemplates: {
               SubmitButton: CurriedCustomSubmitButton("Done"),
             },
-            TitleFieldTemplate,
             BaseInputTemplate,
             ErrorListTemplate,
+            ObjectFieldTemplate,
+            FieldTemplate: CustomFieldTemplate,
           }}
         />
       </div>
