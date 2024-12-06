@@ -88,7 +88,7 @@ export function HardwareTable({
             {allButton}
           </div>
         </td>
-        <td>
+        <td className="flex justify-end">
           <Link
             className={clsx(
               "btn btn-outline ",
@@ -111,7 +111,7 @@ export function HardwareTable({
         <tr>
           <th>name</th>
           <th>vial history</th>
-          <th>actions</th>
+          <th className="flex justify-end">actions</th>
         </tr>
       </thead>
       <tbody>{TableRows}</tbody>

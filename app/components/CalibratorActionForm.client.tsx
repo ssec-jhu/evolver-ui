@@ -11,10 +11,6 @@ import {
 import validator from "@rjsf/validator-ajv8";
 import { ChangeEvent, FocusEvent } from "react";
 
-// RJSF template to swallow form error list
-function ErrorListTemplate() {
-  return;
-}
 function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
   const { action_index } = props.schema;
   return (
@@ -24,24 +20,18 @@ function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
         <p>{props.title}</p>
       </div>
       {props.properties.map((element) => {
-        return <div className="property-wrapper">{element.content}</div>;
+        return (
+          <div key={action_index} className="property-wrapper">
+            {element.content}
+          </div>
+        );
       })}
     </div>
   );
 }
 
 function CustomFieldTemplate(props: FieldTemplateProps) {
-  const {
-    classNames,
-    style,
-    help,
-    description,
-    errors,
-    children,
-    label,
-    required,
-    id,
-  } = props;
+  const { classNames, style, help, description, errors, children } = props;
   return (
     <div className={`${classNames} flex flex-col gap-2`} style={style}>
       {children}
@@ -57,23 +47,15 @@ function BaseInputTemplate(props: BaseInputTemplateProps) {
     schema,
     id,
     options,
-    label,
     value,
     type,
     placeholder,
-    required,
     disabled,
     readonly,
-    autofocus,
     onChange,
     onChangeOverride,
     onBlur,
     onFocus,
-    rawErrors,
-    hideError,
-    uiSchema,
-    registry,
-    formContext,
     ...rest
   } = props;
   const onTextChange = ({
@@ -90,20 +72,15 @@ function BaseInputTemplate(props: BaseInputTemplateProps) {
   }: FocusEvent<HTMLInputElement>) => onFocus(id, val);
 
   const inputProps = { ...rest, ...getInputProps(schema, type, options) };
-  const hasError = rawErrors && rawErrors.length > 0 && !hideError;
 
   return (
     <input
       className="input input-bordered max-w-xs"
       id={id}
-      label={label}
       value={value}
       placeholder={placeholder}
       disabled={disabled}
       readOnly={readonly}
-      autoFocus={autofocus}
-      error={hasError}
-      errors={hasError ? rawErrors : undefined}
       onChange={onChangeOverride || onTextChange}
       onBlur={onTextBlur}
       onFocus={onTextFocus}
@@ -112,37 +89,42 @@ function BaseInputTemplate(props: BaseInputTemplateProps) {
   );
 }
 
-function CurriedCustomSubmitButton(buttonCopy: string) {
-  return function CustomSubmitButton(props: SubmitButtonProps) {
-    const { uiSchema } = props;
-    const { norender } = getSubmitButtonOptions(uiSchema);
-    if (norender) {
-      return null;
-    }
+function CustomSubmitButton(props: SubmitButtonProps) {
+  const { uiSchema } = props;
+  const { norender } = getSubmitButtonOptions(uiSchema);
+  if (norender) {
+    return null;
+  }
 
-    return (
-      <div className="card-actions justify-end align-bottom">
-        <button className={`btn btn-primary`} type="submit">
-          {buttonCopy}
-        </button>
-      </div>
-    );
-  };
+  return (
+    <div className="card-actions justify-end align-bottom">
+      <button className={`btn btn-primary`} type="submit">
+        done
+      </button>
+    </div>
+  );
 }
 
 export default function CalibratorActionForm({
   action,
   index,
+  dispatchAction,
 }: {
-  action: { form_model: { properties: object } | RJSFSchema };
+  action: {
+    input_schema: { properties: object } | RJSFSchema;
+    description: string;
+  };
   index: number;
+  dispatchAction: (action: any) => void;
 }) {
-  // replace the schema title which is a generic "FormModel" with a more specific title
+  // Replace schema title with description
   const schemaToUse = {
-    ...action.form_model,
+    ...action.input_schema,
     title: action.description,
     action_index: index,
+    description: "",
   };
+
   return (
     <div className="card bg-base-100 shadow-xl">
       <div className="card-body flex-1">
@@ -150,12 +132,14 @@ export default function CalibratorActionForm({
           className="flex flex-col gap-4 flex-1 justify-between"
           validator={validator}
           schema={schemaToUse}
+          onSubmit={({ formData }) => {
+            dispatchAction(formData);
+          }}
           templates={{
             ButtonTemplates: {
-              SubmitButton: CurriedCustomSubmitButton("Done"),
+              SubmitButton: CustomSubmitButton,
             },
             BaseInputTemplate,
-            ErrorListTemplate,
             ObjectFieldTemplate,
             FieldTemplate: CustomFieldTemplate,
           }}

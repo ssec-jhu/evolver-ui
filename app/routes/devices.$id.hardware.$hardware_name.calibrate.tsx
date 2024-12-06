@@ -29,7 +29,7 @@ const schema = z.discriminatedUnion("intent", [
     id: z.string(),
     hardware_name: z.string(),
     action_name: z.string(),
-    payload: z.object({}),
+    payload: z.string(),
   }),
   z.object({
     intent: z.literal(Intent.Enum.start_calibration_procedure),
@@ -81,12 +81,14 @@ export async function action({ request }: ActionFunctionArgs) {
 
   switch (intent) {
     case Intent.Enum.dispatch_action:
+      console.log("HERRREEE");
+      const payloadObj: any = JSON.parse(submission.value.payload);
       try {
         await Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
           {
             body: {
               action_name: submission.value.action_name,
-              payload: submission.value.payload,
+              payload: payloadObj,
             },
             path: {
               hardware_name: submission.value.hardware_name,
@@ -144,13 +146,35 @@ export async function loader({ params }: LoaderFunctionArgs) {
 }
 
 const CalibrationProcedure = ({ actions }) => {
+  const submit = useSubmit();
+  const { id, hardware_name } = useParams();
+
   return actions.map((action, ix) => {
+    const dispatchAction = (actionFormData: object) => {
+      console.log("ACTION FORM DATA", actionFormData);
+      console.log("ACTION:", action);
+      const formData = new FormData();
+      formData.append("id", id ?? "");
+      formData.append("intent", Intent.Enum.dispatch_action);
+      formData.append("hardware_name", hardware_name ?? "");
+      formData.append("action_name", action.name);
+      formData.append("payload", JSON.stringify(actionFormData));
+      submit(formData, {
+        method: "POST",
+      });
+    };
     return (
       <ClientOnly
         key={action.description}
         fallback={<span className="skeleton h-32"></span>}
       >
-        {() => <CalibratorActionForm action={action} index={ix} />}
+        {() => (
+          <CalibratorActionForm
+            action={action}
+            index={ix}
+            dispatchAction={dispatchAction}
+          />
+        )}
       </ClientOnly>
     );
   });
@@ -181,6 +205,7 @@ export default function CalibrateHardware() {
       }
     }
   }, [actionData]);
+
   return (
     <div>
       <div className="flex flex-col gap-4">
