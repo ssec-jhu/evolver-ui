@@ -1,17 +1,8 @@
 import { createClient } from "@hey-api/client-fetch";
 import { LoaderFunctionArgs, json } from "@remix-run/node";
-import {
-  Link,
-  useLoaderData,
-  useParams,
-  useRouteLoaderData,
-  useSearchParams,
-} from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 import * as Evolver from "client/services.gen";
 import { db } from "~/utils/db.server";
-import { HardwareLineChart } from "~/components/LineChart";
-import { loader as rootLoader } from "~/root";
-import { XCircleIcon } from "@heroicons/react/24/solid";
 
 export const handle = {
   breadcrumb: (
@@ -33,7 +24,6 @@ export const handle = {
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const { id, hardware_name } = params;
-  const { searchParams } = new URL(request.url);
   const targetDevice = await db.device.findUnique({ where: { device_id: id } });
 
   const { url } = targetDevice;
@@ -41,27 +31,32 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     baseUrl: url,
   });
 
-  const vials = searchParams
-    .get("vials")
-    ?.split(",")
-    .map((str) => Number(str));
+  const { data } =
+    await Evolver.getCalibratorActionsHardwareHardwareNameCalibratorProcedureActionsGet(
+      {
+        path: {
+          hardware_name: hardware_name ?? "",
+        },
+        client: evolverClient,
+      },
+    );
 
-  const properties = searchParams.get("properties")?.split(",");
-
-  const { data } = await Evolver.history({
-    query: {
-      name: hardware_name,
-      vials,
-      properties,
-    },
-    client: evolverClient,
-  });
-
-  return json({ data: data?.data });
+  return json({ actions: data?.actions });
 }
 
 export default function Hardware() {
-  return <div>HELLO WORLD</div>;
+  const { actions } = useLoaderData<typeof loader>();
+  console.log("GOT SOME actions:!", actions);
+
+  return (
+    <div>
+      <progress
+        className="progress w-full"
+        value={0}
+        max={actions.length}
+      ></progress>
+    </div>
+  );
   /*
   const { data } = useLoaderData<typeof loader>();
   const {
