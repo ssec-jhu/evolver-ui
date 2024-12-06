@@ -200,7 +200,8 @@ export default function Device() {
                   onClick={() => {
                     notify.dismiss();
                     const formData = new FormData();
-                    formData.append("redirectTo", currentPath ?? "");
+                    formData.append("redirectTo", pathname);
+                    console.log("FORM DAata", formData);
                     formData.append("id", id ?? "");
                     formData.append("intent", Intent.Enum.stop);
                     submit(formData, {
@@ -225,7 +226,7 @@ export default function Device() {
                     notify.dismiss();
                     const formData = new FormData();
 
-                    formData.append("redirectTo", currentPath ?? "");
+                    formData.append("redirectTo", pathname);
                     formData.append("id", id ?? "");
                     formData.append("intent", Intent.Enum.start);
                     submit(formData, {

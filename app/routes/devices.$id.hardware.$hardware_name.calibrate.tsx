@@ -81,14 +81,12 @@ export async function action({ request }: ActionFunctionArgs) {
 
   switch (intent) {
     case Intent.Enum.dispatch_action:
-      console.log("HERRREEE");
-      const payloadObj: any = JSON.parse(submission.value.payload);
       try {
         await Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
           {
             body: {
               action_name: submission.value.action_name,
-              payload: payloadObj,
+              payload: JSON.parse(submission.value.payload),
             },
             path: {
               hardware_name: submission.value.hardware_name,
@@ -151,8 +149,6 @@ const CalibrationProcedure = ({ actions }) => {
 
   return actions.map((action, ix) => {
     const dispatchAction = (actionFormData: object) => {
-      console.log("ACTION FORM DATA", actionFormData);
-      console.log("ACTION:", action);
       const formData = new FormData();
       formData.append("id", id ?? "");
       formData.append("intent", Intent.Enum.dispatch_action);
