@@ -162,15 +162,24 @@ export default function Device() {
   const evolverConfig = description.config;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-4">
       <div className=" flex items-center gap-4 justify-between">
         <div className="flex items-center">
           <div>
-            <h1 className="text-2xl">{`${evolverConfig.name}`}</h1>
+            <h1>{`${evolverConfig.name}`}</h1>
             <div className="flex w-full">
               <h1 className="font-mono">{`${id}`}</h1>
               <div className="divider divider-horizontal"></div>
-              <h1 className="font-mono">{`${url}`}</h1>
+              <h1 className="font-sans">
+                <span className="font-mono">
+                  <a
+                    className="link"
+                    href={`${url}/docs`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >{`${url}/docs`}</a>
+                </span>
+              </h1>
             </div>
           </div>
         </div>
@@ -191,7 +200,8 @@ export default function Device() {
                   onClick={() => {
                     notify.dismiss();
                     const formData = new FormData();
-                    formData.append("redirectTo", currentPath ?? "");
+                    formData.append("redirectTo", pathname);
+                    console.log("FORM DAata", formData);
                     formData.append("id", id ?? "");
                     formData.append("intent", Intent.Enum.stop);
                     submit(formData, {
@@ -216,7 +226,7 @@ export default function Device() {
                     notify.dismiss();
                     const formData = new FormData();
 
-                    formData.append("redirectTo", currentPath ?? "");
+                    formData.append("redirectTo", pathname);
                     formData.append("id", id ?? "");
                     formData.append("intent", Intent.Enum.start);
                     submit(formData, {
@@ -230,7 +240,7 @@ export default function Device() {
           )}
         </div>
       </div>
-      <div role="tablist" className="tabs tabs-lg tabs-boxed">
+      <div role="tablist" className="tabs  tabs-boxed">
         <Link
           to={"./state"}
           role="tab"
@@ -260,22 +270,11 @@ export default function Device() {
             "tab",
             currentPath === "hardware" && "tab-active",
             currentPath === "history" && "tab-active",
+            currentPath === "calibrate" && "tab-active",
             "tab-border-3",
           )}
         >
           hardware
-        </Link>
-
-        <Link
-          to={"./controllers"}
-          role="tab"
-          className={clsx(
-            "tab",
-            currentPath === "controllers" && "tab-active",
-            "tab-border-3",
-          )}
-        >
-          controllers
         </Link>
       </div>
       <div className="p-8 bg-base-300 rounded-box  relative overflow-x-auto">
