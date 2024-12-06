@@ -9,19 +9,26 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { vialColors } from "~/utils/chart/colors";
+import groupBy from "lodash/groupBy";
 
 const processData = (data, vials, property) => {
-  return data.map((entry) => {
-    const processedEntry: { [key: string]: string } = {
-      timestamp: new Date(entry.timestamp * 1000).toLocaleTimeString(), // Convert timestamp to readable time
-    };
-
-    vials.forEach((vial) => {
-      processedEntry[`vial_${vial}`] = entry.data[vial]?.[property];
-    });
-
-    return processedEntry;
-  });
+  const filtered = data.filter((entry) => vials.includes(`${entry.vial}`));
+  const timed = filtered.map((entry) => ({
+    timestamp: new Date(
+      Math.round(entry.timestamp) * 1000,
+    ).toLocaleTimeString(),
+    vial: `vial_${entry.vial}`,
+    data: entry.data[property],
+  }));
+  // group for plotting by shared x-axis on timestamp. Without this the plotting
+  // utility will consider each entry as a separate line (inefficient)
+  const grouped = groupBy(timed, "timestamp");
+  // grouped creates an object keyed by group with arrays of objects, but
+  // plotting wants array of objects keyed by line discriminator (vial)
+  return Object.values(grouped).map((group) => ({
+    timestamp: group[0].timestamp,
+    ...Object.fromEntries(group.map((g) => [g.vial, g.data])),
+  }));
 };
 
 export const HardwareLineChart = ({ vials, rawData, property = "raw" }) => {
@@ -47,6 +54,7 @@ export const HardwareLineChart = ({ vials, rawData, property = "raw" }) => {
               dataKey={`vial_${vial}`}
               stroke={vialColors[index % vialColors.length]}
               name={`Vial ${vial}`}
+              connectNulls={true}
             />
           ))}
         </LineChart>

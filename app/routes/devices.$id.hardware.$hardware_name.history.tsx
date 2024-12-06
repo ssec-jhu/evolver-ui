@@ -78,15 +78,22 @@ export default function Hardware() {
     );
   }
   const hardwareHistory = data[hardware_name];
-  const allHardwareVials = Object.keys(hardwareHistory[0].data);
   const allHardwareVialsProperties = Object.keys(
-    hardwareHistory[0].data[allHardwareVials[0]],
+    hardwareHistory[0].data,
   ).filter((property) => excludedProperties.includes(property) === false);
 
   let selectedProperties: string[] = allHardwareVialsProperties;
-  let selectedVials: string[] = allHardwareVials;
+  let selectedVials: string[] = [];
   if (searchParams.has("vials")) {
     selectedVials = [...new Set(searchParams.get("vials")?.split(",") ?? [])];
+  } else {
+    Array.from(
+      new Set(hardwareHistory.map((entry) => entry.vial?.toString())),
+    ).forEach((vial) => {
+      if (vial) {
+        selectedVials.push(vial);
+      }
+    });
   }
   if (searchParams.has("properties")) {
     selectedProperties = [
