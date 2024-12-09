@@ -943,13 +943,10 @@
           "skip_control_on_read_failure": {
             "type": "boolean",
             "title": "Skip Control On Read Failure"
-<<<<<<< HEAD
           },
           "log_level": {
             "type": "integer",
             "title": "Log Level"
-=======
->>>>>>> 3e2e346 (actions form wip)
           }
         },
         "type": "object",
@@ -966,12 +963,8 @@
           "raise_loop_exceptions",
           "abort_on_control_errors",
           "abort_on_commit_errors",
-<<<<<<< HEAD
           "skip_control_on_read_failure",
           "log_level"
-=======
-          "skip_control_on_read_failure"
->>>>>>> 3e2e346 (actions form wip)
         ],
         "title": "EvolverConfigWithoutDefaults"
       },
