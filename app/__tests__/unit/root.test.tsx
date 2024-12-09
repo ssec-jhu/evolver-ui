@@ -10,7 +10,13 @@ describe("root loader", () => {
       context: {},
     });
     const data = await response.json();
-    expect(data).toEqual({ theme: "dark", ENV: { NODE_ENV: "test" } });
+    expect(data).toEqual({
+      theme: "dark",
+      ENV: {
+        EXCLUDED_PROPERTIES: "name,vial",
+        NODE_ENV: "test",
+      },
+    });
   });
 
   it("should return the theme from the request cookie", async () => {

@@ -1,7 +1,6 @@
 import { Link, useLocation } from "@remix-run/react";
 import { EvolverConfigWithoutDefaults } from "client";
 import clsx from "clsx";
-import { M } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 
 export function HardwareTable({
   evolverConfig,

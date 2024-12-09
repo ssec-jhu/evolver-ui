@@ -115,7 +115,7 @@ export default function CalibratorActionForm({
     description: string;
   };
   index: number;
-  dispatchAction: (action: any) => void;
+  dispatchAction: (action: FormData) => void;
 }) {
   // Replace schema title with description
   const schemaToUse = {

@@ -10,7 +10,6 @@ import { HardwareTable } from "~/components/HardwareTable";
 import { loader } from "./devices.$id";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
-import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 
 export const handle = {
   breadcrumb: ({
