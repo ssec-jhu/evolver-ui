@@ -84,9 +84,19 @@ npm start
 ## testing
 
 ### unit tests
+
+```sh
+npm run test
+```
+
 [Vitest](https://vitest.dev) and [react-testing-library](https://testing-library.com/docs/react-testing-library/intro/) are used for unit tests, if a system entity is pure (this term is generally analagous to idempotency) it is a good candidate for unit tests. For example a React component that is a pure function of it's parameters/props. Or remix loaders and actions that are a pure function of the parameters of the incoming request that they handle.
 
 ### integration tests
+
+```sh
+npm run test:integ
+```
+
 Whenever a part of the system relies on network requests or complex user interactions, we consider it impure, in these cases, it has dependencies outside our control. For example network requests fail, or respond with unexpected data, while user interactions introduce cyclomatic complexity. To cover these cases we rely on [MSW](https://mswjs.io/) and [puppeteer](https://pptr.dev/) respectively to encapsulate and manage the complexity introduced by the network boundary and human interaction. Within the context of this app, remix routes are a good candidate for integration tests.
 
 Having trouble with MSW? Refer to this example repo: https://github.com/mswjs/examples/blob/main/examples/with-remix/README.md
