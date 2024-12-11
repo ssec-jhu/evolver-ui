@@ -7,6 +7,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  ReferenceLine,
 } from "recharts";
 import { vialColors } from "~/utils/chart/colors";
 import groupBy from "lodash/groupBy";
@@ -14,9 +15,7 @@ import groupBy from "lodash/groupBy";
 const processData = (data, vials, property) => {
   const filtered = data.filter((entry) => vials.includes(`${entry.vial}`));
   const timed = filtered.map((entry) => ({
-    timestamp: new Date(
-      Math.round(entry.timestamp) * 1000,
-    ).toLocaleTimeString(),
+    timestamp: Math.round(entry.timestamp),
     vial: `vial_${entry.vial}`,
     data: entry.data[property],
   }));
@@ -31,8 +30,25 @@ const processData = (data, vials, property) => {
   }));
 };
 
-export const HardwareLineChart = ({ vials, rawData, property = "raw" }) => {
+const processEvents = (data, vials) => {
+  const filtered = data.filter((entry) =>
+    entry.vial ? vials.includes(`${entry.vial}`) : true,
+  );
+  return filtered.map((entry) => ({
+    timestamp: Math.round(entry.timestamp),
+    vial: `vial_${entry.vial}`,
+    data: entry.data,
+  }));
+};
+
+export const HardwareLineChart = ({
+  vials,
+  rawData,
+  events,
+  property = "raw",
+}) => {
   const formattedData = processData(rawData, vials, property);
+  const eventData = processEvents(events, vials);
 
   return (
     <div>
@@ -43,7 +59,15 @@ export const HardwareLineChart = ({ vials, rawData, property = "raw" }) => {
       <ResponsiveContainer width="100%" height={400}>
         <LineChart data={formattedData}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="timestamp" />
+          <XAxis
+            dataKey="timestamp"
+            type="number"
+            domain={["dataMin", "dataMax"]}
+            scale="time"
+            tickFormatter={(unixTime) =>
+              new Date(unixTime * 1000).toLocaleTimeString()
+            }
+          />
           <YAxis />
           <Tooltip />
           <Legend />
@@ -55,6 +79,14 @@ export const HardwareLineChart = ({ vials, rawData, property = "raw" }) => {
               stroke={vialColors[index % vialColors.length]}
               name={`Vial ${vial}`}
               connectNulls={true}
+            />
+          ))}
+          {eventData.map((event) => (
+            <ReferenceLine
+              key={event}
+              x={event.timestamp}
+              label={event.data.message}
+              stroke="red"
             />
           ))}
         </LineChart>
