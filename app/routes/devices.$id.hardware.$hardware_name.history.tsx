@@ -12,6 +12,7 @@ import { db } from "~/utils/db.server";
 import { HardwareLineChart } from "~/components/LineChart";
 import { loader as rootLoader } from "~/root";
 import { XCircleIcon } from "@heroicons/react/24/solid";
+import flatMap from "lodash/flatMap";
 
 export const handle = {
   breadcrumb: (
@@ -51,17 +52,27 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   const { data } = await Evolver.history({
     query: {
       name: hardware_name,
+    },
+    body: {
       vials,
       properties,
+      kinds: ["sensor"],
     },
     client: evolverClient,
   });
 
-  return json({ data: data?.data });
+  const events = await Evolver.history({
+    body: {
+      kinds: ["event"],
+    },
+    client: evolverClient,
+  });
+
+  return json({ data: data?.data, events: events.data?.data });
 }
 
 export default function Hardware() {
-  const { data } = useLoaderData<typeof loader>();
+  const { data, events } = useLoaderData<typeof loader>();
   const {
     ENV: { EXCLUDED_PROPERTIES },
   } = useRouteLoaderData<typeof rootLoader>("root");
@@ -81,6 +92,11 @@ export default function Hardware() {
   const allHardwareVialsProperties = Object.keys(
     hardwareHistory[0].data,
   ).filter((property) => excludedProperties.includes(property) === false);
+
+  // shape of data is not ideal here, we have a struct mapping event name to
+  // array of events. Here we drop name, probably change to backend could keep
+  // the name in the struct
+  const allEvents = flatMap(events);
 
   let selectedProperties: string[] = allHardwareVialsProperties;
   let selectedVials: string[] = [];
@@ -108,6 +124,7 @@ export default function Hardware() {
         rawData={hardwareHistory}
         vials={selectedVials}
         property={property}
+        events={allEvents}
       />
     );
     charts.push(chart);
