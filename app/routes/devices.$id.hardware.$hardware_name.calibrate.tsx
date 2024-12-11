@@ -191,12 +191,8 @@ export default function CalibrateHardware() {
         notify.error(actionData.error);
       }
       if (typeof actionData.error === "object") {
-        const errorMessages: string[] = [];
         Object.entries(actionData.error).forEach(([key, value]) => {
-          errorMessages.push(`${key}: ${value}`);
-        });
-        errorMessages.forEach((message) => {
-          notify.error(message);
+          notify.error(`${key}: ${value}`);
         });
       }
     }
