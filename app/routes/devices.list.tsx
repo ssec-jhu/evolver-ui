@@ -162,7 +162,16 @@ export default function DevicesList() {
           </td>
 
           <td>
-            {status === "online" && <div>{url}</div>}
+            {status === "online" && (
+              <a
+                className="link"
+                href={`${url}/html/network`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {url}
+              </a>
+            )}
             {status === "offline" && <div className={clsx("")}>{url}</div>}
           </td>
           <td>

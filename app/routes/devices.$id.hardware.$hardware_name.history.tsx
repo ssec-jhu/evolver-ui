@@ -11,7 +11,7 @@ import * as Evolver from "client/services.gen";
 import { db } from "~/utils/db.server";
 import { HardwareLineChart } from "~/components/LineChart";
 import { loader as rootLoader } from "~/root";
-import { XCircleIcon } from "@heroicons/react/24/solid";
+import { WrenchScrewdriverIcon, XCircleIcon } from "@heroicons/react/24/solid";
 
 export const handle = {
   breadcrumb: (
@@ -27,9 +27,28 @@ export const handle = {
     if (queryParams !== undefined) {
       linkTo.concat(`?${queryParams.toString()}`);
     }
-    return <Link to={linkTo}>{hardware_name}</Link>;
+    return <Link to={linkTo}>history</Link>;
   },
 };
+
+export function ErrorBoundary() {
+  const { hardware_name } = useParams();
+
+  return (
+    <div className="flex flex-col gap-4 bg-base-300 p-8 rounded-box">
+      <WrenchScrewdriverIcon className="w-10 h-10" />
+      <div>
+        <div>
+          <h1 className="font-mono">{`Error loading the vial history for hardware: ${hardware_name}`}</h1>
+        </div>
+      </div>
+
+      <Link to="/devices" className="link">
+        home
+      </Link>
+    </div>
+  );
+}
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const { id, hardware_name } = params;
