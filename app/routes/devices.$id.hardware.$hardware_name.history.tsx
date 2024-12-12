@@ -49,26 +49,31 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   const properties = searchParams.get("properties")?.split(",");
 
-  const { data } = await Evolver.history({
-    query: {
-      name: hardware_name,
-    },
-    body: {
-      vials,
-      properties,
-      kinds: ["sensor"],
-    },
-    client: evolverClient,
+  const results = Promise.allSettled([
+    Evolver.history({
+      query: {
+        name: hardware_name,
+      },
+      body: {
+        vials,
+        properties,
+        kinds: ["sensor"],
+      },
+      client: evolverClient,
+    }),
+    Evolver.history({
+      body: {
+        kinds: ["event"],
+      },
+      client: evolverClient,
+    }),
+  ]).then((results) => {
+    return results.map((result) => result.value.data);
   });
 
-  const events = await Evolver.history({
-    body: {
-      kinds: ["event"],
-    },
-    client: evolverClient,
-  });
+  const [hist, events] = await results;
 
-  return json({ data: data?.data, events: events.data?.data });
+  return json({ data: hist?.data, events: events?.data });
 }
 
 export default function Hardware() {
