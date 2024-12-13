@@ -12,6 +12,7 @@ import { db } from "~/utils/db.server";
 import { HardwareLineChart } from "~/components/LineChart";
 import { loader as rootLoader } from "~/root";
 import { WrenchScrewdriverIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import flatMap from "lodash/flatMap";
 
 export const handle = {
   breadcrumb: (
@@ -67,20 +68,35 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   const properties = searchParams.get("properties")?.split(",");
 
-  const { data } = await Evolver.history({
-    query: {
-      name: hardware_name,
-      vials,
-      properties,
-    },
-    client: evolverClient,
+  const results = Promise.allSettled([
+    Evolver.history({
+      query: {
+        name: hardware_name,
+      },
+      body: {
+        vials,
+        properties,
+        kinds: ["sensor"],
+      },
+      client: evolverClient,
+    }),
+    Evolver.history({
+      body: {
+        kinds: ["event"],
+      },
+      client: evolverClient,
+    }),
+  ]).then((results) => {
+    return results.map((result) => result.value.data);
   });
 
-  return json({ data: data?.data });
+  const [hist, events] = await results;
+
+  return json({ data: hist?.data, events: events?.data });
 }
 
 export default function Hardware() {
-  const { data } = useLoaderData<typeof loader>();
+  const { data, events } = useLoaderData<typeof loader>();
   const {
     ENV: { EXCLUDED_PROPERTIES },
   } = useRouteLoaderData<typeof rootLoader>("root");
@@ -100,6 +116,11 @@ export default function Hardware() {
   const allHardwareVialsProperties = Object.keys(
     hardwareHistory[0].data,
   ).filter((property) => excludedProperties.includes(property) === false);
+
+  // shape of data is not ideal here, we have a struct mapping event name to
+  // array of events. Here we drop name, probably change to backend could keep
+  // the name in the struct
+  const allEvents = flatMap(events);
 
   let selectedProperties: string[] = allHardwareVialsProperties;
   let selectedVials: string[] = [];
@@ -127,6 +148,7 @@ export default function Hardware() {
         rawData={hardwareHistory}
         vials={selectedVials}
         property={property}
+        events={allEvents}
       />
     );
     charts.push(chart);
