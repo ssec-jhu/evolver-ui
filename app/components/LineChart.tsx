@@ -62,9 +62,7 @@ export const HardwareLineChart = ({
 
   return (
     <div>
-      <div className="divider"></div>
-      <div>property: </div>
-      <div className="stat-value font-mono">{property}</div>
+      <div className="font-mono">property: {property}</div>
       <div className="divider"></div>
       <ResponsiveContainer width="100%" height={400}>
         <LineChart data={formattedData}>
@@ -101,6 +99,7 @@ export const HardwareLineChart = ({
           ))}
         </LineChart>
       </ResponsiveContainer>
+      <div className="divider"></div>
     </div>
   );
 };
