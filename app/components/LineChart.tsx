@@ -76,7 +76,7 @@ export const HardwareLineChart = ({
               new Date(unixTime * 1000).toLocaleTimeString()
             }
           />
-          <YAxis />
+          <YAxis domain={["auto", "auto"]} />
           <Tooltip />
           <Legend />
           {vials.map((vial: string, index: number) => (
