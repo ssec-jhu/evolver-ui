@@ -17,11 +17,14 @@ import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
 import { useEffect } from "react";
 
-const Intent = z.enum(["dispatch_action", "start_calibration_procedure"], {
-  required_error: "intent is required",
-  invalid_type_error:
-    "must be one of, dispatch_action or start_calibration_procedure",
-});
+const Intent = z.enum(
+  ["dispatch_action", "start_calibration_procedure", "undo"],
+  {
+    required_error: "intent is required",
+    invalid_type_error:
+      "must be one of: dispatch_action, start_calibration_procedure, undo",
+  },
+);
 
 const schema = z.discriminatedUnion("intent", [
   z.object({
@@ -33,6 +36,11 @@ const schema = z.discriminatedUnion("intent", [
   }),
   z.object({
     intent: z.literal(Intent.Enum.start_calibration_procedure),
+    id: z.string(),
+    hardware_name: z.string(),
+  }),
+  z.object({
+    intent: z.literal(Intent.Enum.undo),
     id: z.string(),
     hardware_name: z.string(),
   }),
@@ -99,7 +107,6 @@ export async function action({ request }: ActionFunctionArgs) {
       } catch (error) {
         return submission.reply({ formErrors: ["unable to dispatch action"] });
       }
-      break;
     case Intent.Enum.start_calibration_procedure:
       try {
         const procedureState =
@@ -117,11 +124,24 @@ export async function action({ request }: ActionFunctionArgs) {
           formErrors: ["unable to start calibration"],
         });
       }
-      break;
+    case Intent.Enum.undo:
+      try {
+        const procedureState =
+          await Evolver.undoCalibrationProcedureActionHardwareHardwareNameCalibratorProcedureUndoPost(
+            {
+              path: {
+                hardware_name: submission.value.hardware_name,
+              },
+              client: evolverClient,
+            },
+          );
+        return json(procedureState.data);
+      } catch (error) {
+        return submission.reply({ formErrors: ["unable to dispatch action"] });
+      }
     default:
       return submission.reply();
   }
-  return null;
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
@@ -241,7 +261,21 @@ export default function CalibrateHardware() {
               <div className="flex w-full font-mono">calibration procedure</div>
             </div>
           </div>
-          <div>
+          <div className="flex gap-4">
+            <button
+              className={clsx("btn", "btn-secondary")}
+              onClick={() => {
+                const formData = new FormData();
+                formData.append("id", id ?? "");
+                formData.append("intent", Intent.Enum.undo);
+                formData.append("hardware_name", hardware_name ?? "");
+                submit(formData, {
+                  method: "POST",
+                });
+              }}
+            >
+              undo
+            </button>
             <button
               className={clsx(
                 "btn",
