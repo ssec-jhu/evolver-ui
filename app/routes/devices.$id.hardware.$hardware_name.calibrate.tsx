@@ -16,6 +16,7 @@ import clsx from "clsx";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
 import { useEffect } from "react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 const Intent = z.enum(
   ["dispatch_action", "start_calibration_procedure", "undo"],
@@ -217,7 +218,8 @@ const CalibrationProcedureProgress = ({ state, actions }) => {
   const completed = state.completed_actions.length;
   const total = actions.length;
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-3">
+      <div className="font-mono">progress</div>
       <progress
         className="progress progress-accent w-full"
         value={completed}
@@ -234,7 +236,7 @@ export default function CalibrateHardware() {
   const { actions, state } = useLoaderData<typeof loader>();
   const { id, hardware_name } = useParams();
   const hasActions = actions && actions.length > 0;
-  const calibrationButtonCopy = hasActions ? "restart" : "start";
+  const hasHistory = state.history && state.history.length > 0;
 
   const actionData = useActionData<typeof action>();
   const submit = useSubmit();
@@ -262,41 +264,105 @@ export default function CalibrateHardware() {
             </div>
           </div>
           <div className="flex gap-4">
-            <button
-              className={clsx("btn", "btn-secondary")}
-              onClick={() => {
-                const formData = new FormData();
-                formData.append("id", id ?? "");
-                formData.append("intent", Intent.Enum.undo);
-                formData.append("hardware_name", hardware_name ?? "");
-                submit(formData, {
-                  method: "POST",
-                });
-              }}
-            >
-              undo
-            </button>
-            <button
-              className={clsx(
-                "btn",
-                hasActions && "btn-error",
-                !hasActions && "btn-accent",
-              )}
-              onClick={() => {
-                const formData = new FormData();
-                formData.append("id", id ?? "");
-                formData.append(
-                  "intent",
-                  Intent.Enum.start_calibration_procedure,
-                );
-                formData.append("hardware_name", hardware_name ?? "");
-                submit(formData, {
-                  method: "POST",
-                });
-              }}
-            >
-              {calibrationButtonCopy}
-            </button>
+            {hasActions && (
+              <button
+                className={clsx(
+                  "btn",
+                  "btn-secondary",
+                  !hasHistory && "btn-disabled",
+                )}
+                onClick={() => {
+                  const formData = new FormData();
+                  formData.append("id", id ?? "");
+                  formData.append("intent", Intent.Enum.undo);
+                  formData.append("hardware_name", hardware_name ?? "");
+                  submit(formData, {
+                    method: "POST",
+                  });
+                }}
+              >
+                undo
+              </button>
+            )}
+            {!hasActions && (
+              <button
+                className={clsx("btn", "btn-accent")}
+                onClick={() => {
+                  const formData = new FormData();
+                  formData.append("id", id ?? "");
+                  formData.append(
+                    "intent",
+                    Intent.Enum.start_calibration_procedure,
+                  );
+                  formData.append("hardware_name", hardware_name ?? "");
+                  submit(formData, {
+                    method: "POST",
+                  });
+                }}
+              >
+                start
+              </button>
+            )}
+            {hasActions && (
+              <div>
+                <button
+                  className={clsx(
+                    "btn",
+                    hasActions && "btn-error",
+                    !hasHistory && "btn-disabled",
+                  )}
+                  onClick={() =>
+                    document
+                      ?.getElementById("restart_procedure_modal")
+                      ?.showModal()
+                  }
+                >
+                  restart
+                </button>
+                <dialog id="restart_procedure_modal" className="modal">
+                  <div className="modal-box">
+                    <form method="dialog">
+                      <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+                        <XMarkIcon />
+                      </button>
+                    </form>
+                    <h3 className="text-lg">warning</h3>
+                    <p className="py-4">
+                      Restarting the calibration procedure will reset all
+                      progress. Are you sure you want to continue?
+                    </p>
+                    <div className="modal-action">
+                      <form method="dialog">
+                        <button
+                          className={clsx(
+                            "btn",
+                            hasActions && "btn-error",
+                            !hasActions && "btn-accent",
+                          )}
+                          onClick={() => {
+                            const formData = new FormData();
+                            formData.append("id", id ?? "");
+                            formData.append(
+                              "intent",
+                              Intent.Enum.start_calibration_procedure,
+                            );
+                            formData.append(
+                              "hardware_name",
+                              hardware_name ?? "",
+                            );
+                            submit(formData, {
+                              method: "POST",
+                            });
+                          }}
+                        >
+                          restart
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </dialog>
+              </div>
+            )}
           </div>
         </div>
         <div>
