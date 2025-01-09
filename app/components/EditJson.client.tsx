@@ -7,6 +7,7 @@ import {
   NodeData,
   TypeFilterFunction,
   githubDarkTheme,
+  githubLightTheme,
 } from "json-edit-react";
 import { loader as rootLoader } from "~/root";
 import { checkType } from "~/utils/checkType";
@@ -25,7 +26,7 @@ export function EditJson({
     theme: "dark",
   };
 
-  const editorTheme = theme === "dark" ? "githubDark" : "githubLight";
+  const editorTheme = theme === "dark" ? githubDarkTheme : githubLightTheme;
 
   const customizeText = ({ key, value }: NodeData) => {
     switch (key) {
@@ -198,7 +199,7 @@ export function EditJson({
         collapse={collapseDefault}
         restrictTypeSelection={restrictTypeSelection}
         enableClipboard={false}
-        theme={githubDarkTheme}
+        theme={editorTheme}
         rootName="config"
         customText={{
           ITEM_SINGLE: customizeText,
