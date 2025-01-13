@@ -1,6 +1,6 @@
 import { createClient } from "@hey-api/client-fetch";
 import { toast as notify } from "react-toastify";
-import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import {
   Link,
   useActionData,
@@ -104,7 +104,7 @@ export async function action({ request }: ActionFunctionArgs) {
               client: evolverClient,
             },
           );
-        return json(procedureState.data);
+        return procedureState.data;
       } catch (error) {
         return submission.reply({ formErrors: ["unable to dispatch action"] });
       }
@@ -121,7 +121,7 @@ export async function action({ request }: ActionFunctionArgs) {
               client: evolverClient,
             },
           );
-        return json(procedureState.data);
+        return procedureState.data;
       } catch (error) {
         return submission.reply({
           formErrors: ["unable to start calibration"],
@@ -138,7 +138,7 @@ export async function action({ request }: ActionFunctionArgs) {
               client: evolverClient,
             },
           );
-        return json(procedureState.data);
+        return procedureState.data;
       } catch (error) {
         return submission.reply({ formErrors: ["unable to dispatch action"] });
       }
@@ -150,10 +150,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id, hardware_name } = params;
   const targetDevice = await db.device.findUnique({ where: { device_id: id } });
-  if (!targetDevice) {
-    return json({ actions: [] });
-  }
-  const { url } = targetDevice;
+  const { url } = targetDevice ?? { url: "" };
   const evolverClient = createClient({
     baseUrl: url,
   });
@@ -177,10 +174,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
       },
     );
 
-  return json({
+  return {
     actions: procedureActions?.actions,
     state: procedureState,
-  });
+  };
 }
 
 const CalibrationProcedure = ({ actions, state }) => {
@@ -363,8 +360,6 @@ export function ErrorBoundary() {
 
 export default function CalibrateHardware() {
   const { actions, state } = useLoaderData<typeof loader>();
-  const { id, hardware_name }: { id: string; hardware_name: string } =
-    useParams();
 
   const actionData = useActionData<typeof action>();
 
