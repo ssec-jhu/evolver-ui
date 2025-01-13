@@ -346,12 +346,17 @@ const CalibrationProcedureControls = ({
 
 export function ErrorBoundary() {
   return (
-    <div className="flex flex-col gap-4 bg-base-300 rounded-box">
-      <WrenchScrewdriverIcon className="w-10 h-10" />
-      <div>
+    <div>
+      <div className="flex flex-col gap-4">
+        <CalibrationProcedureControls started={false} />
+      </div>
+      <div className="flex flex-col gap-4 bg-base-300 rounded-box">
+        <WrenchScrewdriverIcon className="w-10 h-10" />
         <div>
-          <h1 className="font-mono">{`The calibration procedure encountered an error.
+          <div>
+            <h1 className="font-mono">{`The calibration procedure encountered an error.
           Make sure there is a procedure defined on the hardware in the config and the procedure has been started`}</h1>
+          </div>
         </div>
       </div>
     </div>

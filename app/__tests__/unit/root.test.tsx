@@ -9,7 +9,7 @@ describe("root loader", () => {
       params: {},
       context: {},
     });
-    const data = await response.json();
+    const data = await response;
     expect(data).toEqual({
       theme: "dark",
       ENV: {
@@ -29,7 +29,7 @@ describe("root loader", () => {
       params: {},
       context: {},
     });
-    const data = await response.json();
+    const data = await response;
     expect(data.theme).toEqual("light");
   });
 });

@@ -9,7 +9,7 @@ const DataTable = ({
 }: {
   id: string;
   vialIndex: number;
-  data: { [key: string]: number | null };
+  data: { [key: string]: number };
   excludedProperties?: string[];
 }) => {
   return (
@@ -26,7 +26,7 @@ const DataTable = ({
         </thead>
         <tbody>
           {Object.keys(data).map((mainKey) =>
-            Object.keys(data[mainKey]).map((subKey, subIndex) => {
+            Object.keys(data[mainKey]).map((subKey: string, subIndex) => {
               let renderSubKey = true;
               if (excludedProperties.includes(subKey)) {
                 renderSubKey = false;
@@ -58,9 +58,8 @@ const DataTable = ({
                   )}
                   {renderSubKey && (
                     <td>
-                      {data[mainKey][subKey] !== null &&
-                        data[mainKey][subKey].toString()}
-                      {data[mainKey][subKey] == null && "-"}
+                      {data[mainKey][subKey]}
+                      {!data[mainKey][subKey] && "-"}
                     </td>
                   )}
                 </tr>
@@ -116,14 +115,12 @@ export function VialGrid({
           <span className="block text-[5vw] leading-none">{index}</span>
         </div>
         {hasData && (
-          <div className="relative z-10">
-            <DataTable
-              data={data}
-              id={id}
-              vialIndex={index}
-              excludedProperties={excludedProperties}
-            />
-          </div>
+          <DataTable
+            data={data}
+            id={id}
+            vialIndex={index}
+            excludedProperties={excludedProperties}
+          />
         )}
       </div>
     );
