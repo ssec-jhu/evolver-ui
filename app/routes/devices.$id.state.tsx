@@ -1,5 +1,5 @@
 import { createClient } from "@hey-api/client-fetch";
-import { LoaderFunctionArgs, json } from "@remix-run/node";
+import { LoaderFunctionArgs } from "@remix-run/node";
 import {
   Link,
   useLoaderData,
@@ -30,10 +30,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
   const { data } = await Evolver.state({ client: evolverClient });
   const describeEvolver = await Evolver.describe({ client: evolverClient });
   const vials = describeEvolver?.data?.config?.vials;
-  return json({
+  return {
     vials: vials,
     evolverState: data,
-  });
+  };
 }
 
 export default function Hardware() {

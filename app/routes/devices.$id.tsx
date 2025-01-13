@@ -10,7 +10,6 @@ import {
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
-  json,
   redirect,
 } from "@remix-run/node";
 import { createClient } from "@hey-api/client-fetch";
@@ -107,14 +106,14 @@ export async function loader({ params }: LoaderFunctionArgs) {
   const describeEvolver = await Evolver.describe({ client: evolverClient });
   const evolverState = await Evolver.state({ client: evolverClient });
 
-  return json({
+  return {
     description: describeEvolver.data as {
       config: EvolverConfigWithoutDefaults;
     },
     url,
     ok: true,
     state: evolverState.data,
-  });
+  };
 }
 
 export function ErrorBoundary() {

@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { createRemixStub } from "@remix-run/testing";
-import { json } from "@remix-run/node";
 import ThemeController from "~/components/ThemeController";
 
 const RemixStub = createRemixStub([
@@ -9,7 +8,7 @@ const RemixStub = createRemixStub([
     path: "/",
     Component: () => <ThemeController />,
     loader: () => {
-      return json({ theme: "dark" });
+      return { theme: "dark" };
     },
   },
 ]);
