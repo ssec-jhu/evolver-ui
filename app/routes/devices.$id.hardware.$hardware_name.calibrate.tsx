@@ -16,7 +16,7 @@ import clsx from "clsx";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
 import { useEffect } from "react";
-import { XMarkIcon } from "@heroicons/react/24/solid";
+import { WrenchScrewdriverIcon, XMarkIcon } from "@heroicons/react/24/solid";
 
 const Intent = z.enum(
   ["dispatch_action", "start_calibration_procedure", "undo"],
@@ -108,6 +108,7 @@ export async function action({ request }: ActionFunctionArgs) {
       } catch (error) {
         return submission.reply({ formErrors: ["unable to dispatch action"] });
       }
+
     case Intent.Enum.start_calibration_procedure:
       try {
         const procedureState =
@@ -115,6 +116,7 @@ export async function action({ request }: ActionFunctionArgs) {
             {
               path: {
                 hardware_name: submission.value.hardware_name,
+                resume: false,
               },
               client: evolverClient,
             },
@@ -174,6 +176,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
         client: evolverClient,
       },
     );
+
   return json({
     actions: procedureActions?.actions,
     state: procedureState,
@@ -232,14 +235,138 @@ const CalibrationProcedureProgress = ({ state, actions }) => {
   );
 };
 
+const CalibrationProcedureControls = ({
+  hasHistory = false,
+  started = false,
+}: {
+  hasHistory?: boolean;
+  started: boolean;
+}) => {
+  const submit = useSubmit();
+  const { id, hardware_name } = useParams();
+  return (
+    <div className="flex justify-between items-center gap-4">
+      <div className="flex items-center">
+        <div>
+          <div className="flex w-full font-mono">calibration procedure</div>
+        </div>
+      </div>
+      <div className="flex gap-4">
+        {started && (
+          <button
+            className={clsx(
+              "btn",
+              "btn-secondary",
+              !hasHistory && "btn-disabled",
+            )}
+            onClick={() => {
+              const formData = new FormData();
+              formData.append("id", id ?? "");
+              formData.append("intent", Intent.Enum.undo);
+              formData.append("hardware_name", hardware_name ?? "");
+              submit(formData, {
+                method: "POST",
+              });
+            }}
+          >
+            undo
+          </button>
+        )}
+        {!started && (
+          <button
+            className={clsx("btn", "btn-accent")}
+            onClick={() => {
+              const formData = new FormData();
+              formData.append("id", id ?? "");
+              formData.append(
+                "intent",
+                Intent.Enum.start_calibration_procedure,
+              );
+              formData.append("hardware_name", hardware_name ?? "");
+              submit(formData, {
+                method: "POST",
+              });
+            }}
+          >
+            start
+          </button>
+        )}
+
+        {started && (
+          <div>
+            <button
+              className={clsx(
+                "btn",
+                started && "btn-error",
+                !hasHistory && "btn-disabled",
+              )}
+              onClick={() =>
+                document?.getElementById("restart_procedure_modal")?.showModal()
+              }
+            >
+              restart
+            </button>
+            <dialog id="restart_procedure_modal" className="modal">
+              <div className="modal-box">
+                <form method="dialog">
+                  <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+                    <XMarkIcon />
+                  </button>
+                </form>
+                <h3 className="text-lg">warning</h3>
+                <p className="py-4">
+                  restarting the calibration procedure will reset all progress.
+                </p>
+                <div className="modal-action">
+                  <form method="dialog">
+                    <button
+                      className={clsx("btn", "btn-error")}
+                      onClick={() => {
+                        const formData = new FormData();
+                        formData.append("id", id ?? "");
+                        formData.append(
+                          "intent",
+                          Intent.Enum.start_calibration_procedure,
+                        );
+                        formData.append("hardware_name", hardware_name ?? "");
+                        submit(formData, {
+                          method: "POST",
+                        });
+                      }}
+                    >
+                      restart
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </dialog>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export function ErrorBoundary() {
+  return (
+    <div className="flex flex-col gap-4 bg-base-300 rounded-box">
+      <WrenchScrewdriverIcon className="w-10 h-10" />
+      <div>
+        <div>
+          <h1 className="font-mono">{`The calibration procedure encountered an error.
+          Make sure there is a procedure defined on the hardware in the config and the procedure has been started`}</h1>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CalibrateHardware() {
   const { actions, state } = useLoaderData<typeof loader>();
-  const { id, hardware_name } = useParams();
-  const hasActions = actions && actions.length > 0;
-  const hasHistory = state.history && state.history.length > 0;
+  const { id, hardware_name }: { id: string; hardware_name: string } =
+    useParams();
 
   const actionData = useActionData<typeof action>();
-  const submit = useSubmit();
 
   useEffect(() => {
     if (actionData?.error) {
@@ -254,133 +381,38 @@ export default function CalibrateHardware() {
     }
   }, [actionData]);
 
+  const started = state?.started ?? false;
+  const hasHistory = state?.history && state?.history.length > 0;
+
+  if (!started) {
+    return (
+      <div>
+        <div className="flex flex-col gap-4">
+          <CalibrationProcedureControls started={started} />
+          <div className="card bg-base-100  shadow-xl">
+            <div className="card-body">
+              <p>no calibration procedure</p>
+              <p>start a calibration procedure to begin</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center gap-4">
-          <div className="flex items-center">
-            <div>
-              <div className="flex w-full font-mono">calibration procedure</div>
-            </div>
-          </div>
-          <div className="flex gap-4">
-            {hasActions && (
-              <button
-                className={clsx(
-                  "btn",
-                  "btn-secondary",
-                  !hasHistory && "btn-disabled",
-                )}
-                onClick={() => {
-                  const formData = new FormData();
-                  formData.append("id", id ?? "");
-                  formData.append("intent", Intent.Enum.undo);
-                  formData.append("hardware_name", hardware_name ?? "");
-                  submit(formData, {
-                    method: "POST",
-                  });
-                }}
-              >
-                undo
-              </button>
-            )}
-            {!hasActions && (
-              <button
-                className={clsx("btn", "btn-accent")}
-                onClick={() => {
-                  const formData = new FormData();
-                  formData.append("id", id ?? "");
-                  formData.append(
-                    "intent",
-                    Intent.Enum.start_calibration_procedure,
-                  );
-                  formData.append("hardware_name", hardware_name ?? "");
-                  submit(formData, {
-                    method: "POST",
-                  });
-                }}
-              >
-                start
-              </button>
-            )}
-            {hasActions && (
-              <div>
-                <button
-                  className={clsx(
-                    "btn",
-                    hasActions && "btn-error",
-                    !hasHistory && "btn-disabled",
-                  )}
-                  onClick={() =>
-                    document
-                      ?.getElementById("restart_procedure_modal")
-                      ?.showModal()
-                  }
-                >
-                  restart
-                </button>
-                <dialog id="restart_procedure_modal" className="modal">
-                  <div className="modal-box">
-                    <form method="dialog">
-                      <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-                        <XMarkIcon />
-                      </button>
-                    </form>
-                    <h3 className="text-lg">warning</h3>
-                    <p className="py-4">
-                      Restarting the calibration procedure will reset all
-                      progress. Are you sure you want to continue?
-                    </p>
-                    <div className="modal-action">
-                      <form method="dialog">
-                        <button
-                          className={clsx(
-                            "btn",
-                            hasActions && "btn-error",
-                            !hasActions && "btn-accent",
-                          )}
-                          onClick={() => {
-                            const formData = new FormData();
-                            formData.append("id", id ?? "");
-                            formData.append(
-                              "intent",
-                              Intent.Enum.start_calibration_procedure,
-                            );
-                            formData.append(
-                              "hardware_name",
-                              hardware_name ?? "",
-                            );
-                            submit(formData, {
-                              method: "POST",
-                            });
-                          }}
-                        >
-                          restart
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                </dialog>
-              </div>
-            )}
-          </div>
-        </div>
+        <CalibrationProcedureControls
+          started={started}
+          hasHistory={hasHistory}
+        />
         <div>
           <CalibrationProcedureProgress state={state} actions={actions} />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          {hasActions && (
-            <CalibrationProcedure state={state} actions={actions} />
-          )}
+          {started && <CalibrationProcedure state={state} actions={actions} />}
         </div>
-        {!hasActions && (
-          <div className="card bg-base-100  shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">no calibration procedure</h2>
-              <p>start a calibration procedure to begin</p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
