@@ -2,14 +2,13 @@ import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import Navbar from "~/components/Navbar";
 import { createRemixStub } from "@remix-run/testing";
-import { json } from "@remix-run/node";
 
 const RemixStub = createRemixStub([
   {
     path: "/",
     Component: () => <Navbar pathname="/devices/list" />,
     loader() {
-      return json({ theme: "dark" });
+      return { theme: "dark" };
     },
   },
 ]);

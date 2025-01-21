@@ -6,7 +6,6 @@ import {
   Scripts,
   ScrollRestoration,
   isRouteErrorResponse,
-  json,
   useLoaderData,
   useLocation,
   useMatches,
@@ -66,7 +65,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // succeed anyway the local device is already in the db
   }
   // make the theme available to the client side, daisy ui uses it to set the theme
-  return json({ theme: cookie.theme, ENV: getClientEnv() });
+  return { theme: cookie.theme, ENV: getClientEnv() };
 }
 
 export default function App() {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type ActionFunctionArgs, redirect, json } from "@remix-run/node";
+import { type ActionFunctionArgs, redirect } from "@remix-run/node";
 import { parseWithZod, getZodConstraint } from "@conform-to/zod";
 import { pingDevice } from "~/utils/pingDevice.server";
 import { db } from "~/utils/db.server";
@@ -102,7 +102,7 @@ export const loader = async () => {
           : "offline",
     };
   });
-  return json(results);
+  return results;
 };
 
 export default function DevicesList() {

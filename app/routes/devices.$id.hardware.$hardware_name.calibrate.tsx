@@ -1,6 +1,6 @@
 import { createClient } from "@hey-api/client-fetch";
 import { toast as notify } from "react-toastify";
-import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import {
   Link,
   useActionData,
@@ -16,12 +16,16 @@ import clsx from "clsx";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
 import { useEffect } from "react";
+import { WrenchScrewdriverIcon, XMarkIcon } from "@heroicons/react/24/solid";
 
-const Intent = z.enum(["dispatch_action", "start_calibration_procedure"], {
-  required_error: "intent is required",
-  invalid_type_error:
-    "must be one of, dispatch_action or start_calibration_procedure",
-});
+const Intent = z.enum(
+  ["dispatch_action", "start_calibration_procedure", "undo"],
+  {
+    required_error: "intent is required",
+    invalid_type_error:
+      "must be one of: dispatch_action, start_calibration_procedure, undo",
+  },
+);
 
 const schema = z.discriminatedUnion("intent", [
   z.object({
@@ -33,6 +37,11 @@ const schema = z.discriminatedUnion("intent", [
   }),
   z.object({
     intent: z.literal(Intent.Enum.start_calibration_procedure),
+    id: z.string(),
+    hardware_name: z.string(),
+  }),
+  z.object({
+    intent: z.literal(Intent.Enum.undo),
     id: z.string(),
     hardware_name: z.string(),
   }),
@@ -82,55 +91,70 @@ export async function action({ request }: ActionFunctionArgs) {
   switch (intent) {
     case Intent.Enum.dispatch_action:
       try {
-        await Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
-          {
-            body: {
-              action_name: submission.value.action_name,
-              payload: JSON.parse(submission.value.payload),
+        const procedureState =
+          await Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
+            {
+              body: {
+                action_name: submission.value.action_name,
+                payload: JSON.parse(submission.value.payload),
+              },
+              path: {
+                hardware_name: submission.value.hardware_name,
+              },
+              client: evolverClient,
             },
-            path: {
-              hardware_name: submission.value.hardware_name,
-            },
-            client: evolverClient,
-          },
-        );
+          );
+        return procedureState.data;
       } catch (error) {
         return submission.reply({ formErrors: ["unable to dispatch action"] });
       }
-      break;
+
     case Intent.Enum.start_calibration_procedure:
       try {
-        await Evolver.startCalibrationProcedureHardwareHardwareNameCalibratorProcedureStartPost(
-          {
-            path: {
-              hardware_name: submission.value.hardware_name,
+        const procedureState =
+          await Evolver.startCalibrationProcedureHardwareHardwareNameCalibratorProcedureStartPost(
+            {
+              path: {
+                hardware_name: submission.value.hardware_name,
+                resume: false,
+              },
+              client: evolverClient,
             },
-            client: evolverClient,
-          },
-        );
+          );
+        return procedureState.data;
       } catch (error) {
         return submission.reply({
           formErrors: ["unable to start calibration"],
         });
       }
-      break;
+    case Intent.Enum.undo:
+      try {
+        const procedureState =
+          await Evolver.undoCalibrationProcedureActionHardwareHardwareNameCalibratorProcedureUndoPost(
+            {
+              path: {
+                hardware_name: submission.value.hardware_name,
+              },
+              client: evolverClient,
+            },
+          );
+        return procedureState.data;
+      } catch (error) {
+        return submission.reply({ formErrors: ["unable to dispatch action"] });
+      }
     default:
       return submission.reply();
   }
-  return null;
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id, hardware_name } = params;
   const targetDevice = await db.device.findUnique({ where: { device_id: id } });
-  if (!targetDevice) {
-    return json({ actions: [] });
-  }
-  const { url } = targetDevice;
+  const { url } = targetDevice ?? { url: "" };
   const evolverClient = createClient({
     baseUrl: url,
   });
-  const { data } =
+  const { data: procedureActions } =
     await Evolver.getCalibratorActionsHardwareHardwareNameCalibratorProcedureActionsGet(
       {
         path: {
@@ -140,14 +164,28 @@ export async function loader({ params }: LoaderFunctionArgs) {
       },
     );
 
-  return json({ actions: data?.actions });
+  const { data: procedureState } =
+    await Evolver.getCalibratorStateHardwareHardwareNameCalibratorProcedureStateGet(
+      {
+        path: {
+          hardware_name: hardware_name ?? "",
+        },
+        client: evolverClient,
+      },
+    );
+
+  return {
+    actions: procedureActions?.actions,
+    state: procedureState,
+  };
 }
 
-const CalibrationProcedure = ({ actions }) => {
+const CalibrationProcedure = ({ actions, state }) => {
   const submit = useSubmit();
   const { id, hardware_name } = useParams();
 
   return actions.map((action, ix) => {
+    const isComplete = state?.completed_actions?.includes(action.name) ?? false;
     const dispatchAction = (actionFormData: object) => {
       const formData = new FormData();
       formData.append("id", id ?? "");
@@ -166,7 +204,7 @@ const CalibrationProcedure = ({ actions }) => {
       >
         {() => (
           <CalibratorActionForm
-            action={action}
+            action={{ ...action, is_complete: isComplete }}
             index={ix}
             dispatchAction={dispatchAction}
           />
@@ -176,14 +214,159 @@ const CalibrationProcedure = ({ actions }) => {
   });
 };
 
-export default function CalibrateHardware() {
-  const { actions } = useLoaderData<typeof loader>();
+const CalibrationProcedureProgress = ({ state, actions }) => {
+  const completed = state.completed_actions.length;
+  const total = actions.length;
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="font-mono">progress</div>
+      <progress
+        className="progress progress-accent w-full"
+        value={completed}
+        max={total}
+      />
+      <div className="flex justify-end">
+        {completed}/{total}
+      </div>
+    </div>
+  );
+};
+
+const CalibrationProcedureControls = ({
+  hasHistory = false,
+  started = false,
+}: {
+  hasHistory?: boolean;
+  started: boolean;
+}) => {
+  const submit = useSubmit();
   const { id, hardware_name } = useParams();
-  const hasActions = actions && actions.length > 0;
-  const calibrationButtonCopy = hasActions ? "restart" : "start";
+  return (
+    <div className="flex justify-between items-center gap-4">
+      <div className="flex items-center">
+        <div>
+          <div className="flex w-full font-mono">calibration procedure</div>
+        </div>
+      </div>
+      <div className="flex gap-4">
+        {started && (
+          <button
+            className={clsx(
+              "btn",
+              "btn-secondary",
+              !hasHistory && "btn-disabled",
+            )}
+            onClick={() => {
+              const formData = new FormData();
+              formData.append("id", id ?? "");
+              formData.append("intent", Intent.Enum.undo);
+              formData.append("hardware_name", hardware_name ?? "");
+              submit(formData, {
+                method: "POST",
+              });
+            }}
+          >
+            undo
+          </button>
+        )}
+        {!started && (
+          <button
+            className={clsx("btn", "btn-accent")}
+            onClick={() => {
+              const formData = new FormData();
+              formData.append("id", id ?? "");
+              formData.append(
+                "intent",
+                Intent.Enum.start_calibration_procedure,
+              );
+              formData.append("hardware_name", hardware_name ?? "");
+              submit(formData, {
+                method: "POST",
+              });
+            }}
+          >
+            start
+          </button>
+        )}
+
+        {started && (
+          <div>
+            <button
+              className={clsx(
+                "btn",
+                started && "btn-error",
+                !hasHistory && "btn-disabled",
+              )}
+              onClick={() =>
+                document?.getElementById("restart_procedure_modal")?.showModal()
+              }
+            >
+              restart
+            </button>
+            <dialog id="restart_procedure_modal" className="modal">
+              <div className="modal-box">
+                <form method="dialog">
+                  <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+                    <XMarkIcon />
+                  </button>
+                </form>
+                <h3 className="text-lg">warning</h3>
+                <p className="py-4">
+                  restarting the calibration procedure will reset all progress.
+                </p>
+                <div className="modal-action">
+                  <form method="dialog">
+                    <button
+                      className={clsx("btn", "btn-error")}
+                      onClick={() => {
+                        const formData = new FormData();
+                        formData.append("id", id ?? "");
+                        formData.append(
+                          "intent",
+                          Intent.Enum.start_calibration_procedure,
+                        );
+                        formData.append("hardware_name", hardware_name ?? "");
+                        submit(formData, {
+                          method: "POST",
+                        });
+                      }}
+                    >
+                      restart
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </dialog>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export function ErrorBoundary() {
+  return (
+    <div>
+      <div className="flex flex-col gap-4">
+        <CalibrationProcedureControls started={false} />
+      </div>
+      <div className="flex flex-col gap-4 bg-base-300 rounded-box">
+        <WrenchScrewdriverIcon className="w-10 h-10" />
+        <div>
+          <div>
+            <h1 className="font-mono">{`The calibration procedure encountered an error.
+          Make sure there is a procedure defined on the hardware in the config and the procedure has been started`}</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CalibrateHardware() {
+  const { actions, state } = useLoaderData<typeof loader>();
 
   const actionData = useActionData<typeof action>();
-  const submit = useSubmit();
 
   useEffect(() => {
     if (actionData?.error) {
@@ -198,50 +381,38 @@ export default function CalibrateHardware() {
     }
   }, [actionData]);
 
-  return (
-    <div>
-      <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center gap-4">
-          <div className="flex items-center">
-            <div>
-              <div className="flex w-full font-mono">calibration procedure</div>
-            </div>
-          </div>
-          <div>
-            <button
-              className={clsx(
-                "btn",
-                hasActions && "btn-error",
-                !hasActions && "btn-accent",
-              )}
-              onClick={() => {
-                const formData = new FormData();
-                formData.append("id", id ?? "");
-                formData.append(
-                  "intent",
-                  Intent.Enum.start_calibration_procedure,
-                );
-                formData.append("hardware_name", hardware_name ?? "");
-                submit(formData, {
-                  method: "POST",
-                });
-              }}
-            >
-              {calibrationButtonCopy}
-            </button>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          {hasActions && <CalibrationProcedure actions={actions} />}
-        </div>
-        {!hasActions && (
+  const started = state?.started ?? false;
+  const hasHistory = state?.history && state?.history.length > 0;
+
+  if (!started) {
+    return (
+      <div>
+        <div className="flex flex-col gap-4">
+          <CalibrationProcedureControls started={started} />
           <div className="card bg-base-100  shadow-xl">
             <div className="card-body">
-              <h2 className="card-title">no calibration procedure</h2>
+              <p>no calibration procedure</p>
               <p>start a calibration procedure to begin</p>
             </div>
           </div>
-        )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex flex-col gap-4">
+        <CalibrationProcedureControls
+          started={started}
+          hasHistory={hasHistory}
+        />
+        <div>
+          <CalibrationProcedureProgress state={state} actions={actions} />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          {started && <CalibrationProcedure state={state} actions={actions} />}
+        </div>
       </div>
     </div>
   );

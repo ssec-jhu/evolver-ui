@@ -87,10 +87,10 @@ export function HardwareTable({
             {allButton}
           </div>
         </td>
-        <td className="flex justify-end">
+        <td className="flex justify-end font-sans">
           <Link
             className={clsx(
-              "btn btn-outline ",
+              "btn btn-outline",
               key === hardwareName &&
                 currentPath === "calibrate" &&
                 "btn-active",

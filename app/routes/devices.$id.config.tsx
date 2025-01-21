@@ -112,7 +112,6 @@ export async function action({ request }: ActionFunctionArgs) {
         }
         return redirect(`/devices/${id}/config?mode=view`);
       } catch (error) {
-        console.log("IDK", error);
         return submission.reply({
           formErrors: [
             "unable to update device",

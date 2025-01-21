@@ -1,5 +1,5 @@
 import { createClient } from "@hey-api/client-fetch";
-import { LoaderFunctionArgs, json } from "@remix-run/node";
+import { LoaderFunctionArgs } from "@remix-run/node";
 import {
   Link,
   useLoaderData,
@@ -92,7 +92,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   const [hist, events] = await results;
 
-  return json({ data: hist?.data, events: events?.data });
+  return { data: hist?.data, events: events?.data };
 }
 
 export default function Hardware() {
