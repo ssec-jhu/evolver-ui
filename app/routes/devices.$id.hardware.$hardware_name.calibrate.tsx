@@ -292,9 +292,9 @@ const CalibrationProcedureControls = ({
           <div className="flex w-full font-mono">calibration procedure</div>
         </div>
       </div>
-      <div className="flex gap-4">
+      <div className="flex">
         {!started && (
-          <div>
+          <div className="flex">
             <button
               className={clsx("btn", "btn-error")}
               onClick={() =>
@@ -342,73 +342,12 @@ const CalibrationProcedureControls = ({
                 </div>
               </div>
             </dialog>
+            <div className="divider divider-horizontal"></div>
           </div>
         )}
 
-        {!started && (
-          <button
-            className={clsx("btn", "btn-primary")}
-            onClick={() => {
-              const formData = new FormData();
-              formData.append("id", id ?? "");
-              formData.append(
-                "intent",
-                Intent.Enum.resume_calibration_procedure,
-              );
-              formData.append("hardware_name", hardware_name ?? "");
-              submit(formData, {
-                method: "POST",
-              });
-            }}
-          >
-            resume
-          </button>
-        )}
-
         {started && (
-          <button
-            className={clsx(
-              "btn",
-              "btn-primary",
-              !hasHistory && "btn-disabled",
-            )}
-            onClick={() => {
-              const formData = new FormData();
-              formData.append("id", id ?? "");
-              formData.append("intent", Intent.Enum.save_calibration_procedure);
-              formData.append("hardware_name", hardware_name ?? "");
-              submit(formData, {
-                method: "POST",
-              });
-            }}
-          >
-            save
-          </button>
-        )}
-
-        {started && (
-          <button
-            className={clsx(
-              "btn",
-              "btn-secondary",
-              !hasHistory && "btn-disabled",
-            )}
-            onClick={() => {
-              const formData = new FormData();
-              formData.append("id", id ?? "");
-              formData.append("intent", Intent.Enum.undo);
-              formData.append("hardware_name", hardware_name ?? "");
-              submit(formData, {
-                method: "POST",
-              });
-            }}
-          >
-            undo
-          </button>
-        )}
-
-        {started && (
-          <div>
+          <div className="flex">
             <button
               className={clsx(
                 "btn",
@@ -456,6 +395,73 @@ const CalibrationProcedureControls = ({
                 </div>
               </div>
             </dialog>
+
+            <div className="divider divider-horizontal"></div>
+          </div>
+        )}
+
+        {!started && (
+          <button
+            className={clsx("btn", "btn-primary")}
+            onClick={() => {
+              const formData = new FormData();
+              formData.append("id", id ?? "");
+              formData.append(
+                "intent",
+                Intent.Enum.resume_calibration_procedure,
+              );
+              formData.append("hardware_name", hardware_name ?? "");
+              submit(formData, {
+                method: "POST",
+              });
+            }}
+          >
+            resume
+          </button>
+        )}
+
+        {started && (
+          <div className="flex gap-4">
+            <button
+              className={clsx(
+                "btn",
+                "btn-primary",
+                !hasHistory && "btn-disabled",
+              )}
+              onClick={() => {
+                const formData = new FormData();
+                formData.append("id", id ?? "");
+                formData.append(
+                  "intent",
+                  Intent.Enum.save_calibration_procedure,
+                );
+                formData.append("hardware_name", hardware_name ?? "");
+                submit(formData, {
+                  method: "POST",
+                });
+              }}
+            >
+              save
+            </button>
+
+            <button
+              className={clsx(
+                "btn",
+                "btn-secondary",
+                !hasHistory && "btn-disabled",
+              )}
+              onClick={() => {
+                const formData = new FormData();
+                formData.append("id", id ?? "");
+                formData.append("intent", Intent.Enum.undo);
+                formData.append("hardware_name", hardware_name ?? "");
+                submit(formData, {
+                  method: "POST",
+                });
+              }}
+            >
+              undo
+            </button>
           </div>
         )}
       </div>
