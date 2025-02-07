@@ -147,7 +147,7 @@ export async function action({ request }: ActionFunctionArgs) {
       } catch (error) {
         return submission.reply({
           formErrors: [
-            "unable to start calibration, confirm a calibration_file attribute exists on the hardware config, and the file exists on the evolver device filesystem in the calibration_files directory.",
+            "unable to save calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem.",
           ],
         });
       }
@@ -167,7 +167,7 @@ export async function action({ request }: ActionFunctionArgs) {
       } catch (error) {
         return submission.reply({
           formErrors: [
-            "unable to start calibration, confirm a calibration_file attribute exists on the hardware config, and the file exists on the evolver device filesystem in the calibration_files directory.",
+            "unable to save calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem.",
           ],
         });
       }
