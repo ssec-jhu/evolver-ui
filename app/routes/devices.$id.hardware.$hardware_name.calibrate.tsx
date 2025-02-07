@@ -135,7 +135,10 @@ export async function action({ request }: ActionFunctionArgs) {
                 hardware_name: submission.value.hardware_name,
               },
               query: {
-                resume: Intent.Enum.resume_calibration_procedure ? true : false,
+                resume:
+                  intent === Intent.Enum.resume_calibration_procedure
+                    ? true
+                    : false,
               },
               client: evolverClient,
             },
@@ -293,7 +296,7 @@ const CalibrationProcedureControls = ({
         {!started && (
           <div>
             <button
-              className={clsx("btn", "btn-warning")}
+              className={clsx("btn", "btn-error")}
               onClick={() =>
                 document?.getElementById("start_procedure_modal")?.showModal()
               }
@@ -508,12 +511,6 @@ export default function CalibrateHardware() {
           <div className="card bg-base-100  shadow-xl">
             <div className="card-body">
               <p>no running calibration procedure detected</p>
-              <p>start a calibration procedure to begin</p>
-              <p>
-                if calibration procedure state exists at the
-                calibrator.calibration_file location the procedure will resume
-                from the last saved state
-              </p>
             </div>
           </div>
         </div>
