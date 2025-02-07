@@ -423,6 +423,49 @@
         }
       }
     },
+    "/hardware/{hardware_name}/calibrator/procedure/save": {
+      "post": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Save Calibration Procedure",
+        "operationId": "save_calibration_procedure_hardware__hardware_name__calibrator_procedure_save_post",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/hardware/{hardware_name}/calibrator/data": {
       "get": {
         "tags": [
@@ -703,6 +746,42 @@
         }
       }
     },
+    "/event": {
+      "post": {
+        "summary": "Post Event",
+        "operationId": "post_event_event_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventInfo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/healthz": {
       "get": {
         "summary": "Healthz",
@@ -908,6 +987,40 @@
         ],
         "title": "ConfigDescriptor"
       },
+      "EventInfo": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "vial": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vial"
+          },
+          "data": {
+            "type": "object",
+            "title": "Data",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "message"
+        ],
+        "title": "EventInfo"
+      },
       "EvolverConfigWithoutDefaults": {
         "properties": {
           "name": {
@@ -917,6 +1030,16 @@
           "experiment": {
             "type": "string",
             "title": "Experiment"
+          },
+          "vial_layout": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 2,
+            "title": "Vial Layout",
+            "description": "The layout of the vials in 2 or 3 dimensions. Always left-to-right bottom-top-top order."
           },
           "vials": {
             "items": {},
@@ -1006,6 +1129,7 @@
         "required": [
           "name",
           "experiment",
+          "vial_layout",
           "vials",
           "hardware",
           "controllers",

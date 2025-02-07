@@ -19,7 +19,13 @@ import { useEffect } from "react";
 import { WrenchScrewdriverIcon, XMarkIcon } from "@heroicons/react/24/solid";
 
 const Intent = z.enum(
-  ["dispatch_action", "start_calibration_procedure", "undo"],
+  [
+    "dispatch_action",
+    "start_calibration_procedure",
+    "save_calibration_procedure",
+    "resume_calibration_procedure",
+    "undo",
+  ],
   {
     required_error: "intent is required",
     invalid_type_error:
@@ -37,6 +43,16 @@ const schema = z.discriminatedUnion("intent", [
   }),
   z.object({
     intent: z.literal(Intent.Enum.start_calibration_procedure),
+    id: z.string(),
+    hardware_name: z.string(),
+  }),
+  z.object({
+    intent: z.literal(Intent.Enum.save_calibration_procedure),
+    id: z.string(),
+    hardware_name: z.string(),
+  }),
+  z.object({
+    intent: z.literal(Intent.Enum.resume_calibration_procedure),
     id: z.string(),
     hardware_name: z.string(),
   }),
@@ -109,6 +125,7 @@ export async function action({ request }: ActionFunctionArgs) {
         return submission.reply({ formErrors: ["unable to dispatch action"] });
       }
 
+    case Intent.Enum.resume_calibration_procedure:
     case Intent.Enum.start_calibration_procedure:
       try {
         const procedureState =
@@ -116,6 +133,8 @@ export async function action({ request }: ActionFunctionArgs) {
             {
               path: {
                 hardware_name: submission.value.hardware_name,
+              },
+              query: {
                 resume: false,
               },
               client: evolverClient,
@@ -124,7 +143,29 @@ export async function action({ request }: ActionFunctionArgs) {
         return procedureState.data;
       } catch (error) {
         return submission.reply({
-          formErrors: ["unable to start calibration"],
+          formErrors: [
+            "unable to start calibration, confirm a calibration_file attribute exists on the hardware config, and the file exists on the evolver device filesystem in the calibration_files directory.",
+          ],
+        });
+      }
+
+    case Intent.Enum.save_calibration_procedure:
+      try {
+        const procedureState =
+          await Evolver.saveCalibrationProcedureHardwareHardwareNameCalibratorProcedureSavePost(
+            {
+              path: {
+                hardware_name: submission.value.hardware_name,
+              },
+              client: evolverClient,
+            },
+          );
+        return procedureState.data;
+      } catch (error) {
+        return submission.reply({
+          formErrors: [
+            "unable to start calibration, confirm a calibration_file attribute exists on the hardware config, and the file exists on the evolver device filesystem in the calibration_files directory.",
+          ],
         });
       }
     case Intent.Enum.undo:
@@ -391,8 +432,13 @@ export default function CalibrateHardware() {
           <CalibrationProcedureControls started={started} />
           <div className="card bg-base-100  shadow-xl">
             <div className="card-body">
-              <p>no calibration procedure</p>
+              <p>no running calibration procedure detected</p>
               <p>start a calibration procedure to begin</p>
+              <p>
+                if calibration procedure state exists at the
+                calibrator.calibration_file location the procedure will resume
+                from the last saved state
+              </p>
             </div>
           </div>
         </div>
