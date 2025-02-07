@@ -293,7 +293,7 @@ const CalibrationProcedureControls = ({
         {!started && (
           <div>
             <button
-              className={clsx("btn", "btn-error")}
+              className={clsx("btn", "btn-warning")}
               onClick={() =>
                 document?.getElementById("start_procedure_modal")?.showModal()
               }
@@ -309,10 +309,12 @@ const CalibrationProcedureControls = ({
                 </form>
                 <h3 className="text-lg">warning</h3>
                 <p className="py-4">
-                  starting a fresh calibration procedure will reset all progress
-                  from any in-progress procedures associated with, resuming will
-                  continue from a saved procedure state if it exists and start
-                  fresh if does not.
+                  <span>
+                    starting a new calibration procedure will reset all progress
+                    from any in-progress procedures associated with the
+                  </span>{" "}
+                  <span className="font-mono">{hardware_name}</span>{" "}
+                  <span>hardware.</span>
                 </p>
                 <div className="modal-action">
                   <form method="dialog">
@@ -342,7 +344,7 @@ const CalibrationProcedureControls = ({
 
         {!started && (
           <button
-            className={clsx("btn", "btn-info")}
+            className={clsx("btn", "btn-primary")}
             onClick={() => {
               const formData = new FormData();
               formData.append("id", id ?? "");
@@ -425,7 +427,8 @@ const CalibrationProcedureControls = ({
                 </form>
                 <h3 className="text-lg">warning</h3>
                 <p className="py-4">
-                  restarting the calibration procedure will reset all progress.
+                  restarting the calibration procedure will reset all unsaved
+                  progress.
                 </p>
                 <div className="modal-action">
                   <form method="dialog">
