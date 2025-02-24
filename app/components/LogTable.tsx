@@ -6,7 +6,7 @@ export interface LogLine {
   data: { level: "EVENT"; message: string };
 }
 
-export default function LogDisplay({
+export default function LogTable({
   logs,
   title,
 }: {

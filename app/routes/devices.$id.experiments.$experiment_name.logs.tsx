@@ -5,7 +5,7 @@ import { db } from "~/utils/db.server";
 
 import * as Evolver from "client/services.gen";
 import { LoaderFunctionArgs } from "@remix-run/node";
-import LogDisplay from "~/components/LogDisplay";
+import LogTable from "~/components/LogTable";
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id, experiment_name } = params;
@@ -49,15 +49,14 @@ export function ErrorBoundary() {
 
 export default function ExperimentLogs() {
   const { logs } = useLoaderData<typeof loader>();
-  console.log("DATA: ", logs);
-  const l = Object.keys(logs).map((key, ix) => (
-    <LogDisplay key={`${key}-${ix}`} title={key} logs={logs[key]} />
+  const logTables = Object.keys(logs).map((key, ix) => (
+    <LogTable key={`${key}-${ix}`} title={key} logs={logs[key]} />
   ));
   return (
     <div>
       <div className="divider"></div>
       <div className="font-mono">logs</div>
-      {l}
+      {logTables}
     </div>
   );
 }
