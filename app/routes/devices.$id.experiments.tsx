@@ -4,7 +4,6 @@ import {
   useLoaderData,
   useParams,
   useRouteLoaderData,
-  useSearchParams,
 } from "@remix-run/react";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";

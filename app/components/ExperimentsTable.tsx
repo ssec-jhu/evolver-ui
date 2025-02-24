@@ -40,8 +40,8 @@ export function ExperimentsTable({
               className={clsx(
                 "btn btn-outline",
                 key === experiment_name &&
-                currentPath === "logs" &&
-                "btn-active",
+                  currentPath === "logs" &&
+                  "btn-active",
               )}
               to={`/devices/${id}/experiments/${key}/logs`}
             >
