@@ -24,8 +24,12 @@ export function ExperimentsTable({
             <ul className="list">
               {controllers?.map(({ classinfo, config }) => {
                 return (
-                  <li className="list-row" key={classinfo}>
-                    {config.name}
+                  <li className="list-row underline" key={classinfo}>
+                    <Link
+                      to={`/devices/${id}/experiments/${key}/logs#${config.name}`}
+                    >
+                      {config.name}
+                    </Link>
                   </li>
                 );
               })}

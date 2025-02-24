@@ -35,7 +35,9 @@ export default function LogDisplay({
   return (
     <div>
       <div className="divider"></div>
-      <div className="font-mono">title: {title}</div>
+      <div id={title} className="font-mono">
+        {title}
+      </div>
       <div className="divider"></div>
       <div className="flex h-screen w-auto">
         <div className="overflow-y-auto flex-1">

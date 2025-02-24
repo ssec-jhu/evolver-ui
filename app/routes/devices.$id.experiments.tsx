@@ -67,7 +67,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
 export default function Controllers() {
   const { id } = useParams();
   const { experiments } = useLoaderData<typeof loader>();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const loaderData = useRouteLoaderData<typeof loader>("routes/devices.$id");
   let evolverConfig = {} as EvolverConfigWithoutDefaults;

@@ -5,7 +5,7 @@ import { db } from "~/utils/db.server";
 
 import * as Evolver from "client/services.gen";
 import { LoaderFunctionArgs } from "@remix-run/node";
-import LogDisplay, { LogLine } from "~/components/LogDisplay";
+import LogDisplay from "~/components/LogDisplay";
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id, experiment_name } = params;
