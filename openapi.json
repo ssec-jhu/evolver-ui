@@ -552,6 +552,111 @@
         }
       }
     },
+    "/experiment/": {
+      "get": {
+        "tags": [
+          "experiment"
+        ],
+        "summary": "Get Experiments",
+        "operationId": "get_experiments_experiment__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/Experiment-Output"
+                  },
+                  "type": "object",
+                  "title": "Response Get Experiments Experiment  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/experiment/{experiment_name}/logs": {
+      "get": {
+        "tags": [
+          "experiment"
+        ],
+        "summary": "Get Experiment Logs",
+        "operationId": "get_experiment_logs_experiment__experiment_name__logs_get",
+        "parameters": [
+          {
+            "name": "experiment_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/experiment/{experiment_name}": {
+      "get": {
+        "tags": [
+          "experiment"
+        ],
+        "summary": "Get Experiment Overview",
+        "operationId": "get_experiment_overview_experiment__experiment_name__get",
+        "parameters": [
+          {
+            "name": "experiment_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Experiment Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Describe Evolver",
@@ -671,15 +776,6 @@
         "summary": "Get History",
         "operationId": "history",
         "parameters": [
-          {
-            "name": "name",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Name"
-            }
-          },
           {
             "name": "t_start",
             "in": "query",
@@ -919,6 +1015,13 @@
     "schemas": {
       "Body_history": {
         "properties": {
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Names"
+          },
           "kinds": {
             "anyOf": [
               {
@@ -967,6 +1070,23 @@
         },
         "type": "object",
         "title": "Body_history"
+      },
+      "Config-Output": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "title": "Config"
       },
       "ConfigDescriptor": {
         "properties": {
@@ -1027,9 +1147,9 @@
             "type": "string",
             "title": "Name"
           },
-          "experiment": {
+          "namespace": {
             "type": "string",
-            "title": "Experiment"
+            "title": "Namespace"
           },
           "vial_layout": {
             "items": {
@@ -1060,19 +1180,12 @@
             "type": "object",
             "title": "Hardware"
           },
-          "controllers": {
-            "items": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/ConfigDescriptor"
-                },
-                {
-                  "$ref": "#/components/schemas/evolver__controller__interface__Controller__Config"
-                }
-              ]
+          "experiments": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Experiment-Input"
             },
-            "type": "array",
-            "title": "Controllers"
+            "type": "object",
+            "title": "Experiments"
           },
           "serial": {
             "anyOf": [
@@ -1128,11 +1241,11 @@
         "type": "object",
         "required": [
           "name",
-          "experiment",
+          "namespace",
           "vial_layout",
           "vials",
           "hardware",
-          "controllers",
+          "experiments",
           "serial",
           "history",
           "enable_control",
@@ -1144,6 +1257,80 @@
           "log_level"
         ],
         "title": "EvolverConfigWithoutDefaults"
+      },
+      "Experiment-Input": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          },
+          "controllers": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ConfigDescriptor"
+                },
+                {
+                  "$ref": "#/components/schemas/evolver__controller__interface__Controller__Config"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Controllers",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "Experiment"
+      },
+      "Experiment-Output": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          },
+          "controllers": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ConfigDescriptor"
+                },
+                {
+                  "$ref": "#/components/schemas/Config-Output"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Controllers",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "Experiment"
       },
       "HTTPValidationError": {
         "properties": {
