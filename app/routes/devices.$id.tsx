@@ -274,6 +274,17 @@ export default function Device() {
         >
           hardware
         </Link>
+        <Link
+          to={"./experiments"}
+          role="tab"
+          className={clsx(
+            "tab",
+            currentPath === "experiments" && "tab-active",
+            "tab-border-3",
+          )}
+        >
+          experiments
+        </Link>
       </div>
       <div className="p-8 bg-base-300 rounded-box  relative overflow-x-auto">
         <Outlet />
