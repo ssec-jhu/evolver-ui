@@ -1,9 +1,9 @@
 export interface LogLine {
-  [key: string]: number | string | { level: "EVENT"; message: string } | null;
+  [key: string]: number | string | { level: string; message: string } | null;
   timestamp: number;
-  kind: "event";
+  kind: string;
   vial: number | null;
-  data: { level: "EVENT"; message: string };
+  data: { level: string; message: string };
 }
 
 export default function LogTable({
