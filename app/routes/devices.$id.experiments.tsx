@@ -15,6 +15,7 @@ import * as Evolver from "client/services.gen";
 
 import { createClient } from "@hey-api/client-fetch";
 import { ExperimentsTable } from "~/components/ExperimentsTable";
+import { ControllerConfig } from "~/components/ControllerConfig";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string } }) => {
@@ -94,6 +95,75 @@ export default function Controllers() {
     );
   }
 
+  // Get all controllers from all experiments
+  const allControllers = Object.entries(experiments).flatMap(
+    ([experimentId, experimentData]) => {
+      return experimentData.controllers || [];
+    },
+  );
+
+  return (
+    <div>
+      <ExperimentsTable
+        evolverConfig={evolverConfig}
+        experiments={experiments}
+        id={id ?? ""}
+      />
+
+      {/* Display controller configurations */}
+      {Object.entries(experiments).map(([experimentId, experimentData]) => (
+        <div key={experimentId} className="mt-8">
+          <h2 className="text-lg font-bold mb-4">
+            {experimentData.name || experimentId} Controllers
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {experimentData.controllers &&
+              experimentData.controllers.map((controller, idx) => (
+                <ControllerConfig
+                  key={`${experimentId}-controller-${idx}`}
+                  controller={controller}
+                />
+              ))}
+          </div>
+        </div>
+      ))}
+
+      <Outlet />
+    </div>
+  );
+}
+/*
+export default function Controllers() {
+  const { id } = useParams();
+  const { experiments } = useLoaderData<typeof loader>();
+
+  const loaderData = useRouteLoaderData<typeof loader>("routes/devices.$id");
+  let evolverConfig = {} as EvolverConfigWithoutDefaults;
+
+  if (loaderData?.description?.config) {
+    const description = loaderData.description;
+    if (description && description.config) {
+      evolverConfig = description.config as EvolverConfigWithoutDefaults;
+    }
+  }
+
+  if (!evolverConfig.experiments) {
+    return (
+      <div className="flex flex-col items-center">
+        <CogIcon className="h-20 w-20" />
+        <div>No experiments found in config.</div>
+        <div
+          className="tooltip"
+          data-tip="use the configuration editor to add hardware "
+        >
+          <Link className="link text-primary" to={`/devices/${id}/config`}>
+            add experiment
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <ExperimentsTable
@@ -105,3 +175,4 @@ export default function Controllers() {
     </div>
   );
 }
+*/
