@@ -1,4 +1,3 @@
-import { XCircleIcon } from "@heroicons/react/24/solid";
 import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
