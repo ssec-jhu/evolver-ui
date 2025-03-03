@@ -158,7 +158,7 @@ export default function Device() {
     }
   }, [actionData]);
   const pathElements = pathname.split("/");
-  const currentPath = pathElements.pop();
+  const lastPathElement = pathElements[pathElements.length - 1];
   const evolverConfig = description.config;
 
   return (
@@ -246,7 +246,7 @@ export default function Device() {
             role="tab"
             className={clsx(
               "tab",
-              currentPath === "state" && "tab-active",
+              lastPathElement === "state" && "tab-active",
               "tab-border-3",
             )}
           >
@@ -257,7 +257,7 @@ export default function Device() {
             to={"./config"}
             className={clsx(
               "tab",
-              currentPath === "config" && "tab-active",
+              lastPathElement === "config" && "tab-active",
               "tab-border-3",
             )}
           >

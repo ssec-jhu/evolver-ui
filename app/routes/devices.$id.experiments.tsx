@@ -103,23 +103,6 @@ export default function Controllers() {
         id={id ?? ""}
       />
 
-      {Object.entries(experiments).map(([experimentId, experimentData]) => (
-        <div key={experimentId} className="mt-8">
-          <h2 className="text-lg font-bold mb-4">
-            {experimentData.name || experimentId} Controllers
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {experimentData.controllers &&
-              experimentData.controllers.map((controller, idx) => (
-                <ControllerConfig
-                  key={`${experimentId}-controller-${idx}`}
-                  controller={controller}
-                />
-              ))}
-          </div>
-        </div>
-      ))}
-
       <Outlet />
     </div>
   );

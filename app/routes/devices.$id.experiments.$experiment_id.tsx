@@ -95,16 +95,11 @@ export default function Controllers() {
   }
 
   return (
-    <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
+    <div className="bg-base-300 rounded-box relative overflow-x-auto">
       {Object.entries(experiments)
-        .filter(([experimentId]) => {
-          experimentId !== experiment_id;
-        })
+        .filter(([experimentId]) => experimentId == experiment_id)
         .map(([experimentId, experimentData]) => (
           <div key={experimentId} className="mt-8">
-            <h2 className="text-lg font-bold mb-4">
-              {experimentData.name || experimentId} Controllers
-            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {experimentData.controllers &&
                 experimentData.controllers.map((controller, idx) => (
