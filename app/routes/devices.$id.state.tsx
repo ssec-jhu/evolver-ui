@@ -47,7 +47,7 @@ export default function Hardware() {
   const excludedProperties = EXCLUDED_PROPERTIES?.split(",") ?? [];
 
   return (
-    <div>
+    <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
       <FilterableVialGrid
         stateData={evolverState.state}
         id={id}

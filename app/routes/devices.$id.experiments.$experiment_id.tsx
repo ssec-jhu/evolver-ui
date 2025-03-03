@@ -14,7 +14,6 @@ import { db } from "~/utils/db.server";
 import * as Evolver from "client/services.gen";
 
 import { createClient } from "@hey-api/client-fetch";
-import { ExperimentsTable } from "~/components/ExperimentsTable";
 import { ControllerConfig } from "~/components/ControllerConfig";
 
 export const handle = {
@@ -25,13 +24,13 @@ export const handle = {
 };
 
 export function ErrorBoundary() {
-  const { id } = useParams();
+  const { id, experiment_id } = useParams();
   return (
     <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
       <WrenchScrewdriverIcon className="w-10 h-10" />
       <div>
         <div>
-          <h1 className="font-mono">{`Error loading experiment. Check config experiments attribute.`}</h1>
+          <h1 className="font-mono">{`Error loading experiment ${experiment_id}. Check config experiments attribute.`}</h1>
         </div>
       </div>
 
@@ -65,7 +64,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 }
 
 export default function Controllers() {
-  const { id } = useParams();
+  const { id, experiment_id } = useParams();
   const { experiments } = useLoaderData<typeof loader>();
 
   const loaderData = useRouteLoaderData<typeof loader>("routes/devices.$id");
@@ -78,11 +77,11 @@ export default function Controllers() {
     }
   }
 
-  if (!evolverConfig.experiments) {
+  if (!evolverConfig.experiments[experiment_id]) {
     return (
       <div className="flex flex-col items-center">
         <CogIcon className="h-20 w-20" />
-        <div>No experiments found in config.</div>
+        <div>{`No experiment with name: ${experiment_id} was found in config.`}</div>
         <div
           className="tooltip"
           data-tip="use the configuration editor to add hardware "
@@ -97,29 +96,26 @@ export default function Controllers() {
 
   return (
     <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
-      <ExperimentsTable
-        evolverConfig={evolverConfig}
-        experiments={experiments}
-        id={id ?? ""}
-      />
-
-      {Object.entries(experiments).map(([experimentId, experimentData]) => (
-        <div key={experimentId} className="mt-8">
-          <h2 className="text-lg font-bold mb-4">
-            {experimentData.name || experimentId} Controllers
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {experimentData.controllers &&
-              experimentData.controllers.map((controller, idx) => (
-                <ControllerConfig
-                  key={`${experimentId}-controller-${idx}`}
-                  controller={controller}
-                />
-              ))}
+      {Object.entries(experiments)
+        .filter(([experimentId]) => {
+          experimentId !== experiment_id;
+        })
+        .map(([experimentId, experimentData]) => (
+          <div key={experimentId} className="mt-8">
+            <h2 className="text-lg font-bold mb-4">
+              {experimentData.name || experimentId} Controllers
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {experimentData.controllers &&
+                experimentData.controllers.map((controller, idx) => (
+                  <ControllerConfig
+                    key={`${experimentId}-controller-${idx}`}
+                    controller={controller}
+                  />
+                ))}
+            </div>
           </div>
-        </div>
-      ))}
-
+        ))}
       <Outlet />
     </div>
   );

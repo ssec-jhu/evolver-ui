@@ -117,7 +117,7 @@ export function VialGrid({
           hasData && "border-4 border-primary",
         )}
       >
-        <div className="absolute inset-0 flex items-center justify-center text-neutral text-opacity-25">
+        <div className="absolute inset-0 flex items-center justify-center text-neutral opacity-50 font-mono">
           <span className="block text-[5vw] leading-none">{index}</span>
         </div>
         {hasData && (
@@ -149,7 +149,7 @@ export function FilterableVialGrid({
   const [filteredProperties, setFilteredProperties] = useState<string[]>([]);
   const [availableSubKeys, setAvailableSubKeys] = useState<string[]>([]);
 
-  // Extract all unique subkeys from the data
+  // Extract all unique subkeys from the data, minus excludedProperties
   useEffect(() => {
     const subKeys = new Set<string>();
 
@@ -168,7 +168,7 @@ export function FilterableVialGrid({
 
   const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-    if (value === "x") {
+    if (value === "showAllCheckbox") {
       setFilteredProperties([]);
     } else if (filteredProperties.includes(value)) {
       setFilteredProperties(
@@ -191,7 +191,6 @@ export function FilterableVialGrid({
       },
       {} as { [key: string]: { [key: string]: number } },
     );
-    // Spread matchingData into the return object
     return { index, ...matchingData };
   });
 
@@ -201,13 +200,13 @@ export function FilterableVialGrid({
       <div
         key={index}
         className={clsx(
-          "relative flex items-center justify-center aspect-square border font-bold rounded-md",
+          "relative flex items-center justify-center aspect-square border font-bold rounded-md bg-base-200",
           !hasData && "border-2 border-gray-300",
           hasData && "border-4 border-primary",
         )}
       >
-        <div className="absolute inset-0 flex items-center justify-center text-neutral text-opacity-25">
-          <span className="block text-[5vw] leading-none">{index}</span>
+        <div className="absolute font-mono opacity-5">
+          <span className="block text-[10vw] leading-none">{index}</span>
         </div>
         {hasData && (
           <DataTable
@@ -221,44 +220,28 @@ export function FilterableVialGrid({
       </div>
     );
   });
+  const filterOptions = [
+    ...availableSubKeys.map((subKey) => (
+      <input
+        key={subKey}
+        className="btn"
+        type="checkbox"
+        name="propertyFilter"
+        value={subKey}
+        onChange={handleFilterChange}
+        aria-label={subKey}
+      />
+    )),
+  ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <form
-        className="filter flex justify-between gap-4"
-        id="propertyFilterForm"
-      >
-        <div className="flex gap-4 items-center">
-          <label className="font-mono" htmlFor="propertyFilterForm">
-            properties:
-          </label>
-          <input
-            className="btn "
-            type="checkbox"
-            value="x"
-            aria-label="show all"
-            checked={filteredProperties.length === 0}
-            onChange={handleFilterChange}
-          />
+    <div className="flex flex-col gap-4 ">
+      <div className="flex items-center gap-4 justify-end">
+        {filterOptions.length > 0 && <div className="font-mono">filter:</div>}
+        <div className="filter" id="propertyFilterForm">
+          {filterOptions}
         </div>
-        <div className="flex gap-4 items-center">
-          <label className="font-mono" htmlFor="propertyFilterForm">
-            exclude:
-          </label>
-          {availableSubKeys.map((subKey) => (
-            <input
-              key={subKey}
-              className="btn"
-              type="checkbox"
-              name="propertyFilter"
-              value={subKey}
-              checked={filteredProperties.includes(subKey)}
-              onChange={handleFilterChange}
-              aria-label={subKey}
-            />
-          ))}
-        </div>
-      </form>
+      </div>
       <div className="grid grid-cols-4 grid-rows-4 gap-2">{cells}</div>
     </div>
   );

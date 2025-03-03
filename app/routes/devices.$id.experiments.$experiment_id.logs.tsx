@@ -8,7 +8,7 @@ import { LoaderFunctionArgs } from "@remix-run/node";
 import LogTable from "~/components/LogTable";
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  const { id, experiment_name } = params;
+  const { id, experiment_id } = params;
   const targetDevice = await db.device.findUnique({ where: { device_id: id } });
   const { url } = targetDevice ?? { url: "" };
   const evolverClient = createClient({
@@ -18,7 +18,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
   const results = Promise.allSettled([
     Evolver.getExperimentLogsExperimentExperimentNameLogsGet({
       client: evolverClient,
-      path: { experiment_name },
+      path: { experiment_name: experiment_id },
     }),
   ]).then((results) => {
     return results.map((result) => result.value.data);
@@ -50,7 +50,7 @@ export function ErrorBoundary() {
 export default function ExperimentLogs() {
   const { logs } = useLoaderData<typeof loader>();
   const logTables = Object.keys(logs).map((key, ix) => (
-    <LogTable key={`${key}-${ix}`} title={key} logs={logs[key]} />
+    <LogTable key={key + ix} title={key} logs={logs[key]} />
   ));
   return (
     <div>

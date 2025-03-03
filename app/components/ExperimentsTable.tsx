@@ -14,44 +14,42 @@ export function ExperimentsTable({
   const { experiment_name } = useParams();
 
   const rows = [];
-  Object.entries(experiments).forEach(
-    ([key, { name, enabled, controllers }]) => {
-      rows.push(
-        <tr key={key} className={clsx("font-mono")}>
-          <td className="font-mono">{name}</td>
-          <td>{enabled ? "enabled" : "disabled"}</td>
-          <td className="font-mono">
-            <ul className="list">
-              {controllers?.map(({ classinfo, config }) => {
-                return (
-                  <li className="list-row underline" key={classinfo}>
-                    <Link
-                      to={`/devices/${id}/experiments/${key}/logs#${config.name}`}
-                    >
-                      {config.name}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </td>
-          <td className="flex justify-end font-sans">
-            <Link
-              className={clsx(
-                "btn btn-outline",
-                key === experiment_name &&
-                  currentPath === "logs" &&
-                  "btn-active",
-              )}
-              to={`/devices/${id}/experiments/${key}/logs`}
-            >
-              logs
-            </Link>
-          </td>
-        </tr>,
-      );
-    },
-  );
+  Object.entries(experiments).forEach(([key, { enabled, controllers }], ix) => {
+    rows.push(
+      <tr key={key + ix} className={clsx("font-mono")}>
+        <td className="font-mono">
+          <Link to={`/devices/${id}/experiments/${key}`}>{key}</Link>
+        </td>
+        <td>{enabled ? "enabled" : "disabled"}</td>
+        <td className="font-mono">
+          <ul className="list">
+            {controllers?.map(({ classinfo, config }, ix) => {
+              return (
+                <li className="list-row underline" key={classinfo + ix}>
+                  <Link
+                    to={`/devices/${id}/experiments/${key}/logs#${config.name}`}
+                  >
+                    {config.name}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </td>
+        <td className="flex justify-end font-sans">
+          <Link
+            className={clsx(
+              "btn btn-outline",
+              key === experiment_name && currentPath === "logs" && "btn-active",
+            )}
+            to={`/devices/${id}/experiments/${key}/logs`}
+          >
+            logs
+          </Link>
+        </td>
+      </tr>,
+    );
+  });
 
   return (
     <table className="table">
