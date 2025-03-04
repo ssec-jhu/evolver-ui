@@ -27,6 +27,7 @@ import { useEffect } from "react";
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string } }) => {
     const { id } = params;
+
     return <Link to={`/devices/${id}/state`}>{id}</Link>;
   },
 };
@@ -178,6 +179,17 @@ export default function Device() {
                     target="_blank"
                     rel="noreferrer"
                   >{`api`}</a>
+                </span>
+              </h1>
+              <div className="divider divider-horizontal"></div>
+              <h1 className="font-sans">
+                <span className="font-mono">
+                  <a
+                    className="link"
+                    href={`${url}/html/network`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >{`network`}</a>
                 </span>
               </h1>
             </div>

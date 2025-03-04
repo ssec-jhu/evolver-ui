@@ -195,12 +195,11 @@ export default function DevicesList() {
 
   return (
     <>
-      <div className="flex flex-wrap justify-between gap-4">
-        <h1 className="flex-none text-2xl">Devices</h1>
+      <div className="flex">
         <Form
           method="POST"
           action="/devices/list"
-          className="flex flex-none w-100 space-x-4 items-baseline"
+          className=""
           {...getFormProps(form)}
         >
           <input
@@ -263,7 +262,7 @@ export default function DevicesList() {
                   <th>id</th>
                   <th>url</th>
                   <th>status</th>
-                  <th>forget</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>{deviceTableItems}</tbody>

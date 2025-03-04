@@ -235,8 +235,10 @@ export function FilterableVialGrid({
   ];
 
   return (
-    <div className="flex flex-col gap-4 ">
-      <div className="flex items-center gap-4 justify-end">
+    <div
+      className={clsx(filterOptions.length > 0 && "gap-4", "flex", "flex-col")}
+    >
+      <div className="flex flex-col items-center justify-end gap-4">
         {filterOptions.length > 0 && <div className="font-mono">filter:</div>}
         <div className="filter" id="propertyFilterForm">
           {filterOptions}
