@@ -155,7 +155,7 @@ function Document(props: {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="p-4">
         <GlobalLoading />
         {props.children}
         <ScrollRestoration />

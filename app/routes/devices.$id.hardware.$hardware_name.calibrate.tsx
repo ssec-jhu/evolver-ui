@@ -296,15 +296,9 @@ const CalibrationProcedureControls = ({
       <div className="flex">
         {!started && (
           <div className="flex">
-            <button
-              className={clsx("btn", "btn-error")}
-              onClick={() =>
-                document?.getElementById("start_procedure_modal")?.showModal()
-              }
-            >
-              start
-            </button>
             <WarningModal
+              triggerClassname={clsx("btn btn-error")}
+              triggerText="start"
               modalId="start_procedure_modal"
               submitText="start"
               warningMessage={`
@@ -330,19 +324,13 @@ const CalibrationProcedureControls = ({
 
         {started && (
           <div className="flex">
-            <button
-              className={clsx(
+            <WarningModal
+              triggerClassname={clsx(
                 "btn",
                 started && "btn-error",
                 !hasHistory && "btn-disabled",
               )}
-              onClick={() =>
-                document?.getElementById("restart_procedure_modal")?.showModal()
-              }
-            >
-              restart
-            </button>
-            <WarningModal
+              triggerText="restart"
               modalId="restart_procedure_modal"
               submitText="restart"
               warningMessage={`
