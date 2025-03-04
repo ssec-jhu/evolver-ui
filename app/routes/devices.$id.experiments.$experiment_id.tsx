@@ -107,7 +107,7 @@ export default function Controllers() {
       {Object.entries(experiments)
         .filter(([experimentId]) => experimentId == experiment_id)
         .map(([experimentId, experimentData]) => (
-          <div key={experimentId} className="mt-8">
+          <div key={experimentId}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {experimentData.controllers &&
                 experimentData.controllers.map((controller, idx) => (
