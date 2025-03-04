@@ -17,6 +17,7 @@ import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
 import { useEffect } from "react";
 import { WrenchScrewdriverIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { WarningModal } from "~/components/Modals";
 
 const Intent = z.enum(
   [
@@ -303,45 +304,26 @@ const CalibrationProcedureControls = ({
             >
               start
             </button>
-            <dialog id="start_procedure_modal" className="modal">
-              <div className="modal-box">
-                <form method="dialog">
-                  <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-                    <XMarkIcon />
-                  </button>
-                </form>
-                <h3 className="text-lg">warning</h3>
-                <p className="py-4">
-                  <span>
+            <WarningModal
+              modalId="start_procedure_modal"
+              submitText="start"
+              warningMessage={`
                     starting a new calibration procedure will reset all progress
-                    from any in-progress procedures associated with the
-                  </span>{" "}
-                  <span className="font-mono">{hardware_name}</span>{" "}
-                  <span>hardware.</span>
-                </p>
-                <div className="modal-action">
-                  <form method="dialog">
-                    <button
-                      className={clsx("btn", "btn-warning")}
-                      onClick={() => {
-                        const formData = new FormData();
-                        formData.append("id", id ?? "");
-                        formData.append(
-                          "intent",
-                          Intent.Enum.start_calibration_procedure,
-                        );
-                        formData.append("hardware_name", hardware_name ?? "");
-                        submit(formData, {
-                          method: "POST",
-                        });
-                      }}
-                    >
-                      start
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </dialog>
+                    from any in-progress procedures associated with the ${hardware_name} hardware.
+              `}
+              onClick={() => {
+                const formData = new FormData();
+                formData.append("id", id ?? "");
+                formData.append(
+                  "intent",
+                  Intent.Enum.start_calibration_procedure,
+                );
+                formData.append("hardware_name", hardware_name ?? "");
+                submit(formData, {
+                  method: "POST",
+                });
+              }}
+            />
             <div className="divider divider-horizontal"></div>
           </div>
         )}
@@ -360,42 +342,26 @@ const CalibrationProcedureControls = ({
             >
               restart
             </button>
-            <dialog id="restart_procedure_modal" className="modal">
-              <div className="modal-box">
-                <form method="dialog">
-                  <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-                    <XMarkIcon />
-                  </button>
-                </form>
-                <h3 className="text-lg">warning</h3>
-                <p className="py-4">
-                  restarting the calibration procedure will reset all unsaved
-                  progress.
-                </p>
-                <div className="modal-action">
-                  <form method="dialog">
-                    <button
-                      className={clsx("btn", "btn-error")}
-                      onClick={() => {
-                        const formData = new FormData();
-                        formData.append("id", id ?? "");
-                        formData.append(
-                          "intent",
-                          Intent.Enum.start_calibration_procedure,
-                        );
-                        formData.append("hardware_name", hardware_name ?? "");
-                        submit(formData, {
-                          method: "POST",
-                        });
-                      }}
-                    >
-                      restart
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </dialog>
-
+            <WarningModal
+              modalId="restart_procedure_modal"
+              submitText="restart"
+              warningMessage={`
+                    restarting the calibration procedure will reset all unsaved
+                    progress.
+              `}
+              onClick={() => {
+                const formData = new FormData();
+                formData.append("id", id ?? "");
+                formData.append(
+                  "intent",
+                  Intent.Enum.start_calibration_procedure,
+                );
+                formData.append("hardware_name", hardware_name ?? "");
+                submit(formData, {
+                  method: "POST",
+                });
+              }}
+            />
             <div className="divider divider-horizontal"></div>
           </div>
         )}

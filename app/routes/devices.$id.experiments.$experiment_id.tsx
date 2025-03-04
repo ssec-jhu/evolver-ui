@@ -17,9 +17,17 @@ import { createClient } from "@hey-api/client-fetch";
 import { ControllerConfig } from "~/components/ControllerConfig";
 
 export const handle = {
-  breadcrumb: ({ params }: { params: { id: string } }) => {
-    const { id } = params;
-    return <Link to={`/devices/${id}/experiment`}>experiment</Link>;
+  breadcrumb: ({
+    params,
+  }: {
+    params: { id: string; experiment_id: string };
+  }) => {
+    const { id, experiment_id } = params;
+    return (
+      <Link to={`/devices/${id}/experiments/${experiment_id}`}>
+        {experiment_id}
+      </Link>
+    );
   },
 };
 

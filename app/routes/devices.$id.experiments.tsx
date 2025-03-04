@@ -20,7 +20,7 @@ import { ControllerConfig } from "~/components/ControllerConfig";
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string } }) => {
     const { id } = params;
-    return <Link to={`/devices/${id}/experiment`}>experiment</Link>;
+    return <Link to={`/devices/${id}/experiments`}>experiments</Link>;
   },
 };
 

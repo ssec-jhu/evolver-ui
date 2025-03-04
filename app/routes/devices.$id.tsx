@@ -177,7 +177,7 @@ export default function Device() {
                     href={`${url}/docs`}
                     target="_blank"
                     rel="noreferrer"
-                  >{`${url}/docs`}</a>
+                  >{`api`}</a>
                 </span>
               </h1>
             </div>
