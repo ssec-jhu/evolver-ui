@@ -5,7 +5,7 @@ import clsx from "clsx";
 export default function Navbar({ pathname = "" as string }): JSX.Element {
   return (
     <div className="">
-      <div className="mx-auto max-w-6xl flex flex-wrap justify-between gap-10 min-h-16 items-center">
+      <div className="mx-auto max-w-6xl flex flex-wrap justify-between gap-4 min-h-16 items-center">
         <div className="flex-1">
           <div className="flex items-center space-x-1">
             <Link to="/" className="text-primary ">
@@ -13,7 +13,7 @@ export default function Navbar({ pathname = "" as string }): JSX.Element {
             </Link>
           </div>
         </div>
-        <div className="flex-none">
+        <div className="flex  gap-10">
           <Link
             tabIndex={0}
             role="button"
@@ -23,10 +23,8 @@ export default function Navbar({ pathname = "" as string }): JSX.Element {
             )}
             to="/devices/list"
           >
-            Devices
+            devices
           </Link>
-        </div>
-        <div className="flex-none">
           <ThemeController />
         </div>
       </div>

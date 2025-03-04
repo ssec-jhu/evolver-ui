@@ -36,7 +36,7 @@ export function ErrorBoundary() {
   const { hardware_name } = useParams();
 
   return (
-    <div className="flex flex-col gap-4 bg-base-300 p-8 rounded-box">
+    <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
       <WrenchScrewdriverIcon className="w-10 h-10" />
       <div>
         <div>
@@ -44,7 +44,7 @@ export function ErrorBoundary() {
         </div>
       </div>
 
-      <Link to="/devices" className="link">
+      <Link to="/devices/list" className="link">
         home
       </Link>
     </div>
@@ -106,7 +106,7 @@ export default function Hardware() {
 
   if (!data || !hardware_name || !data[hardware_name]) {
     return (
-      <div className="flex flex-col items-center justify-center  p-10">
+      <div className="flex flex-col items-center justify-center p-4 bg-base-300 rounded-box relative overflow-x-auto">
         <XCircleIcon className="w-6 h-6" />
         <div>Data not found</div>
       </div>
@@ -154,5 +154,9 @@ export default function Hardware() {
     charts.push(chart);
   });
 
-  return <div className="mt-4">{charts}</div>;
+  return (
+    <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
+      {charts}
+    </div>
+  );
 }

@@ -195,12 +195,11 @@ export default function DevicesList() {
 
   return (
     <>
-      <div className="mt-4 mb-4 flex flex-wrap justify-between gap-4">
-        <h1 className="flex-none text-2xl">Devices</h1>
+      <div className="flex">
         <Form
           method="POST"
           action="/devices/list"
-          className="flex flex-none w-100 space-x-4 items-baseline"
+          className=""
           {...getFormProps(form)}
         >
           <input
@@ -234,7 +233,7 @@ export default function DevicesList() {
           </div>
         </Form>
       </div>
-      <div className="bg-base-300 rounded-box p-8">
+      <div className="bg-base-300 rounded-box p-4">
         {deviceTableItems.length === 0 && (
           <div className="flex flex-col justify-center items-center gap-4">
             <CloudIcon className="w-16 h-16 text-gray-500" />
@@ -263,7 +262,7 @@ export default function DevicesList() {
                   <th>id</th>
                   <th>url</th>
                   <th>status</th>
-                  <th>forget</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>{deviceTableItems}</tbody>

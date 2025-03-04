@@ -12,7 +12,7 @@ export default function ThemeController() {
   const { theme } = useLoaderData<typeof loader>();
 
   return (
-    <label className="swap swap-rotate pt-2">
+    <label className="swap swap-rotate">
       {/* this hidden checkbox controls the state */}
       <input
         type="checkbox"

@@ -61,9 +61,8 @@ export const HardwareLineChart = ({
   const eventData = processEvents(events, vials);
 
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       <div className="font-mono">property: {property}</div>
-      <div className="divider"></div>
       <ResponsiveContainer width="100%" height={400}>
         <LineChart data={formattedData}>
           <CartesianGrid strokeDasharray="3 3" />

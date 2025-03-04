@@ -10,25 +10,35 @@ import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { db } from "~/utils/db.server";
+
 import * as Evolver from "client/services.gen";
+
 import { createClient } from "@hey-api/client-fetch";
-import { ExperimentsTable } from "~/components/ExperimentsTable";
+import { ControllerConfig } from "~/components/ControllerConfig";
 
 export const handle = {
-  breadcrumb: ({ params }: { params: { id: string } }) => {
-    const { id } = params;
-    return <Link to={`/devices/${id}/experiments`}>experiments</Link>;
+  breadcrumb: ({
+    params,
+  }: {
+    params: { id: string; experiment_id: string };
+  }) => {
+    const { id, experiment_id } = params;
+    return (
+      <Link to={`/devices/${id}/experiments/${experiment_id}`}>
+        {experiment_id}
+      </Link>
+    );
   },
 };
 
 export function ErrorBoundary() {
-  const { id } = useParams();
+  const { id, experiment_id } = useParams();
   return (
     <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
       <WrenchScrewdriverIcon className="w-10 h-10" />
       <div>
         <div>
-          <h1 className="font-mono">{`Error loading experiment. Check config experiments attribute.`}</h1>
+          <h1 className="font-mono">{`Error loading experiment ${experiment_id}. Check config experiments attribute.`}</h1>
         </div>
       </div>
 
@@ -62,7 +72,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 }
 
 export default function Controllers() {
-  const { id } = useParams();
+  const { id, experiment_id } = useParams();
   const { experiments } = useLoaderData<typeof loader>();
 
   const loaderData = useRouteLoaderData<typeof loader>("routes/devices.$id");
@@ -75,11 +85,11 @@ export default function Controllers() {
     }
   }
 
-  if (!evolverConfig.experiments) {
+  if (!evolverConfig.experiments[experiment_id]) {
     return (
       <div className="flex flex-col items-center">
         <CogIcon className="h-20 w-20" />
-        <div>No experiments found in config.</div>
+        <div>{`No experiment with name: ${experiment_id} was found in config.`}</div>
         <div
           className="tooltip"
           data-tip="use the configuration editor to add hardware "
@@ -93,13 +103,22 @@ export default function Controllers() {
   }
 
   return (
-    <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
-      <ExperimentsTable
-        evolverConfig={evolverConfig}
-        experiments={experiments}
-        id={id ?? ""}
-      />
-
+    <div className="bg-base-300 rounded-box relative overflow-x-auto">
+      {Object.entries(experiments)
+        .filter(([experimentId]) => experimentId == experiment_id)
+        .map(([experimentId, experimentData]) => (
+          <div key={experimentId}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {experimentData.controllers &&
+                experimentData.controllers.map((controller, idx) => (
+                  <ControllerConfig
+                    key={`${experimentId}-controller-${idx}`}
+                    controller={controller}
+                  />
+                ))}
+            </div>
+          </div>
+        ))}
       <Outlet />
     </div>
   );
