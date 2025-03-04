@@ -6,7 +6,7 @@ import {
 type ControllerConfigProps = {
   controller: {
     classinfo: string;
-    config: Record<string, any>;
+    config: Record<string, unknown>;
   };
 };
 

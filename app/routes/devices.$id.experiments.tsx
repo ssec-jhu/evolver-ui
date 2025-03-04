@@ -10,12 +10,9 @@ import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { db } from "~/utils/db.server";
-
 import * as Evolver from "client/services.gen";
-
 import { createClient } from "@hey-api/client-fetch";
 import { ExperimentsTable } from "~/components/ExperimentsTable";
-import { ControllerConfig } from "~/components/ControllerConfig";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string } }) => {

@@ -16,7 +16,7 @@ import clsx from "clsx";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
 import { useEffect } from "react";
-import { WrenchScrewdriverIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { WarningModal } from "~/components/Modals";
 
 const Intent = z.enum(
