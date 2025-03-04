@@ -23,6 +23,7 @@ import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
 import { toast as notify } from "react-toastify";
 import { useEffect } from "react";
+import { WarningModal } from "~/components/Modals";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string } }) => {
@@ -205,23 +206,31 @@ export default function Device() {
               className="tooltip"
               data-tip="Click to stop device hardware and stop the control loop"
             >
-              <div className="flex flex-col items-center">
-                <PauseIcon
-                  title="pause device"
-                  className="h-9 w-9 text-accent"
-                  onClick={() => {
-                    notify.dismiss();
-                    const formData = new FormData();
-                    formData.append("redirectTo", pathname);
-                    formData.append("id", id ?? "");
-                    formData.append("intent", Intent.Enum.stop);
-                    submit(formData, {
-                      method: "POST",
-                    });
-                  }}
-                />
-                <div className="badge text-sm badge-accent">running</div>
-              </div>
+              <WarningModal
+                warningTitle="pause device"
+                warningMessage="Pause the hardware and the control loop, any data stored-in-memory will be lost."
+                modalId="start_device_modal"
+                submitText="pause"
+                submitClassname="btn btn-error"
+                onClick={() => {
+                  notify.dismiss();
+                  const formData = new FormData();
+                  formData.append("redirectTo", pathname);
+                  formData.append("id", id ?? "");
+                  formData.append("intent", Intent.Enum.stop);
+                  submit(formData, {
+                    method: "POST",
+                  });
+                }}
+              >
+                <div className="flex flex-col items-center">
+                  <PauseIcon
+                    title="pause device"
+                    className="h-9 w-9 text-accent"
+                  />
+                  <div className="badge text-sm badge-accent">running</div>
+                </div>
+              </WarningModal>
             </div>
           )}
           {!state.active && (
@@ -229,24 +238,32 @@ export default function Device() {
               className="tooltip"
               data-tip="Click to start running the device hardware and the control loop"
             >
-              <div className="flex flex-col items-center">
-                <PlayIcon
-                  title="start device"
-                  className="h-9 w-9 fill-current "
-                  onClick={() => {
-                    notify.dismiss();
-                    const formData = new FormData();
+              <WarningModal
+                warningTitle="start device"
+                warningMessage="Are you sure you want to start the device?"
+                modalId="start_device_modal"
+                submitText="start"
+                onClick={() => {
+                  notify.dismiss();
+                  const formData = new FormData();
 
-                    formData.append("redirectTo", pathname);
-                    formData.append("id", id ?? "");
-                    formData.append("intent", Intent.Enum.start);
-                    submit(formData, {
-                      method: "POST",
-                    });
-                  }}
-                />
-                <div className="badge text-sm badge-current">stopped</div>
-              </div>
+                  formData.append("redirectTo", pathname);
+                  formData.append("id", id ?? "");
+                  formData.append("intent", Intent.Enum.start);
+                  submit(formData, {
+                    method: "POST",
+                  });
+                }}
+              >
+                <div className="flex flex-col items-center">
+                  <PlayIcon
+                    title="start device"
+                    className="h-9 w-9 fill-current "
+                  />
+
+                  <div className="badge text-sm ">stopped</div>
+                </div>
+              </WarningModal>
             </div>
           )}
         </div>

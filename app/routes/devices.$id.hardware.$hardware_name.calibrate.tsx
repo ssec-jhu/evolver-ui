@@ -297,8 +297,6 @@ const CalibrationProcedureControls = ({
         {!started && (
           <div className="flex">
             <WarningModal
-              triggerClassname={clsx("btn btn-error")}
-              triggerText="start"
               modalId="start_procedure_modal"
               submitText="start"
               warningMessage={`
@@ -317,7 +315,9 @@ const CalibrationProcedureControls = ({
                   method: "POST",
                 });
               }}
-            />
+            >
+              <span className={clsx("btn")}>start</span>
+            </WarningModal>
             <div className="divider divider-horizontal"></div>
           </div>
         )}
@@ -325,12 +325,7 @@ const CalibrationProcedureControls = ({
         {started && (
           <div className="flex">
             <WarningModal
-              triggerClassname={clsx(
-                "btn",
-                started && "btn-error",
-                !hasHistory && "btn-disabled",
-              )}
-              triggerText="restart"
+              active={hasHistory}
               modalId="restart_procedure_modal"
               submitText="restart"
               warningMessage={`
@@ -349,7 +344,17 @@ const CalibrationProcedureControls = ({
                   method: "POST",
                 });
               }}
-            />
+            >
+              <span
+                className={clsx(
+                  "btn",
+                  started && "btn-error",
+                  !hasHistory && "btn-disabled",
+                )}
+              >
+                restart
+              </span>
+            </WarningModal>
             <div className="divider divider-horizontal"></div>
           </div>
         )}

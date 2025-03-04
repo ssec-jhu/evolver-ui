@@ -7,24 +7,25 @@ export function WarningModal({
   warningTitle = "warning",
   modalId,
   submitText = "ok",
-  triggerClassname,
-  triggerText,
+  submitClassname = "btn",
+  children,
+  active = true,
 }: {
   onClick: () => void;
   warningTitle?: string;
   warningMessage: string;
   modalId: string;
   submitText?: string;
-  triggerClassname: ReactNode;
-  triggerText: string;
+  submitClassname?: string | ReactNode;
+  children: ReactNode;
+  active?: boolean;
 }) {
   return (
     <div>
       <button
-        className={triggerClassname as string}
-        onClick={() => document?.getElementById(modalId)?.showModal()}
+        onClick={() => active && document?.getElementById(modalId)?.showModal()}
       >
-        {triggerText}
+        {children}
       </button>
       <dialog id={modalId} className="modal">
         <div className="modal-box">
@@ -37,7 +38,7 @@ export function WarningModal({
           <p className="py-4">{warningMessage}</p>
           <div className="modal-action">
             <form method="dialog">
-              <button className="btn btn-error" onClick={onClick}>
+              <button className={submitClassname} onClick={onClick}>
                 {submitText}
               </button>
             </form>
