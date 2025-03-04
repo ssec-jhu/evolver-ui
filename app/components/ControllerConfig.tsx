@@ -11,8 +11,9 @@ type ControllerConfigProps = {
 };
 
 export function ControllerConfig({ controller }: ControllerConfigProps) {
+  const controllerName = controller.config.name;
   return (
-    <div className="card bg-base-100  shadow-xl">
+    <div id={controllerName + "config"} className="card bg-base-100 shadow-xl">
       <ul className="list card-body">
         {Object.entries(controller.config).map(([key, value]) => (
           <li key={key} className="list-row">
