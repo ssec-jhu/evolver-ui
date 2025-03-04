@@ -1,9 +1,4 @@
-import {
-  Link,
-  useLocation,
-  useParams,
-  useSearchParams,
-} from "@remix-run/react";
+import { Link, useLocation } from "@remix-run/react";
 import { Experiment_Output } from "client";
 import clsx from "clsx";
 
