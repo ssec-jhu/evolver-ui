@@ -115,7 +115,7 @@ export function ErrorBoundary() {
             {error.status} {error.statusText || error.data}
           </pre>
           <div className="flex flex-col">
-            <Link className="link" to="/devices" reloadDocument>
+            <Link className="link" to="/devices/list" reloadDocument>
               home
             </Link>
             <Link className="link" to="https://evolver.bio">
@@ -155,7 +155,7 @@ function Document(props: {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="p-4">
         <GlobalLoading />
         {props.children}
         <ScrollRestoration />

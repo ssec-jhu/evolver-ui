@@ -56,10 +56,8 @@ export default function Hardware() {
   }
 
   return (
-    <div>
-      <div>
-        <div className="font-mono">device hardware</div>
-        <div className="divider"></div>
+    <div className="flex flex-col gap-4">
+      <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
         <HardwareTable
           evolverConfig={evolverConfig}
           hardwareName={hardware_name ?? ""}

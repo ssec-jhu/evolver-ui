@@ -169,86 +169,88 @@ export default function DeviceConfig() {
   }, [updatedEvolverConfig]);
 
   return (
-    <div className="flex flex-col gap-4">
-      {mode === "view" && (
-        <div className="flex gap-4">
-          <button
-            className="btn btn-neutral"
-            onClick={() => {
-              exportData(evolverConfig);
-            }}
-          >
-            Download
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              const params = new URLSearchParams();
-              params.set("mode", "edit");
-              setSearchParams(params);
-            }}
-          >
-            Edit
-          </button>
-        </div>
-      )}
+    <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
+      <div className="flex flex-col gap-4">
+        {mode === "view" && (
+          <div className="flex gap-4">
+            <button
+              className="btn btn-neutral"
+              onClick={() => {
+                exportData(evolverConfig);
+              }}
+            >
+              Download
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                const params = new URLSearchParams();
+                params.set("mode", "edit");
+                setSearchParams(params);
+              }}
+            >
+              Edit
+            </button>
+          </div>
+        )}
 
-      {mode === "edit" && (
-        <div className="flex flex-wrap gap-4">
-          <input
-            onChange={(e) =>
-              handleFileUpload({
-                e,
-                setData: setEvolverConfig,
-              })
-            }
-            type="file"
-            className="file-input w-full max-w-xs"
-            accept=".json"
-          />
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              notify.dismiss();
-              const formData = new FormData();
-              formData.append("id", id ?? "");
-              formData.append(
-                "intent",
-                UpdateDeviceIntentEnum.Enum.update_evolver,
-              );
-              formData.append("data", JSON.stringify(updatedEvolverConfig));
-              submit(formData, {
-                method: "POST",
-              });
-            }}
-          >
-            Save
-          </button>
-          <button
-            className="btn"
-            onClick={() => {
-              setEvolverConfig(evolverConfig);
-              const params = new URLSearchParams();
-              params.set("mode", "view");
-              setSearchParams(params);
-              notify.dismiss();
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-      <div className="mt-4 flex items-start gap-4 mb-8 justify-between">
-        <ClientOnly fallback={<h1>...loading</h1>}>
-          {() => (
-            <EditJson
-              key={pathname}
-              data={updatedEvolverConfig}
-              mode={mode}
-              setData={setEvolverConfig}
+        {mode === "edit" && (
+          <div className="flex flex-wrap gap-4">
+            <input
+              onChange={(e) =>
+                handleFileUpload({
+                  e,
+                  setData: setEvolverConfig,
+                })
+              }
+              type="file"
+              className="file-input w-full max-w-xs"
+              accept=".json"
             />
-          )}
-        </ClientOnly>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                notify.dismiss();
+                const formData = new FormData();
+                formData.append("id", id ?? "");
+                formData.append(
+                  "intent",
+                  UpdateDeviceIntentEnum.Enum.update_evolver,
+                );
+                formData.append("data", JSON.stringify(updatedEvolverConfig));
+                submit(formData, {
+                  method: "POST",
+                });
+              }}
+            >
+              Save
+            </button>
+            <button
+              className="btn"
+              onClick={() => {
+                setEvolverConfig(evolverConfig);
+                const params = new URLSearchParams();
+                params.set("mode", "view");
+                setSearchParams(params);
+                notify.dismiss();
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+        <div className="flex items-start gap-4 mb-8 justify-between">
+          <ClientOnly fallback={<h1>...loading</h1>}>
+            {() => (
+              <EditJson
+                key={pathname}
+                data={updatedEvolverConfig}
+                mode={mode}
+                setData={setEvolverConfig}
+              />
+            )}
+          </ClientOnly>
+        </div>
       </div>
     </div>
   );

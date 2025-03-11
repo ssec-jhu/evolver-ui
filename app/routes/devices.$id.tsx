@@ -23,10 +23,12 @@ import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
 import { toast as notify } from "react-toastify";
 import { useEffect } from "react";
+import { WarningModal } from "~/components/Modals";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string } }) => {
     const { id } = params;
+
     return <Link to={`/devices/${id}/state`}>{id}</Link>;
   },
 };
@@ -119,7 +121,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 export function ErrorBoundary() {
   const { id } = useParams();
   return (
-    <div className="flex flex-col gap-4 bg-base-300 p-8 rounded-box">
+    <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
       <WrenchScrewdriverIcon className="w-10 h-10" />
       <div>
         <div>
@@ -127,7 +129,7 @@ export function ErrorBoundary() {
         </div>
       </div>
 
-      <Link to="/devices" className="link">
+      <Link to="/devices/list" className="link">
         home
       </Link>
     </div>
@@ -157,12 +159,13 @@ export default function Device() {
       }
     }
   }, [actionData]);
-  const currentPath = pathname.split("/").pop();
+  const pathElements = pathname.split("/");
+  const lastPathElement = pathElements[pathElements.length - 1];
   const evolverConfig = description.config;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className=" flex items-center gap-4 justify-between">
+      <div className=" flex items-center gap-4 justify-between pb-4">
         <div className="flex items-center">
           <div>
             <h1>{`${evolverConfig.name}`}</h1>
@@ -176,13 +179,24 @@ export default function Device() {
                     href={`${url}/docs`}
                     target="_blank"
                     rel="noreferrer"
-                  >{`${url}/docs`}</a>
+                  >{`api`}</a>
+                </span>
+              </h1>
+              <div className="divider divider-horizontal"></div>
+              <h1 className="font-sans">
+                <span className="font-mono">
+                  <a
+                    className="link"
+                    href={`${url}/html/network`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >{`network`}</a>
                 </span>
               </h1>
             </div>
           </div>
         </div>
-        <div className=" flex items-center gap-4 justify-end">
+        <div className="flex items-center gap-4 justify-end">
           <div className="flex flex-col items-center">
             <BeakerIcon className="h-9 w-9 text-accent" />
             <div className={clsx("badge text-sm", "badge-accent")}>online</div>
@@ -192,23 +206,31 @@ export default function Device() {
               className="tooltip"
               data-tip="Click to stop device hardware and stop the control loop"
             >
-              <div className="flex flex-col items-center">
-                <PauseIcon
-                  title="pause device"
-                  className="h-9 w-9 text-accent"
-                  onClick={() => {
-                    notify.dismiss();
-                    const formData = new FormData();
-                    formData.append("redirectTo", pathname);
-                    formData.append("id", id ?? "");
-                    formData.append("intent", Intent.Enum.stop);
-                    submit(formData, {
-                      method: "POST",
-                    });
-                  }}
-                />
-                <div className="badge text-sm badge-accent">running</div>
-              </div>
+              <WarningModal
+                warningTitle="pause device"
+                warningMessage="Pause the hardware and the control loop, any data stored-in-memory will be lost."
+                modalId="start_device_modal"
+                submitText="pause"
+                submitClassname="btn btn-error"
+                onClick={() => {
+                  notify.dismiss();
+                  const formData = new FormData();
+                  formData.append("redirectTo", pathname);
+                  formData.append("id", id ?? "");
+                  formData.append("intent", Intent.Enum.stop);
+                  submit(formData, {
+                    method: "POST",
+                  });
+                }}
+              >
+                <div className="flex flex-col items-center">
+                  <PauseIcon
+                    title="pause device"
+                    className="h-9 w-9 text-accent"
+                  />
+                  <div className="badge text-sm badge-accent">running</div>
+                </div>
+              </WarningModal>
             </div>
           )}
           {!state.active && (
@@ -216,79 +238,85 @@ export default function Device() {
               className="tooltip"
               data-tip="Click to start running the device hardware and the control loop"
             >
-              <div className="flex flex-col items-center">
-                <PlayIcon
-                  title="start device"
-                  className="h-9 w-9 fill-current "
-                  onClick={() => {
-                    notify.dismiss();
-                    const formData = new FormData();
+              <WarningModal
+                warningTitle="start device"
+                warningMessage="Are you sure you want to start the device?"
+                modalId="start_device_modal"
+                submitText="start"
+                onClick={() => {
+                  notify.dismiss();
+                  const formData = new FormData();
 
-                    formData.append("redirectTo", pathname);
-                    formData.append("id", id ?? "");
-                    formData.append("intent", Intent.Enum.start);
-                    submit(formData, {
-                      method: "POST",
-                    });
-                  }}
-                />
-                <div className="badge text-sm badge-current">stopped</div>
-              </div>
+                  formData.append("redirectTo", pathname);
+                  formData.append("id", id ?? "");
+                  formData.append("intent", Intent.Enum.start);
+                  submit(formData, {
+                    method: "POST",
+                  });
+                }}
+              >
+                <div className="flex flex-col items-center">
+                  <PlayIcon
+                    title="start device"
+                    className="h-9 w-9 fill-current "
+                  />
+
+                  <div className="badge text-sm ">stopped</div>
+                </div>
+              </WarningModal>
             </div>
           )}
         </div>
       </div>
-      <div role="tablist" className="tabs  tabs-boxed">
-        <Link
-          to={"./state"}
-          role="tab"
-          className={clsx(
-            "tab",
-            currentPath === "state" && "tab-active",
-            "tab-border-3",
-          )}
-        >
-          state
-        </Link>
-        <Link
-          role="tab"
-          to={"./config"}
-          className={clsx(
-            "tab",
-            currentPath === "config" && "tab-active",
-            "tab-border-3",
-          )}
-        >
-          configuration
-        </Link>
-        <Link
-          to={"./hardware"}
-          role="tab"
-          className={clsx(
-            "tab",
-            currentPath === "hardware" && "tab-active",
-            currentPath === "history" && "tab-active",
-            currentPath === "calibrate" && "tab-active",
-            "tab-border-3",
-          )}
-        >
-          hardware
-        </Link>
-        <Link
-          to={"./experiments"}
-          role="tab"
-          className={clsx(
-            "tab",
-            currentPath === "experiments" && "tab-active",
-            "tab-border-3",
-          )}
-        >
-          experiments
-        </Link>
+      <div>
+        <div role="tablist" className="tabs tabs-box">
+          <Link
+            to={"./state"}
+            role="tab"
+            className={clsx(
+              "tab",
+              lastPathElement === "state" && "tab-active",
+              "tab-border-3",
+            )}
+          >
+            state
+          </Link>
+          <Link
+            role="tab"
+            to={"./config"}
+            className={clsx(
+              "tab",
+              lastPathElement === "config" && "tab-active",
+              "tab-border-3",
+            )}
+          >
+            configuration
+          </Link>
+          <Link
+            to={"./hardware"}
+            role="tab"
+            className={clsx(
+              "tab",
+              pathElements.includes("hardware") && "tab-active",
+              "tab-border-3",
+            )}
+          >
+            hardware
+          </Link>
+          <Link
+            to={"./experiments"}
+            role="tab"
+            className={clsx(
+              "tab",
+              pathElements.includes("experiments") && "tab-active",
+              "tab-border-3",
+            )}
+          >
+            experiments
+          </Link>
+        </div>
       </div>
-      <div className="p-8 bg-base-300 rounded-box  relative overflow-x-auto">
-        <Outlet />
-      </div>
+      <Outlet />
     </div>
   );
 }

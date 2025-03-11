@@ -15,7 +15,7 @@ const RemixStub = createRemixStub([
 
 test("shows the devices link", async () => {
   await render(<RemixStub />);
-  expect(await screen.findAllByText("Devices")).toHaveLength(1);
+  expect(await screen.findAllByText("devices")).toHaveLength(1);
 });
 
 test("shows the theme toggle", async () => {

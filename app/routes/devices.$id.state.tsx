@@ -7,7 +7,7 @@ import {
   useRouteLoaderData,
 } from "@remix-run/react";
 import * as Evolver from "client/services.gen";
-import { VialGrid } from "~/components/VialGrid";
+import { FilterableVialGrid } from "~/components/VialGrid";
 import { db } from "~/utils/db.server";
 import { loader as rootLoader } from "~/root";
 
@@ -47,8 +47,8 @@ export default function Hardware() {
   const excludedProperties = EXCLUDED_PROPERTIES?.split(",") ?? [];
 
   return (
-    <div>
-      <VialGrid
+    <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
+      <FilterableVialGrid
         stateData={evolverState.state}
         id={id}
         vialCount={VIAL_COUNT}

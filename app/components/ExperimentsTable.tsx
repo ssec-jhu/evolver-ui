@@ -1,4 +1,4 @@
-import { Link, useLocation, useParams } from "@remix-run/react";
+import { Link, useLocation } from "@remix-run/react";
 import { Experiment_Output } from "client";
 import clsx from "clsx";
 
@@ -10,48 +10,69 @@ export function ExperimentsTable({
   experiments: { [key: string]: Experiment_Output };
 }) {
   const { pathname } = useLocation();
-  const currentPath = pathname.split("/").pop();
-  const { experiment_name } = useParams();
+  const pathElements = pathname.split("/");
+  const currentPath = pathElements[pathElements.length - 1];
 
   const rows = [];
-  Object.entries(experiments).forEach(
-    ([key, { name, enabled, controllers }]) => {
-      rows.push(
-        <tr key={key} className={clsx("font-mono")}>
-          <td className="font-mono">{name}</td>
-          <td>{enabled ? "enabled" : "disabled"}</td>
-          <td className="font-mono">
-            <ul className="list">
-              {controllers?.map(({ classinfo, config }) => {
+
+  Object.entries(experiments).forEach(([key, { enabled, controllers }], ix) => {
+    rows.push(
+      <tr key={key + ix} className={clsx("font-mono")}>
+        <td className="font-mono">
+          <Link
+            className={clsx(pathElements.includes(key) && "underline")}
+            to={`/devices/${id}/experiments/${key}`}
+          >
+            {key}
+          </Link>
+        </td>
+        <td>{enabled ? "enabled" : "disabled"}</td>
+        <td className="font-mono">
+          <ul className="list">
+            {controllers?.map(
+              ({ classinfo, config: { name: controllerName } }, ix) => {
                 return (
-                  <li className="list-row underline" key={classinfo}>
+                  <li
+                    className={clsx(
+                      "list-row",
+                      controllerName === currentPath && "underline",
+                    )}
+                    key={classinfo + ix}
+                  >
+                    <div className="opacity-30 font-mono flex items-center">
+                      {ix + 1}
+                    </div>
                     <Link
-                      to={`/devices/${id}/experiments/${key}/logs#${config.name}`}
+                      className="list-col-grow flex items-center"
+                      to={`/devices/${id}/experiments/${key}/logs#${controllerName}`}
                     >
-                      {config.name}
+                      {controllerName}
                     </Link>
+
+                    <div className="join">
+                      <Link
+                        className={clsx("btn btn-outline join-item")}
+                        to={`/devices/${id}/experiments/${key}#${controllerName + "config"}`}
+                      >
+                        config
+                      </Link>
+
+                      <Link
+                        className={clsx("btn btn-outline join-item")}
+                        to={`/devices/${id}/experiments/${key}/logs#${controllerName}`}
+                      >
+                        log
+                      </Link>
+                    </div>
                   </li>
                 );
-              })}
-            </ul>
-          </td>
-          <td className="flex justify-end font-sans">
-            <Link
-              className={clsx(
-                "btn btn-outline",
-                key === experiment_name &&
-                  currentPath === "logs" &&
-                  "btn-active",
-              )}
-              to={`/devices/${id}/experiments/${key}/logs`}
-            >
-              logs
-            </Link>
-          </td>
-        </tr>,
-      );
-    },
-  );
+              },
+            )}
+          </ul>
+        </td>
+      </tr>,
+    );
+  });
 
   return (
     <table className="table">
@@ -60,7 +81,6 @@ export function ExperimentsTable({
           <th>name</th>
           <th>state</th>
           <th>controllers</th>
-          <th className="flex justify-end">logs</th>
         </tr>
       </thead>
       <tbody>{rows}</tbody>
