@@ -1,27 +1,26 @@
-import { Link } from "@remix-run/react";
+import { Link, useParams } from "@remix-run/react";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 
 const DataTable = ({
   data,
-  id,
   vialIndex,
   excludedProperties = [],
   filteredProperties = [],
 }: {
-  id: string;
   vialIndex: number;
   data: { [key: string]: number };
   excludedProperties?: string[];
   filteredProperties?: string[];
 }) => {
+  const { name, id } = useParams();
   return (
     <div className="overflow-x-auto">
       <table className="table table-xs w-full">
         <thead>
           <tr>
             <th>
-              <Link to={`/devices/${id}/hardware`}>hardware</Link>{" "}
+              <Link to={`/devices/${id}/${name}/hardware`}>hardware</Link>{" "}
             </th>
             <th></th>
             <th></th>
@@ -46,7 +45,7 @@ const DataTable = ({
                     >
                       <Link
                         className="link"
-                        to={`/devices/${id}/hardware/${mainKey}/history?vials=${vialIndex}`}
+                        to={`/devices/${id}/${name}/hardware/${mainKey}/history?vials=${vialIndex}`}
                       >
                         {mainKey}
                       </Link>
@@ -56,7 +55,7 @@ const DataTable = ({
                     <td>
                       <Link
                         className="link"
-                        to={`/devices/${id}/hardware/${mainKey}/history?properties=${subKey}&vials=${vialIndex}`}
+                        to={`/devices/${id}/${name}/hardware/${mainKey}/history?properties=${subKey}&vials=${vialIndex}`}
                       >
                         {subKey}
                       </Link>
@@ -123,7 +122,6 @@ export function VialGrid({
         {hasData && (
           <DataTable
             data={data}
-            id={id}
             vialIndex={index}
             excludedProperties={excludedProperties}
           />
@@ -211,7 +209,6 @@ export function FilterableVialGrid({
         {hasData && (
           <DataTable
             data={data}
-            id={id}
             vialIndex={index}
             excludedProperties={excludedProperties}
             filteredProperties={filteredProperties}

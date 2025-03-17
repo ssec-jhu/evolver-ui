@@ -69,12 +69,12 @@ export const handle = {
     {
       params,
     }: {
-      params: { id: string; hardware_name: string };
+      params: { id: string; hardware_name: string; name: string };
     },
     queryParams?: URLSearchParams,
   ) => {
-    const { id, hardware_name } = params;
-    const linkTo = `/devices/${id}/hardware/${hardware_name}/`;
+    const { id, hardware_name, name } = params;
+    const linkTo = `/devices/${id}/${name}/hardware/${hardware_name}/`;
     if (queryParams !== undefined) {
       linkTo.concat(`?${queryParams.toString()}`);
     }

@@ -1,13 +1,7 @@
-import {
-  Link,
-  Outlet,
-  useParams,
-  useRouteLoaderData,
-  useSearchParams,
-} from "@remix-run/react";
+import { Link, Outlet, useParams, useRouteLoaderData } from "@remix-run/react";
 
 import { HardwareTable } from "~/components/HardwareTable";
-import { loader } from "./devices.$id";
+import { loader } from "./devices.$id.$name";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 
@@ -15,17 +9,18 @@ export const handle = {
   breadcrumb: ({
     params,
   }: {
-    params: { id: string; hardware_name: string };
+    params: { id: string; hardware_name: string; name: string };
   }) => {
-    const { id } = params;
-    return <Link to={`/devices/${id}/hardware`}>hardware</Link>;
+    const { id, name } = params;
+    return <Link to={`/devices/${id}/${name}/hardware`}>hardware</Link>;
   },
 };
 
 export default function Hardware() {
-  const { id, hardware_name } = useParams();
-  const [queryParams] = useSearchParams();
-  const loaderData = useRouteLoaderData<typeof loader>("routes/devices.$id");
+  const { id, hardware_name, name } = useParams();
+  const loaderData = useRouteLoaderData<typeof loader>(
+    "routes/devices.$id.$name",
+  );
   let evolverConfig = {} as EvolverConfigWithoutDefaults;
 
   if (loaderData?.description?.config) {
@@ -47,7 +42,10 @@ export default function Hardware() {
           className="tooltip"
           data-tip="use the configuration editor to add hardware "
         >
-          <Link className="link text-primary" to={`/devices/${id}/config`}>
+          <Link
+            className="link text-primary"
+            to={`/devices/${id}/${name}/config`}
+          >
             add hardware
           </Link>
         </div>
@@ -61,8 +59,6 @@ export default function Hardware() {
         <HardwareTable
           evolverConfig={evolverConfig}
           hardwareName={hardware_name ?? ""}
-          queryParams={queryParams}
-          id={id ?? ""}
         />
       </div>
       <div>

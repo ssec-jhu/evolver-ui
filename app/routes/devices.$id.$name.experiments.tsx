@@ -15,14 +15,14 @@ import { createClient } from "@hey-api/client-fetch";
 import { ExperimentsTable } from "~/components/ExperimentsTable";
 
 export const handle = {
-  breadcrumb: ({ params }: { params: { id: string } }) => {
-    const { id } = params;
-    return <Link to={`/devices/${id}/experiments`}>experiments</Link>;
+  breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
+    const { id, name } = params;
+    return <Link to={`/devices/${id}/${name}/experiments`}>experiments</Link>;
   },
 };
 
 export function ErrorBoundary() {
-  const { id } = useParams();
+  const { id, name } = useParams();
   return (
     <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
       <WrenchScrewdriverIcon className="w-10 h-10" />
@@ -32,7 +32,7 @@ export function ErrorBoundary() {
         </div>
       </div>
 
-      <Link to={`/devices/${id}/config`} className="link">
+      <Link to={`/devices/${id}/${name}/config`} className="link">
         config
       </Link>
     </div>
@@ -62,10 +62,12 @@ export async function loader({ params }: LoaderFunctionArgs) {
 }
 
 export default function Controllers() {
-  const { id } = useParams();
+  const { id, name } = useParams();
   const { experiments } = useLoaderData<typeof loader>();
 
-  const loaderData = useRouteLoaderData<typeof loader>("routes/devices.$id");
+  const loaderData = useRouteLoaderData<typeof loader>(
+    "routes/devices.$id.$name",
+  );
   let evolverConfig = {} as EvolverConfigWithoutDefaults;
 
   if (loaderData?.description?.config) {
@@ -84,7 +86,10 @@ export default function Controllers() {
           className="tooltip"
           data-tip="use the configuration editor to add hardware "
         >
-          <Link className="link text-primary" to={`/devices/${id}/config`}>
+          <Link
+            className="link text-primary"
+            to={`/devices/${id}/${name}/config`}
+          >
             add experiment
           </Link>
         </div>
@@ -97,7 +102,6 @@ export default function Controllers() {
       <ExperimentsTable
         evolverConfig={evolverConfig}
         experiments={experiments}
-        id={id ?? ""}
       />
 
       <Outlet />

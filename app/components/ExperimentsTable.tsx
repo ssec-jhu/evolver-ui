@@ -1,14 +1,13 @@
-import { Link, useLocation } from "@remix-run/react";
+import { Link, useLocation, useParams } from "@remix-run/react";
 import { Experiment_Output } from "client";
 import clsx from "clsx";
 
 export function ExperimentsTable({
-  id,
   experiments,
 }: {
-  id: string;
   experiments: { [key: string]: Experiment_Output };
 }) {
+  const { name, id } = useParams();
   const { pathname } = useLocation();
   const pathElements = pathname.split("/");
   const currentPath = pathElements[pathElements.length - 1];
@@ -21,7 +20,7 @@ export function ExperimentsTable({
         <td className="font-mono">
           <Link
             className={clsx(pathElements.includes(key) && "underline")}
-            to={`/devices/${id}/experiments/${key}`}
+            to={`/devices/${id}/${name}/experiments/${key}`}
           >
             {key}
           </Link>
@@ -44,7 +43,7 @@ export function ExperimentsTable({
                     </div>
                     <Link
                       className="list-col-grow flex items-center"
-                      to={`/devices/${id}/experiments/${key}/logs#${controllerName}`}
+                      to={`/devices/${id}/${name}/experiments/${key}/logs#${controllerName}`}
                     >
                       {controllerName}
                     </Link>
@@ -52,14 +51,14 @@ export function ExperimentsTable({
                     <div className="join">
                       <Link
                         className={clsx("btn btn-outline join-item")}
-                        to={`/devices/${id}/experiments/${key}#${controllerName + "config"}`}
+                        to={`/devices/${id}/${name}/experiments/${key}#${controllerName + "config"}`}
                       >
                         config
                       </Link>
 
                       <Link
                         className={clsx("btn btn-outline join-item")}
-                        to={`/devices/${id}/experiments/${key}/logs#${controllerName}`}
+                        to={`/devices/${id}/${name}/experiments/${key}/logs#${controllerName}`}
                       >
                         log
                       </Link>

@@ -10,11 +10,13 @@ export const handle = {
   breadcrumb: ({
     params,
   }: {
-    params: { id: string; experiment_id: string };
+    params: { id: string; experiment_id: string; name: string };
   }) => {
-    const { id, experiment_id } = params;
+    const { id, experiment_id, name } = params;
     return (
-      <Link to={`/devices/${id}/experiments/${experiment_id}/logs`}>logs</Link>
+      <Link to={`/devices/${id}/${name}/experiments/${experiment_id}/logs`}>
+        logs
+      </Link>
     );
   },
 };

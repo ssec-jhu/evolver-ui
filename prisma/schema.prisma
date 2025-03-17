@@ -16,4 +16,5 @@ model Device {
   updatedAt DateTime @updatedAt
   url       String   @unique
   device_id String   @unique
+  name      String   @default("bioreactor")
 }
