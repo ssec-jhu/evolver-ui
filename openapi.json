@@ -1552,6 +1552,12 @@
             ],
             "title": "Output Transformer"
           },
+          "no_refit": {
+            "type": "boolean",
+            "title": "No Refit",
+            "description": "If True, use only cached fitted transfomers from calibration_file",
+            "default": false
+          },
           "calibration_file": {
             "anyOf": [
               {
@@ -1561,7 +1567,20 @@
                 "type": "null"
               }
             ],
-            "title": "Calibration File"
+            "title": "Calibration File",
+            "description": "Completed calibration file to use for transformations"
+          },
+          "procedure_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Procedure File",
+            "description": "Working calibration file for currently active (or next) procedure"
           }
         },
         "type": "object",

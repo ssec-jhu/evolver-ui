@@ -50,10 +50,10 @@ export async function action({ request }: ActionFunctionArgs) {
     case IntentEnum.Enum.add_device:
       try {
         const { url } = submission.value;
-        const { online: isOnline } = await pingDevice(url as string);
+        const { online: isOnline, name } = await pingDevice(url as string);
         if (isOnline) {
           id = await generateDeviceId(url);
-          await db.device.create({ data: { url, device_id: id } });
+          await db.device.create({ data: { url, device_id: id, name } });
         } else {
           throw Error("no evolver detected at that address");
         }
