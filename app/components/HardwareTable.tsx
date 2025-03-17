@@ -18,7 +18,6 @@ export function HardwareTable({
   const { name, id } = useParams();
   const [queryParams] = useSearchParams();
 
-  console.log(evolverConfig);
   const currentPath = pathname.split("/").pop();
   let currentVials: string[] | undefined = [];
   if (queryParams.has("vials")) {
@@ -27,7 +26,6 @@ export function HardwareTable({
   const evolverHardware = evolverConfig.hardware;
 
   const TableRows = Object.keys(evolverHardware).map((key) => {
-    console.log("HERE!", key);
     const vials = evolverHardware[key]?.config?.vials;
 
     const vialsWithLinks = vials?.map((vial) => {
