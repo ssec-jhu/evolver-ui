@@ -15,6 +15,8 @@ import { server } from "./mocks/server";
 import { ENV } from "./utils/env.server";
 
 const ABORT_DELAY = 5_000;
+//https://remix.run/docs/en/2.13.1/start/future-flags#v3_singleFetch
+export const streamTimeout = ABORT_DELAY;
 
 if (ENV.NODE_ENV === "test") {
   server.listen();
@@ -104,11 +106,7 @@ function handleBrowserRequest(
   return new Promise((resolve, reject) => {
     let shellRendered = false;
     const { pipe, abort } = renderToPipeableStream(
-      <RemixServer
-        context={remixContext}
-        url={request.url}
-        abortDelay={ABORT_DELAY}
-      />,
+      <RemixServer context={remixContext} url={request.url} />,
       {
         onShellReady() {
           shellRendered = true;
@@ -141,6 +139,7 @@ function handleBrowserRequest(
       },
     );
 
-    setTimeout(abort, ABORT_DELAY);
+    //https://remix.run/docs/en/2.13.1/start/future-flags#v3_singleFetch
+    setTimeout(abort, streamTimeout + 1000);
   });
 }

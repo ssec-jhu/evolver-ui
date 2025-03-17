@@ -179,7 +179,7 @@ export default function DeviceConfig() {
                 exportData(evolverConfig);
               }}
             >
-              Download
+              download
             </button>
             <button
               className="btn btn-primary"
@@ -189,7 +189,7 @@ export default function DeviceConfig() {
                 setSearchParams(params);
               }}
             >
-              Edit
+              edit
             </button>
           </div>
         )}
