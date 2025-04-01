@@ -134,7 +134,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function DeviceConfig() {
-  const { id, name } = useParams();
+  const { id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname } = useLocation();
 

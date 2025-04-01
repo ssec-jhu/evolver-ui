@@ -80,7 +80,6 @@ const DataTable = ({
 export function VialGrid({
   vialCount,
   stateData,
-  id,
   excludedProperties = [],
 }: {
   vialCount: number;
@@ -136,7 +135,6 @@ export function VialGrid({
 export function FilterableVialGrid({
   vialCount,
   stateData,
-  id,
   excludedProperties = [],
 }: {
   vialCount: number;
