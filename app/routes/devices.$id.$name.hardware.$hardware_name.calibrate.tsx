@@ -429,6 +429,7 @@ const CalibrationProcedureControls = ({
 };
 
 export function ErrorBoundary() {
+  const { hardware_name } = useParams();
   return (
     <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto flex flex-col gap-4">
       <CalibrationProcedureControls started={false} />
@@ -438,7 +439,7 @@ export function ErrorBoundary() {
           <div>
             <div>
               <h1 className="font-mono">{`The calibration procedure encountered an error.
-          Make sure there is a procedure defined on the hardware in the config and the procedure has been started`}</h1>
+          Make sure there is a calibrator.procedure_file attribute defined on the ${hardware_name} hardware in the config and the procedure has been started`}</h1>
             </div>
           </div>
         </div>

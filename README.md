@@ -2,7 +2,7 @@
 
 ## Install NodeJS.
 
-This app runs on NodeJS, we recommend using [mise](https://mise.jdx.dev) to manage the node version. 
+This app runs on NodeJS, we recommend using [mise](https://mise.jdx.dev) to manage the node version.
 
 ```shellscript
 mise use node@lts
@@ -45,6 +45,7 @@ npx prisma migrate dev --name init
 If you adapt the schema run this command again to generate migrations that will be applied to the prod db.
 
 ### Run the dev server against the dev db
+
 Run the dev server:
 
 ```shellscript
@@ -70,13 +71,16 @@ npm start
 # dependency documentation
 
 ## database - used to store the devices you've connected to
+
 [sqlite](https://www.sqlite.org) - the prisma ORM handles database management (schema, migrations, etc...).
 
 ## orm - to manage the db
+
 [Prisma ORM](https://www.prisma.io/docs/orm/prisma-schema/overview)
 
 ## framework - a reference implementation demonstrating the capabilities of the evolver's HTTP API.
-[Remix](https://remix.run/docs) - a fullstack framework, it consists of a Node.js based server, tightly coupled to a react web app through the use of HTTP web standards and react hooks. 
+
+[Remix](https://remix.run/docs) - a fullstack framework, it consists of a Node.js based server, tightly coupled to a react web app through the use of HTTP web standards and react hooks.
 [React](https://react.dev) - a frontend framework
 [Tailwind](https://tailwindcss.com) - a css styling framework
 [DaisyUI](https://daisyui.com) - a component library for tailwind, that simplifies composing tailwind classnames by providing generic defaults.
@@ -102,7 +106,9 @@ Whenever a part of the system relies on network requests or complex user interac
 Having trouble with MSW? Refer to this example repo: https://github.com/mswjs/examples/blob/main/examples/with-remix/README.md
 
 ### balancing unit and integration tests
+
 https://github.com/remix-run/remix/discussions/5769#discussioncomment-5281163
 
 ### e2e tests
+
 in a production system at scale the entire evolver system, would have a simulated and tested as part of its deployment pipeline as close to production as possible. At this stage e2e tests could be run against real hardware. This is out of scope for current stage of research. e2e tests are not included in this software. That said, the front end integration tests could be run without MSW against a real evolver endpoint to achieve this whenever it becomes necessary.
