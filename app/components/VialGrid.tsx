@@ -63,8 +63,9 @@ const DataTable = ({
                   )}
                   {renderSubKey && (
                     <td>
-                      {data[mainKey][subKey]}
-                      {!data[mainKey][subKey] && "-"}
+                      {typeof data[mainKey][subKey] === "number"
+                        ? data[mainKey][subKey].toFixed(3)
+                        : data[mainKey][subKey] || "-"}
                     </td>
                   )}
                 </tr>
@@ -216,11 +217,20 @@ export function FilterableVialGrid({
     );
   });
   const filterOptions = [
+    <input
+      key="showAllCheckbox"
+      className="btn filter-reset"
+      type="radio"
+      name="propertyFilter"
+      value="showAllCheckbox"
+      onChange={handleFilterChange}
+      aria-label="show all"
+    />,
     ...availableSubKeys.map((subKey) => (
       <input
         key={subKey}
         className="btn"
-        type="checkbox"
+        type="radio"
         name="propertyFilter"
         value={subKey}
         onChange={handleFilterChange}
@@ -233,11 +243,9 @@ export function FilterableVialGrid({
     <div
       className={clsx(filterOptions.length > 0 && "gap-4", "flex", "flex-col")}
     >
-      <div className="flex flex-col items-center justify-end gap-4">
+      <div className="flex items-center gap-4">
         {filterOptions.length > 0 && <div className="font-mono">filter:</div>}
-        <div className="filter" id="propertyFilterForm">
-          {filterOptions}
-        </div>
+        <div className="filter">{filterOptions}</div>
       </div>
       <div className="grid grid-cols-4 grid-rows-4 gap-2">{cells}</div>
     </div>
