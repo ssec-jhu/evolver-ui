@@ -50,13 +50,14 @@ export async function action({ request }: ActionFunctionArgs) {
     case IntentEnum.Enum.add_device:
       try {
         const { url } = submission.value;
-        const { online: isOnline } = await pingDevice(url as string);
+        const { online: isOnline, name } = await pingDevice(url as string);
         if (isOnline) {
           id = await generateDeviceId(url);
-          await db.device.create({ data: { url, device_id: id } });
+          await db.device.create({ data: { url, device_id: id, name } });
         } else {
           throw Error("no evolver detected at that address");
         }
+        return redirect(`/devices/${id}/${name}/state`);
       } catch (error) {
         const { url } = submission.value;
         const errorMessages = ["unable to add device"];
@@ -69,8 +70,8 @@ export async function action({ request }: ActionFunctionArgs) {
         }
         return submission.reply({ formErrors: errorMessages });
       }
+      return null;
 
-      return redirect(`/devices/${id}/state`);
     case IntentEnum.Enum.delete_device:
       try {
         const { id } = submission.value;
@@ -145,14 +146,13 @@ export default function DevicesList() {
         <tr key={device_id}>
           <th>{ix + 1}</th>
           <td>{new Date(createdAt).toDateString()}</td>
-          <td>{name}</td>
           <td>
             {status === "online" && (
-              <Link to={`/devices/${device_id}/state`}>
+              <Link to={`/devices/${device_id}/${name}/state`}>
                 <div
                   className={clsx(status === "online" && "link link-primary")}
                 >
-                  {device_id}
+                  {name}
                 </div>
               </Link>
             )}
@@ -160,7 +160,6 @@ export default function DevicesList() {
               <div className={clsx("")}>{device_id}</div>
             )}
           </td>
-
           <td>
             {status === "online" && (
               <a
@@ -259,7 +258,6 @@ export default function DevicesList() {
                   <th></th>
                   <th>added</th>
                   <th>name</th>
-                  <th>id</th>
                   <th>url</th>
                   <th>status</th>
                   <th></th>

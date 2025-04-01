@@ -14,9 +14,9 @@ import { loader as rootLoader } from "~/root";
 const VIAL_COUNT = 16;
 
 export const handle = {
-  breadcrumb: ({ params }: { params: { id: string } }) => {
-    const { id } = params;
-    return <Link to={`/devices/${id}/state`}>state</Link>;
+  breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
+    const { id, name } = params;
+    return <Link to={`/devices/${id}/${name}/state`}>state</Link>;
   },
 };
 

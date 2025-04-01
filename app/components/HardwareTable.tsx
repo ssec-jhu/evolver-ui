@@ -1,23 +1,27 @@
-import { Link, useLocation } from "@remix-run/react";
+import {
+  Link,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from "@remix-run/react";
 import { EvolverConfigWithoutDefaults } from "client";
 import clsx from "clsx";
 
 export function HardwareTable({
   evolverConfig,
-  id,
   hardwareName,
-  queryParams,
 }: {
   evolverConfig: EvolverConfigWithoutDefaults;
-  id: string;
   hardwareName: string;
-  queryParams: URLSearchParams;
 }) {
   const { pathname } = useLocation();
+  const { name, id } = useParams();
+  const [queryParams] = useSearchParams();
+
   const currentPath = pathname.split("/").pop();
-  let currentVials: string[] = [];
+  let currentVials: string[] | undefined = [];
   if (queryParams.has("vials")) {
-    currentVials = queryParams.get("vials")?.split(",");
+    currentVials = queryParams?.get("vials")?.split(",");
   }
   const evolverHardware = evolverConfig.hardware;
 
@@ -25,9 +29,9 @@ export function HardwareTable({
     const vials = evolverHardware[key]?.config?.vials;
 
     const vialsWithLinks = vials?.map((vial) => {
-      const linkTo = `/devices/${id}/hardware/${key}/history?vials=${vial}`;
+      const linkTo = `/devices/${id}/${name}/hardware/${key}/history?vials=${vial}`;
       const activeVial =
-        currentVials.includes(vial.toString()) && hardwareName === key;
+        currentVials?.includes(vial.toString()) && hardwareName === key;
       const vialButtons = (
         <Link
           key={vial}
@@ -62,8 +66,8 @@ export function HardwareTable({
         key={"all"}
         to={
           vials
-            ? `/devices/${id}/hardware/${key}/history?vials=${vials?.join(",")}`
-            : `/devices/${id}/hardware/${key}/history`
+            ? `/devices/${id}/${name}/hardware/${key}/history?vials=${vials?.join(",")}`
+            : `/devices/${id}/${name}/hardware/${key}/history`
         }
       >
         {" "}
@@ -95,7 +99,7 @@ export function HardwareTable({
                 currentPath === "calibrate" &&
                 "btn-active",
             )}
-            to={`/devices/${id}/hardware/${key}/calibrate`}
+            to={`/devices/${id}/${name}/hardware/${key}/calibrate`}
           >
             calibrate
           </Link>

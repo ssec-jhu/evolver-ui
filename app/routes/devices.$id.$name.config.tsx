@@ -11,7 +11,7 @@ import { EditJson } from "~/components/EditJson.client";
 import { ClientOnly } from "remix-utils/client-only";
 import { useEffect, useState } from "react";
 import { exportData } from "~/utils/exportData";
-import { type loader } from "./devices.$id";
+import { type loader } from "./devices.$id.$name";
 import { handleFileUpload } from "~/utils/handleFileUpload";
 import { EvolverConfigWithoutDefaults } from "client";
 import { ActionFunctionArgs, redirect } from "@remix-run/node";
@@ -23,9 +23,9 @@ import { toast as notify } from "react-toastify";
 import { db } from "~/utils/db.server";
 
 export const handle = {
-  breadcrumb: ({ params }: { params: { id: string } }) => {
-    const { id } = params;
-    return <Link to={`/devices/${id}/config`}>config</Link>;
+  breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
+    const { id, name } = params;
+    return <Link to={`/devices/${id}/${name}/config`}>config</Link>;
   },
 };
 
@@ -48,6 +48,10 @@ const schema = z.object({
     (value) => (value === "" ? undefined : value),
     z.string({ required_error: "an id is required" }),
   ),
+  name: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string({ required_error: "a name is required" }),
+  ),
   // Assume this is valid, client side AJV validation.
   data: z.string({ required_error: "an evolver config is required" }),
 });
@@ -61,7 +65,7 @@ export async function action({ request }: ActionFunctionArgs) {
   if (submission.status !== "success") {
     return submission.reply();
   }
-  const { intent, id, data } = submission.value;
+  const { intent, id, data, name } = submission.value;
 
   // use the db to get the url for that device id...
   const targetDevice = await db.device.findUnique({ where: { device_id: id } });
@@ -110,7 +114,12 @@ export async function action({ request }: ActionFunctionArgs) {
             ],
           });
         }
-        return redirect(`/devices/${id}/config?mode=view`);
+        // update the database with the new config's name
+        await db.device.update({
+          where: { device_id: id },
+          data: { name },
+        });
+        return redirect(`/devices/${id}/${name}/config?mode=view`);
       } catch (error) {
         return submission.reply({
           formErrors: [
@@ -135,7 +144,9 @@ export default function DeviceConfig() {
   const submit = useSubmit();
   const mode = searchParams.get("mode") === "edit" ? "edit" : "view";
 
-  const loaderData = useRouteLoaderData<typeof loader>("routes/devices.$id");
+  const loaderData = useRouteLoaderData<typeof loader>(
+    "routes/devices.$id.$name",
+  );
   let description;
 
   if (loaderData?.description?.config) {
@@ -179,7 +190,7 @@ export default function DeviceConfig() {
                 exportData(evolverConfig);
               }}
             >
-              Download
+              download
             </button>
             <button
               className="btn btn-primary"
@@ -189,7 +200,7 @@ export default function DeviceConfig() {
                 setSearchParams(params);
               }}
             >
-              Edit
+              edit
             </button>
           </div>
         )}
@@ -213,6 +224,8 @@ export default function DeviceConfig() {
                 notify.dismiss();
                 const formData = new FormData();
                 formData.append("id", id ?? "");
+                // get the name from the updated evolver config.
+                formData.append("name", updatedEvolverConfig.name);
                 formData.append(
                   "intent",
                   UpdateDeviceIntentEnum.Enum.update_evolver,

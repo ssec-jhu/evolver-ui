@@ -26,10 +26,10 @@ import { useEffect } from "react";
 import { WarningModal } from "~/components/Modals";
 
 export const handle = {
-  breadcrumb: ({ params }: { params: { id: string } }) => {
-    const { id } = params;
+  breadcrumb: (props: { params: { id: string; name: string } }) => {
+    const { id, name } = props.params;
 
-    return <Link to={`/devices/${id}/state`}>{id}</Link>;
+    return <Link to={`/devices/${id}/${name}/state`}>{name}</Link>;
   },
 };
 
@@ -167,11 +167,9 @@ export default function Device() {
     <div className="flex flex-col gap-4">
       <div className=" flex items-center gap-4 justify-between pb-4">
         <div className="flex items-center">
-          <div>
+          <div className="flex flex-col gap-2">
             <h1>{`${evolverConfig.name}`}</h1>
             <div className="flex w-full">
-              <h1 className="font-mono">{`${id}`}</h1>
-              <div className="divider divider-horizontal"></div>
               <h1 className="font-sans">
                 <span className="font-mono">
                   <a
