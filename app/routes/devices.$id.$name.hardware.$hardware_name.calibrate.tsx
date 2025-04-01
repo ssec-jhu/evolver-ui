@@ -26,11 +26,12 @@ const Intent = z.enum(
     "save_calibration_procedure",
     "resume_calibration_procedure",
     "undo",
+    "apply_calibration_procedure",
   ],
   {
     required_error: "intent is required",
     invalid_type_error:
-      "must be one of: dispatch_action, start_calibration_procedure, undo",
+      "must be one of: dispatch_action, start_calibration_procedure, undo, apply_calibration_procedure",
   },
 );
 
@@ -61,6 +62,12 @@ const schema = z.discriminatedUnion("intent", [
     intent: z.literal(Intent.Enum.undo),
     id: z.string(),
     hardware_name: z.string(),
+  }),
+  z.object({
+    intent: z.literal(Intent.Enum.apply_calibration_procedure),
+    id: z.string(),
+    hardware_name: z.string(),
+    calibration_file: z.string(),
   }),
 ]);
 
@@ -172,6 +179,28 @@ export async function action({ request }: ActionFunctionArgs) {
           ],
         });
       }
+    case Intent.Enum.apply_calibration_procedure:
+      try {
+        const procedureState =
+          await Evolver.applyCalibrationProcedureHardwareHardwareNameCalibratorProcedureApplyPost(
+            {
+              path: {
+                hardware_name: submission.value.hardware_name,
+              },
+              query: {
+                calibration_file: submission.value.calibration_file,
+              },
+              client: evolverClient,
+            },
+          );
+        return procedureState.data;
+      } catch (error) {
+        return submission.reply({
+          formErrors: [
+            "unable to apply calibration, confirm calibration_file parameter is correct and exists on the evolver device filesystem.",
+          ],
+        });
+      }
     case Intent.Enum.undo:
       try {
         const procedureState =
@@ -218,10 +247,24 @@ export async function loader({ params }: LoaderFunctionArgs) {
         client: evolverClient,
       },
     );
+    
+  // Get hardware details to extract the calibration_file
+  const { data: hardware } =
+    await Evolver.getHardwareHardwareHardwareNameGet(
+      {
+        path: {
+          hardware_name: hardware_name ?? "",
+        },
+        client: evolverClient,
+      },
+    );
+
+  const calibrationFile = hardware?.calibrator?.calibration_file || "";
 
   return {
     actions: procedureActions?.actions,
     state: procedureState,
+    calibrationFile,
   };
 }
 
@@ -280,9 +323,11 @@ const CalibrationProcedureProgress = ({ state, actions }) => {
 const CalibrationProcedureControls = ({
   hasHistory = false,
   started = false,
+  calibrationFile = "",
 }: {
   hasHistory?: boolean;
   started: boolean;
+  calibrationFile?: string;
 }) => {
   const submit = useSubmit();
   const { id, hardware_name } = useParams();
@@ -403,6 +448,39 @@ const CalibrationProcedureControls = ({
               save
             </button>
 
+            <WarningModal
+              active={!!calibrationFile && hasHistory}
+              modalId="apply_procedure_modal"
+              submitText="apply"
+              warningMessage={`
+                    Apply the current calibration to update the calibration configuration.
+                    This will use ${calibrationFile} as the calibration file.
+              `}
+              onClick={() => {
+                const formData = new FormData();
+                formData.append("id", id ?? "");
+                formData.append(
+                  "intent",
+                  Intent.Enum.apply_calibration_procedure,
+                );
+                formData.append("hardware_name", hardware_name ?? "");
+                formData.append("calibration_file", calibrationFile);
+                submit(formData, {
+                  method: "POST",
+                });
+              }}
+            >
+              <span
+                className={clsx(
+                  "btn",
+                  "btn-accent",
+                  (!calibrationFile || !hasHistory) && "btn-disabled",
+                )}
+              >
+                apply
+              </span>
+            </WarningModal>
+
             <button
               className={clsx(
                 "btn",
@@ -449,7 +527,7 @@ export function ErrorBoundary() {
 }
 
 export default function CalibrateHardware() {
-  const { actions, state } = useLoaderData<typeof loader>();
+  const { actions, state, calibrationFile } = useLoaderData<typeof loader>();
 
   const actionData = useActionData<typeof action>();
 
@@ -473,7 +551,7 @@ export default function CalibrateHardware() {
     return (
       <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
         <div className="flex flex-col gap-4">
-          <CalibrationProcedureControls started={started} />
+          <CalibrationProcedureControls started={started} calibrationFile={calibrationFile} />
           <div className="card bg-base-100  shadow-xl">
             <div className="card-body">
               <p>no running calibration procedure detected</p>
@@ -490,6 +568,7 @@ export default function CalibrateHardware() {
         <CalibrationProcedureControls
           started={started}
           hasHistory={hasHistory}
+          calibrationFile={calibrationFile}
         />
         <div>
           <CalibrationProcedureProgress state={state} actions={actions} />
