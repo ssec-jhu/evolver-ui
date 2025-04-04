@@ -10,6 +10,8 @@ export function WarningModal({
   submitClassname = "btn",
   children,
   active = true,
+  showProcedureFileInput = false,
+  onProcedureFileChange,
 }: {
   onClick: () => void;
   warningTitle?: string;
@@ -19,6 +21,8 @@ export function WarningModal({
   submitClassname?: string | ReactNode;
   children: ReactNode;
   active?: boolean;
+  showProcedureFileInput?: boolean;
+  onProcedureFileChange?: (value: string) => void;
 }) {
   return (
     <div>
@@ -36,6 +40,19 @@ export function WarningModal({
           </form>
           <h3 className="text-lg">{warningTitle}</h3>
           <p className="py-4">{warningMessage}</p>
+          {showProcedureFileInput && (
+            <div className="flex flex-col gap-4 form-control w-full">
+              <label className="label">
+                <span className="label-text">procedure_file name</span>
+              </label>
+              <input
+                type="text"
+                placeholder="enter procedure_file name"
+                className="input input-bordered w-full"
+                onChange={(e) => onProcedureFileChange?.(e.target.value)}
+              />
+            </div>
+          )}
           <div className="modal-action">
             <form method="dialog">
               <button className={submitClassname} onClick={onClick}>

@@ -193,6 +193,7 @@
           "hardware"
         ],
         "summary": "Start Calibration Procedure",
+        "description": "Start a new calibration procedure for the specified hardware.\n\nArgs:\n    hardware_name: Name of the hardware to calibrate\n    procedure_file: Optional, file name to save the procedure state to, useful for testing the api if provided\n                    as the hardware's procedure_file attribute.\n\nReturns:\n    The initial state of the calibration procedure.",
         "operationId": "start_calibration_procedure_hardware__hardware_name__calibrator_procedure_start_post",
         "parameters": [
           {
@@ -205,13 +206,56 @@
             }
           },
           {
-            "name": "resume",
+            "name": "procedure_file",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Resume"
+              "type": "string",
+              "title": "Procedure File"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hardware/{hardware_name}/calibrator/procedure/resume": {
+      "post": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Resume Calibration Procedure",
+        "description": "Resume an existing calibration procedure for the specified hardware.\n\nArgs:\n    hardware_name: Name of the hardware to calibrate\n\nReturns:\n    The current state of the calibration procedure.",
+        "operationId": "resume_calibration_procedure_hardware__hardware_name__calibrator_procedure_resume_post",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
             }
           }
         ],
@@ -466,6 +510,59 @@
         }
       }
     },
+    "/hardware/{hardware_name}/calibrator/procedure/apply": {
+      "post": {
+        "tags": [
+          "hardware"
+        ],
+        "summary": "Apply Calibration Procedure",
+        "description": "Apply the calibration procedure to update the calibrator configuration.\n\nWhen trying to understand both the Calibrator.calibration_file and Calibrator.procedure_file,\ncalibration_file is a complete version of procedure_file, whereas the latter can be incomplete.\n\nOne way to think about procedure_file is as ephemeral memory, or a \"buffer\" used to store the in-progress procedure data.\nWhen all actions that constitute a procedure are complete, that procedure is eligible to be \"applied\", which means\nthat its state is copied to the calibration_file and the data stored there is sufficient to calibrate the hardware it is\nassociated with whenever the device is initialized.\n\nOn which note: since the configuration is reinitialized by calling save -\nself.hardware.calibrator.calibration_data.save(file_path)\nthe evolver object will be reinitialized directly when this endpoint is invoked, and transformers initialized.",
+        "operationId": "apply_calibration_procedure_hardware__hardware_name__calibrator_procedure_apply_post",
+        "parameters": [
+          {
+            "name": "hardware_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hardware Name"
+            }
+          },
+          {
+            "name": "calibration_file",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Calibration File"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/hardware/{hardware_name}/calibrator/data": {
       "get": {
         "tags": [
@@ -566,7 +663,7 @@
               "application/json": {
                 "schema": {
                   "additionalProperties": {
-                    "$ref": "#/components/schemas/Experiment-Output"
+                    "$ref": "#/components/schemas/Experiment"
                   },
                   "type": "object",
                   "title": "Response Get Experiments Experiment  Get"
@@ -660,13 +757,16 @@
     "/": {
       "get": {
         "summary": "Describe Evolver",
+        "description": "Return the current applied configuration and state of the evolver.\n\nThe state contains the latest readings from sensors, last read times and\nflag indicating if the evolver is currently active. The config returned by\nthis endpoint can be used in a POST request to update the configuration.\n\nSee also the `/state` endpoint which provides the current state of the\nevolver without the config.",
         "operationId": "describe",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/EvolverStateWithConfig"
+                }
               }
             }
           }
@@ -674,6 +774,7 @@
       },
       "post": {
         "summary": "Update Evolver",
+        "description": "Update the configuration of the eVolver.\n\nThis endpoint requires all fields in the configuration to be explicitly\nprovided, so does not support partial updates. To make a partial update,\nfirst obtain the full configuration using the `/` endpoint, modify the\nfields of interest, then POST the modified configuration back to this\nendpoint.\n\nnote:\n  Applying the configuration will replace the current eVolver in-memory\n  object with a new one. Experiments will continue as normal, but any\n  in-memory buffers within controllers will be lost. History will be\n  preserved via the built-in history server, so typically this will not\n  impact operations.",
         "operationId": "update",
         "requestBody": {
           "content": {
@@ -710,13 +811,16 @@
     "/state": {
       "get": {
         "summary": "Get State",
+        "description": "Return the current state of the eVolver.\n\nThe state refers to the sensor readings. This will be a dictionary mapping\nthe hardware name, and within that typically will be a mapping of vial\nnumber to the sensor Output model (which is specific to the particular\nhardware being reported).\n\nThis endpoint also contains a map of hardware name to the last read time of\nthe hardware, which can be used to determine the freshness of the data.\nAdditionally a flag `active` which is `True` if the control loop is enabled,\nmeaning physical actuation may be performed.",
         "operationId": "state",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/EvolverState"
+                }
               }
             }
           }
@@ -726,6 +830,7 @@
     "/schema/": {
       "get": {
         "summary": "Get Schema",
+        "description": "Return json schema for the `Config` of given fully qualified class.\n\nIf no class is provided, the json schema for the `Config` of the `Evolver`\nclass is described (that which is returned in the `/` describe endpoint).\n\nThis endpoint can be used when a client needs to know what fields to set on\na particular hardware or controller when it is added to the system,\nparticularly when fields are required. Given the class name of the\ncomponent, this will return schema with the fields available to configure on\nthat component.",
         "operationId": "schema",
         "parameters": [
           {
@@ -774,6 +879,7 @@
     "/history/": {
       "post": {
         "summary": "Get History",
+        "description": "Get history data for the specified system components.\n\nThe arguments herein are directly passed to the history server `get` method,\nsee docs for `evolver.history.interface.History.get` for more information.\n\nThe returned value is a `HistoryResult`, see\n`evolver.history.interface.HistoryResult` for more information.",
         "operationId": "history",
         "parameters": [
           {
@@ -845,6 +951,7 @@
     "/event": {
       "post": {
         "summary": "Post Event",
+        "description": "Add an event to the history server.\n\nThis puts a \"event\" kind with provided info into the history server. The\ninfo should contain a name, message and optionally a vial number it refers\nto and any auxiliary data to be stored with the event.\n\nThese events can be subsequently retrieved using the `/history` endpoint,\nwhere they can be adding to plots or other visualizations.",
         "operationId": "post_event_event_post",
         "requestBody": {
           "content": {
@@ -897,6 +1004,7 @@
     "/calibration_status/": {
       "get": {
         "summary": "Calibration Status",
+        "description": "Return the status of calibration on the specified hardware.\n\nIf no name is provided, the status of calibration on all hardware is\nreturned as a map of hardware name to calibration status, where status is\nNone if a calibrator doesn't exist on that hardware.\n\nIf a name is provided and a calibrator does not exist, this returns a\nCalibratorNotFoundError.",
         "operationId": "calibration_status_calibration_status__get",
         "parameters": [
           {
@@ -981,6 +1089,7 @@
     "/abort": {
       "post": {
         "summary": "Abort",
+        "description": "Abort the evolver.\n\nThis will stop the control loop, thus preventing any further physical\nactuation of the system. The endpoint also calls the `abort` method of the\neVolver manager, which in turn calls the `off` method of all hardware, to\nattempt to perform a clean shutdown.\n\nAbort does not stop sensor reads, so the state of the system can still be\ninquired to help ensure it arrived to a safe state.\n\nnote:\n    Shutting off hardware requires a command to be sent and acknowledged by\n    the hardware, and thus it cannot be guaranteed that all hardware will\n    successfully shut down. Physical intervention in the lab may be\n    required.",
         "operationId": "abort_abort_post",
         "responses": {
           "200": {
@@ -997,6 +1106,7 @@
     "/start": {
       "post": {
         "summary": "Start",
+        "description": "Start the control loop after abort.\n\nThis will re-enable the control loop, allowing the system to resume normal\noperation including physical actuation of the system.",
         "operationId": "start_start_post",
         "responses": {
           "200": {
@@ -1070,23 +1180,6 @@
         },
         "type": "object",
         "title": "Body_history"
-      },
-      "Config-Output": {
-        "properties": {
-          "name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name"
-          }
-        },
-        "type": "object",
-        "title": "Config"
       },
       "ConfigDescriptor": {
         "properties": {
@@ -1173,7 +1266,7 @@
                   "$ref": "#/components/schemas/ConfigDescriptor"
                 },
                 {
-                  "$ref": "#/components/schemas/evolver__hardware__interface__HardwareDriver__Config"
+                  "$ref": "#/components/schemas/evolver__hardware__interface__HardwareDriver__Config-Input"
                 }
               ]
             },
@@ -1182,7 +1275,7 @@
           },
           "experiments": {
             "additionalProperties": {
-              "$ref": "#/components/schemas/Experiment-Input"
+              "$ref": "#/components/schemas/Experiment"
             },
             "type": "object",
             "title": "Experiments"
@@ -1258,7 +1351,57 @@
         ],
         "title": "EvolverConfigWithoutDefaults"
       },
-      "Experiment-Input": {
+      "EvolverState": {
+        "properties": {
+          "state": {
+            "type": "object",
+            "title": "State"
+          },
+          "last_read": {
+            "type": "object",
+            "title": "Last Read"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "last_read",
+          "active"
+        ],
+        "title": "EvolverState"
+      },
+      "EvolverStateWithConfig": {
+        "properties": {
+          "state": {
+            "type": "object",
+            "title": "State"
+          },
+          "last_read": {
+            "type": "object",
+            "title": "Last Read"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "config": {
+            "$ref": "#/components/schemas/evolver__device__Evolver__Config"
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "last_read",
+          "active",
+          "config"
+        ],
+        "title": "EvolverStateWithConfig"
+      },
+      "Experiment": {
         "properties": {
           "name": {
             "anyOf": [
@@ -1284,43 +1427,6 @@
                 },
                 {
                   "$ref": "#/components/schemas/evolver__controller__interface__Controller__Config"
-                }
-              ]
-            },
-            "type": "array",
-            "title": "Controllers",
-            "default": []
-          }
-        },
-        "type": "object",
-        "title": "Experiment"
-      },
-      "Experiment-Output": {
-        "properties": {
-          "name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name"
-          },
-          "enabled": {
-            "type": "boolean",
-            "title": "Enabled",
-            "default": true
-          },
-          "controllers": {
-            "items": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/ConfigDescriptor"
-                },
-                {
-                  "$ref": "#/components/schemas/Config-Output"
                 }
               ]
             },
@@ -1552,6 +1658,12 @@
             ],
             "title": "Output Transformer"
           },
+          "no_refit": {
+            "type": "boolean",
+            "title": "No Refit",
+            "description": "If True, use only cached fitted transfomers from calibration_file",
+            "default": false
+          },
           "calibration_file": {
             "anyOf": [
               {
@@ -1561,7 +1673,20 @@
                 "type": "null"
               }
             ],
-            "title": "Calibration File"
+            "title": "Calibration File",
+            "description": "Completed calibration file to use for transformations"
+          },
+          "procedure_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Procedure File",
+            "description": "Working calibration file for currently active (or next) procedure"
           }
         },
         "type": "object",
@@ -1651,7 +1776,191 @@
         "type": "object",
         "title": "Config"
       },
-      "evolver__hardware__interface__HardwareDriver__Config": {
+      "evolver__device__Evolver__Config": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": "Evolver"
+          },
+          "namespace": {
+            "type": "string",
+            "title": "Namespace",
+            "default": "unspecified"
+          },
+          "vial_layout": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 2,
+            "title": "Vial Layout",
+            "description": "The layout of the vials in 2 or 3 dimensions. Always left-to-right bottom-top-top order.",
+            "default": [
+              4,
+              4
+            ]
+          },
+          "vials": {
+            "items": {},
+            "type": "array",
+            "title": "Vials",
+            "default": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          },
+          "hardware": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ConfigDescriptor"
+                },
+                {
+                  "$ref": "#/components/schemas/evolver__hardware__interface__HardwareDriver__Config-Output"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Hardware",
+            "default": {}
+          },
+          "experiments": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Experiment"
+            },
+            "type": "object",
+            "title": "Experiments",
+            "default": {}
+          },
+          "serial": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfigDescriptor"
+              },
+              {
+                "$ref": "#/components/schemas/evolver__connection__interface__Connection__Config"
+              }
+            ],
+            "title": "Serial",
+            "default": {
+              "classinfo": "evolver.serial.EvolverSerialUART",
+              "config": {
+                "baudrate": 9600,
+                "name": "EvolverSerialUART",
+                "port": "/dev/ttyAMA0",
+                "timeout": 1
+              }
+            }
+          },
+          "history": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfigDescriptor"
+              },
+              {
+                "$ref": "#/components/schemas/evolver__history__interface__History__Config"
+              }
+            ],
+            "title": "History",
+            "default": {
+              "classinfo": "evolver.history.standard.HistoryServer",
+              "config": {
+                "buffer_partitions": 3,
+                "default_n_max": 5000,
+                "default_window": 3600,
+                "name": "HistoryServer",
+                "partition_seconds": 3600
+              }
+            }
+          },
+          "enable_control": {
+            "type": "boolean",
+            "title": "Enable Control",
+            "default": true
+          },
+          "interval": {
+            "type": "integer",
+            "title": "Interval",
+            "default": 20
+          },
+          "raise_loop_exceptions": {
+            "type": "boolean",
+            "title": "Raise Loop Exceptions",
+            "default": false
+          },
+          "abort_on_control_errors": {
+            "type": "boolean",
+            "title": "Abort On Control Errors",
+            "default": false
+          },
+          "abort_on_commit_errors": {
+            "type": "boolean",
+            "title": "Abort On Commit Errors",
+            "default": false
+          },
+          "skip_control_on_read_failure": {
+            "type": "boolean",
+            "title": "Skip Control On Read Failure",
+            "default": true
+          },
+          "log_level": {
+            "type": "integer",
+            "title": "Log Level",
+            "default": 21
+          }
+        },
+        "type": "object",
+        "title": "Config"
+      },
+      "evolver__hardware__interface__HardwareDriver__Config-Input": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "calibrator": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfigDescriptor"
+              },
+              {
+                "$ref": "#/components/schemas/evolver__calibration__interface__Calibrator__Config"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibrator",
+            "description": "The calibrator used to both calibrate and transform Input and/or Output data."
+          }
+        },
+        "type": "object",
+        "title": "Config"
+      },
+      "evolver__hardware__interface__HardwareDriver__Config-Output": {
         "properties": {
           "name": {
             "anyOf": [

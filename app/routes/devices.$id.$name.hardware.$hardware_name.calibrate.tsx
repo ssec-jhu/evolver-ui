@@ -15,7 +15,7 @@ import { db } from "~/utils/db.server";
 import clsx from "clsx";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { WarningModal } from "~/components/Modals";
 
@@ -26,11 +26,12 @@ const Intent = z.enum(
     "save_calibration_procedure",
     "resume_calibration_procedure",
     "undo",
+    "apply_calibration_procedure",
   ],
   {
     required_error: "intent is required",
     invalid_type_error:
-      "must be one of: dispatch_action, start_calibration_procedure, undo",
+      "must be one of: dispatch_action, start_calibration_procedure, undo, apply_calibration_procedure",
   },
 );
 
@@ -46,6 +47,7 @@ const schema = z.discriminatedUnion("intent", [
     intent: z.literal(Intent.Enum.start_calibration_procedure),
     id: z.string(),
     hardware_name: z.string(),
+    procedure_file: z.string(),
   }),
   z.object({
     intent: z.literal(Intent.Enum.save_calibration_procedure),
@@ -61,6 +63,12 @@ const schema = z.discriminatedUnion("intent", [
     intent: z.literal(Intent.Enum.undo),
     id: z.string(),
     hardware_name: z.string(),
+  }),
+  z.object({
+    intent: z.literal(Intent.Enum.apply_calibration_procedure),
+    id: z.string(),
+    hardware_name: z.string(),
+    calibration_file: z.string(),
   }),
 ]);
 
@@ -127,6 +135,24 @@ export async function action({ request }: ActionFunctionArgs) {
       }
 
     case Intent.Enum.resume_calibration_procedure:
+      try {
+        const procedureState =
+          await Evolver.resumeCalibrationProcedureHardwareHardwareNameCalibratorProcedureResumePost(
+            {
+              path: {
+                hardware_name: submission.value.hardware_name,
+              },
+              client: evolverClient,
+            },
+          );
+        return procedureState.data;
+      } catch (error) {
+        return submission.reply({
+          formErrors: [
+            "unable to resume calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem. If this is a new hardware, make sure to start the calibration procedure first.",
+          ],
+        });
+      }
     case Intent.Enum.start_calibration_procedure:
       try {
         const procedureState =
@@ -136,10 +162,7 @@ export async function action({ request }: ActionFunctionArgs) {
                 hardware_name: submission.value.hardware_name,
               },
               query: {
-                resume:
-                  intent === Intent.Enum.resume_calibration_procedure
-                    ? true
-                    : false,
+                procedure_file: submission.value.procedure_file,
               },
               client: evolverClient,
             },
@@ -169,6 +192,28 @@ export async function action({ request }: ActionFunctionArgs) {
         return submission.reply({
           formErrors: [
             "unable to save calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem.",
+          ],
+        });
+      }
+    case Intent.Enum.apply_calibration_procedure:
+      try {
+        const procedureState =
+          await Evolver.applyCalibrationProcedureHardwareHardwareNameCalibratorProcedureApplyPost(
+            {
+              path: {
+                hardware_name: submission.value.hardware_name,
+              },
+              query: {
+                calibration_file: submission.value.calibration_file,
+              },
+              client: evolverClient,
+            },
+          );
+        return procedureState.data;
+      } catch (error) {
+        return submission.reply({
+          formErrors: [
+            "unable to apply calibration, confirm calibration_file parameter is correct and exists on the evolver device filesystem.",
           ],
         });
       }
@@ -219,9 +264,20 @@ export async function loader({ params }: LoaderFunctionArgs) {
       },
     );
 
+  // Get hardware details to extract the calibration_file
+  const { data: hardware } = await Evolver.getHardwareHardwareHardwareNameGet({
+    path: {
+      hardware_name: hardware_name ?? "",
+    },
+    client: evolverClient,
+  });
+
+  const calibrationFile = hardware?.calibrator?.calibration_file || "";
+
   return {
     actions: procedureActions?.actions,
     state: procedureState,
+    calibrationFile,
   };
 }
 
@@ -280,12 +336,15 @@ const CalibrationProcedureProgress = ({ state, actions }) => {
 const CalibrationProcedureControls = ({
   hasHistory = false,
   started = false,
+  calibrationFile = "",
 }: {
   hasHistory?: boolean;
   started: boolean;
+  calibrationFile?: string;
 }) => {
   const submit = useSubmit();
   const { id, hardware_name } = useParams();
+  const [procedureFile, setProcedureFile] = useState("");
   return (
     <div className="flex justify-between items-center gap-4">
       <div className="flex items-center">
@@ -300,9 +359,12 @@ const CalibrationProcedureControls = ({
               modalId="start_procedure_modal"
               submitText="start"
               warningMessage={`
-                    starting a new calibration procedure will reset all progress
-                    from any in-progress procedures associated with the ${hardware_name} hardware.
+                this will start a new calibration procedure and create a new procedure_file file to store procedure state on the device. if you already have a procedure_file defined for the ${hardware_name} hardware in config, you can resume the procedure rather than starting a new one.
               `}
+              showProcedureFileInput={true}
+              onProcedureFileChange={(value) => {
+                setProcedureFile(value);
+              }}
               onClick={() => {
                 const formData = new FormData();
                 formData.append("id", id ?? "");
@@ -311,6 +373,9 @@ const CalibrationProcedureControls = ({
                   Intent.Enum.start_calibration_procedure,
                 );
                 formData.append("hardware_name", hardware_name ?? "");
+                if (procedureFile) {
+                  formData.append("procedure_file", procedureFile);
+                }
                 submit(formData, {
                   method: "POST",
                 });
@@ -332,6 +397,10 @@ const CalibrationProcedureControls = ({
                     restarting the calibration procedure will reset all unsaved
                     progress.
               `}
+              showProcedureFileInput={true}
+              onProcedureFileChange={(value) => {
+                setProcedureFile(value);
+              }}
               onClick={() => {
                 const formData = new FormData();
                 formData.append("id", id ?? "");
@@ -340,6 +409,9 @@ const CalibrationProcedureControls = ({
                   Intent.Enum.start_calibration_procedure,
                 );
                 formData.append("hardware_name", hardware_name ?? "");
+                if (procedureFile) {
+                  formData.append("procedure_file", procedureFile);
+                }
                 submit(formData, {
                   method: "POST",
                 });
@@ -403,6 +475,39 @@ const CalibrationProcedureControls = ({
               save
             </button>
 
+            <WarningModal
+              active={!!calibrationFile && hasHistory}
+              modalId="apply_procedure_modal"
+              submitText="apply"
+              warningMessage={`
+                    Apply the current calibration to update the calibration configuration.
+                    This will use ${calibrationFile} as the calibration file.
+              `}
+              onClick={() => {
+                const formData = new FormData();
+                formData.append("id", id ?? "");
+                formData.append(
+                  "intent",
+                  Intent.Enum.apply_calibration_procedure,
+                );
+                formData.append("hardware_name", hardware_name ?? "");
+                formData.append("calibration_file", calibrationFile);
+                submit(formData, {
+                  method: "POST",
+                });
+              }}
+            >
+              <span
+                className={clsx(
+                  "btn",
+                  "btn-accent",
+                  (!calibrationFile || !hasHistory) && "btn-disabled",
+                )}
+              >
+                apply
+              </span>
+            </WarningModal>
+
             <button
               className={clsx(
                 "btn",
@@ -449,7 +554,7 @@ export function ErrorBoundary() {
 }
 
 export default function CalibrateHardware() {
-  const { actions, state } = useLoaderData<typeof loader>();
+  const { actions, state, calibrationFile } = useLoaderData<typeof loader>();
 
   const actionData = useActionData<typeof action>();
 
@@ -473,7 +578,10 @@ export default function CalibrateHardware() {
     return (
       <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
         <div className="flex flex-col gap-4">
-          <CalibrationProcedureControls started={started} />
+          <CalibrationProcedureControls
+            started={started}
+            calibrationFile={calibrationFile}
+          />
           <div className="card bg-base-100  shadow-xl">
             <div className="card-body">
               <p>no running calibration procedure detected</p>
@@ -490,6 +598,7 @@ export default function CalibrateHardware() {
         <CalibrationProcedureControls
           started={started}
           hasHistory={hasHistory}
+          calibrationFile={calibrationFile}
         />
         <div>
           <CalibrationProcedureProgress state={state} actions={actions} />
