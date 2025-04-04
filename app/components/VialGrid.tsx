@@ -64,7 +64,9 @@ const DataTable = ({
                   {renderSubKey && (
                     <td>
                       {typeof data[mainKey][subKey] === "number"
-                        ? data[mainKey][subKey].toFixed(3)
+                        ? Number(data[mainKey][subKey].toFixed(3)) % 1 === 0
+                          ? data[mainKey][subKey].toFixed(0)
+                          : data[mainKey][subKey].toFixed(3)
                         : data[mainKey][subKey] || "-"}
                     </td>
                   )}

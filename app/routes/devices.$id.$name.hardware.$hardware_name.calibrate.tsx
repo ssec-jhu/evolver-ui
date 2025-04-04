@@ -219,6 +219,7 @@ export async function action({ request }: ActionFunctionArgs) {
     default:
       return submission.reply();
   }
+  return null;
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
@@ -247,17 +248,14 @@ export async function loader({ params }: LoaderFunctionArgs) {
         client: evolverClient,
       },
     );
-    
+
   // Get hardware details to extract the calibration_file
-  const { data: hardware } =
-    await Evolver.getHardwareHardwareHardwareNameGet(
-      {
-        path: {
-          hardware_name: hardware_name ?? "",
-        },
-        client: evolverClient,
-      },
-    );
+  const { data: hardware } = await Evolver.getHardwareHardwareHardwareNameGet({
+    path: {
+      hardware_name: hardware_name ?? "",
+    },
+    client: evolverClient,
+  });
 
   const calibrationFile = hardware?.calibrator?.calibration_file || "";
 
@@ -551,7 +549,10 @@ export default function CalibrateHardware() {
     return (
       <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
         <div className="flex flex-col gap-4">
-          <CalibrationProcedureControls started={started} calibrationFile={calibrationFile} />
+          <CalibrationProcedureControls
+            started={started}
+            calibrationFile={calibrationFile}
+          />
           <div className="card bg-base-100  shadow-xl">
             <div className="card-body">
               <p>no running calibration procedure detected</p>
