@@ -20,7 +20,12 @@ const DataTable = ({
         <thead>
           <tr>
             <th>
-              <Link to={`/devices/${id}/${name}/hardware`}>hardware</Link>{" "}
+              <Link
+                className={"font-mono text-primary"}
+                to={`/devices/${id}/${name}/hardware`}
+              >
+                {vialIndex}
+              </Link>{" "}
             </th>
             <th></th>
             <th></th>
@@ -41,7 +46,7 @@ const DataTable = ({
                   {subIndex === 0 && (
                     <td
                       rowSpan={Object.keys(data[mainKey]).length}
-                      className="text-center"
+                      className="text-center font-mono"
                     >
                       <Link
                         className="link"
@@ -54,7 +59,7 @@ const DataTable = ({
                   {renderSubKey && (
                     <td>
                       <Link
-                        className="link"
+                        className="link font-mono"
                         to={`/devices/${id}/${name}/hardware/${mainKey}/history?properties=${subKey}&vials=${vialIndex}`}
                       >
                         {subKey}
@@ -204,9 +209,6 @@ export function FilterableVialGrid({
           hasData && "border-4 border-primary",
         )}
       >
-        <div className="absolute font-mono opacity-5">
-          <span className="block text-[10vw] leading-none">{index}</span>
-        </div>
         {hasData && (
           <DataTable
             data={data}
