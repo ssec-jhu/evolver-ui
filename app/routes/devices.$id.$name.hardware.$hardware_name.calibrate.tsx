@@ -235,6 +235,9 @@ export async function action({ request }: ActionFunctionArgs) {
     default:
       return submission.reply();
   }
+  return submission.reply({
+    formErrors: ["unknown error"],
+  });
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
