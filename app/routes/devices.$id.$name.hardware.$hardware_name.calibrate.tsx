@@ -276,11 +276,13 @@ export async function loader({ params }: LoaderFunctionArgs) {
   });
 
   const calibrationFile = hardware?.calibrator?.calibration_file || "";
+  const procedureFile = hardware?.calibrator?.procedure_file || "";
 
   return {
     actions: procedureActions?.actions,
     state: procedureState,
     calibrationFile,
+    procedureFile,
   };
 }
 
@@ -339,15 +341,25 @@ const CalibrationProcedureProgress = ({ state, actions }) => {
 const CalibrationProcedureControls = ({
   hasHistory = false,
   started = false,
-  calibrationFile = "",
+  calibrationFile,
+  currentProcedureFile,
+  calibrationProcedureIsComplete,
 }: {
   hasHistory?: boolean;
   started: boolean;
-  calibrationFile?: string;
+  calibrationFile: string;
+  currentProcedureFile: string;
+  calibrationProcedureIsComplete: boolean;
 }) => {
   const submit = useSubmit();
   const { id, hardware_name } = useParams();
   const [procedureFile, setProcedureFile] = useState("");
+  const startProcedureWarningMessage = currentProcedureFile
+    ? `There is already a procedure_file associated with this hardware, ${currentProcedureFile}, are you sure you want to start a new procedure? If you use the same name, any procedure state stored in ${currentProcedureFile} will be overwritten. Choose a new procedure_file name to start fresh, otherwise consider resuming the procedure.`
+    : `This will start a new calibration procedure and create a new procedure_file file to store procedure state on the device.`;
+
+  const applyProcedureWarningMessage = `Apply the calibration procedure.This will copy procedure state currently stored in the procedure_file ${currentProcedureFile} to the calibration_file. Data in the calibration_file is used to calibrate the hardware. ${calibrationFile ?? "since no calibration_file attribute was found on this hardware's config, the data in procedure_file will be copied to a default calibration_file name."}`;
+
   return (
     <div className="flex justify-between items-center gap-4">
       <div className="flex items-center">
@@ -361,9 +373,7 @@ const CalibrationProcedureControls = ({
             <WarningModal
               modalId="start_procedure_modal"
               submitText="start"
-              warningMessage={`
-                this will start a new calibration procedure and create a new procedure_file file to store procedure state on the device. if you already have a procedure_file defined for the ${hardware_name} hardware in config, you can resume the procedure rather than starting a new one.
-              `}
+              warningMessage={startProcedureWarningMessage}
               showProcedureFileInput={true}
               onProcedureFileChange={(value) => {
                 setProcedureFile(value);
@@ -459,6 +469,24 @@ const CalibrationProcedureControls = ({
             <button
               className={clsx(
                 "btn",
+                "btn-secondary",
+                !hasHistory && "btn-disabled",
+              )}
+              onClick={() => {
+                const formData = new FormData();
+                formData.append("id", id ?? "");
+                formData.append("intent", Intent.Enum.undo);
+                formData.append("hardware_name", hardware_name ?? "");
+                submit(formData, {
+                  method: "POST",
+                });
+              }}
+            >
+              undo
+            </button>
+            <button
+              className={clsx(
+                "btn",
                 "btn-primary",
                 !hasHistory && "btn-disabled",
               )}
@@ -477,15 +505,16 @@ const CalibrationProcedureControls = ({
             >
               save
             </button>
-
+          </div>
+        )}
+        {started && (
+          <div className="flex">
+            <div className="divider divider-horizontal"></div>
             <WarningModal
-              active={!!calibrationFile && hasHistory}
+              active={calibrationProcedureIsComplete}
               modalId="apply_procedure_modal"
               submitText="apply"
-              warningMessage={`
-                    Apply the current calibration to update the calibration configuration.
-                    This will use ${calibrationFile} as the calibration file.
-              `}
+              warningMessage={applyProcedureWarningMessage}
               onClick={() => {
                 const formData = new FormData();
                 formData.append("id", id ?? "");
@@ -504,31 +533,12 @@ const CalibrationProcedureControls = ({
                 className={clsx(
                   "btn",
                   "btn-accent",
-                  (!calibrationFile || !hasHistory) && "btn-disabled",
+                  !calibrationProcedureIsComplete && "btn-disabled",
                 )}
               >
                 apply
               </span>
             </WarningModal>
-
-            <button
-              className={clsx(
-                "btn",
-                "btn-secondary",
-                !hasHistory && "btn-disabled",
-              )}
-              onClick={() => {
-                const formData = new FormData();
-                formData.append("id", id ?? "");
-                formData.append("intent", Intent.Enum.undo);
-                formData.append("hardware_name", hardware_name ?? "");
-                submit(formData, {
-                  method: "POST",
-                });
-              }}
-            >
-              undo
-            </button>
           </div>
         )}
       </div>
@@ -557,9 +567,14 @@ export function ErrorBoundary() {
 }
 
 export default function CalibrateHardware() {
-  const { actions, state, calibrationFile } = useLoaderData<typeof loader>();
+  const { actions, state, calibrationFile, procedureFile } =
+    useLoaderData<typeof loader>();
 
+  console.log("calibrationFile", calibrationFile);
+  console.log("procedureFile", procedureFile);
   const actionData = useActionData<typeof action>();
+  const calibrationProcedureIsComplete =
+    state.completed_actions.length === actions.length;
 
   useEffect(() => {
     if (actionData?.error) {
@@ -584,6 +599,8 @@ export default function CalibrateHardware() {
           <CalibrationProcedureControls
             started={started}
             calibrationFile={calibrationFile}
+            currentProcedureFile={procedureFile}
+            calibrationProcedureIsComplete={calibrationProcedureIsComplete}
           />
           <div className="card bg-base-100  shadow-xl">
             <div className="card-body">
@@ -602,6 +619,8 @@ export default function CalibrateHardware() {
           started={started}
           hasHistory={hasHistory}
           calibrationFile={calibrationFile}
+          currentProcedureFile={procedureFile}
+          calibrationProcedureIsComplete={calibrationProcedureIsComplete}
         />
         <div>
           <CalibrationProcedureProgress state={state} actions={actions} />

@@ -27,7 +27,7 @@
     "@heroicons/react": "^2.1.5",
     "@hey-api/client-fetch": "^0.1.10",
     "@hey-api/openapi-ts": "^0.49.0",
-    "@prisma/client": "^5.16.2",
+    "@prisma/client": "^6.6.0",
     "@remix-run/node": "^2.16.0",
     "@remix-run/react": "^2.16.0",
     "@remix-run/serve": "^2.16.0",

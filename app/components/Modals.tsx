@@ -42,10 +42,11 @@ export function WarningModal({
           <p className="py-4">{warningMessage}</p>
           {showProcedureFileInput && (
             <div className="flex flex-col gap-4 form-control w-full">
-              <label className="label">
+              <label className="label" htmlFor="procedureFileInput">
                 <span className="label-text">procedure_file name</span>
               </label>
               <input
+                id="procedureFileInput"
                 type="text"
                 placeholder="enter procedure_file name"
                 className="input input-bordered w-full"
