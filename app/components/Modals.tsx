@@ -10,8 +10,10 @@ export function WarningModal({
   submitClassname = "btn",
   children,
   active = true,
-  showProcedureFileInput = false,
-  onProcedureFileChange,
+  showInputField = false,
+  inputLabel = "Input",
+  inputPlaceholder = "Enter value",
+  onInputChange,
 }: {
   onClick: () => void;
   warningTitle?: string;
@@ -21,8 +23,10 @@ export function WarningModal({
   submitClassname?: string | ReactNode;
   children: ReactNode;
   active?: boolean;
-  showProcedureFileInput?: boolean;
-  onProcedureFileChange?: (value: string) => void;
+  showInputField?: boolean;
+  inputLabel?: string;
+  inputPlaceholder?: string;
+  onInputChange?: (value: string) => void;
 }) {
   return (
     <div>
@@ -40,17 +44,17 @@ export function WarningModal({
           </form>
           <h3 className="text-lg">{warningTitle}</h3>
           <p className="py-4">{warningMessage}</p>
-          {showProcedureFileInput && (
+          {showInputField && (
             <div className="flex flex-col gap-4 form-control w-full">
-              <label className="label" htmlFor="procedureFileInput">
-                <span className="label-text">procedure_file name</span>
+              <label className="label" htmlFor="modalInput">
+                <span className="label-text">{inputLabel}</span>
               </label>
               <input
-                id="procedureFileInput"
+                id="modalInput"
                 type="text"
-                placeholder="enter procedure_file name"
+                placeholder={inputPlaceholder}
                 className="input input-bordered w-full"
-                onChange={(e) => onProcedureFileChange?.(e.target.value)}
+                onChange={(e) => onInputChange?.(e.target.value)}
               />
             </div>
           )}

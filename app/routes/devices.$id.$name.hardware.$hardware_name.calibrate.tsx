@@ -47,7 +47,7 @@ const schema = z.discriminatedUnion("intent", [
     intent: z.literal(Intent.Enum.start_calibration_procedure),
     id: z.string(),
     hardware_name: z.string(),
-    procedure_file: z.string(),
+    procedure_file: z.string().optional(),
   }),
   z.object({
     intent: z.literal(Intent.Enum.save_calibration_procedure),
@@ -354,11 +354,13 @@ const CalibrationProcedureControls = ({
   const submit = useSubmit();
   const { id, hardware_name } = useParams();
   const [procedureFile, setProcedureFile] = useState("");
+  const [calibrationFileName, setCalibrationFileName] =
+    useState(calibrationFile);
   const startProcedureWarningMessage = currentProcedureFile
     ? `There is already a procedure_file associated with this hardware, ${currentProcedureFile}, are you sure you want to start a new procedure? If you use the same name, any procedure state stored in ${currentProcedureFile} will be overwritten. Choose a new procedure_file name to start fresh, otherwise consider resuming the procedure.`
     : `This will start a new calibration procedure and create a new procedure_file file to store procedure state on the device.`;
 
-  const applyProcedureWarningMessage = `Apply the calibration procedure.This will copy procedure state currently stored in the procedure_file ${currentProcedureFile} to the calibration_file. Data in the calibration_file is used to calibrate the hardware. ${calibrationFile ?? "since no calibration_file attribute was found on this hardware's config, the data in procedure_file will be copied to a default calibration_file name."}`;
+  const applyProcedureWarningMessage = `Apply the calibration procedure. This will copy procedure state currently stored in the procedure_file ${currentProcedureFile} to the calibration_file. Data in the calibration_file is used to calibrate the hardware. Please specify a calibration file name.`;
 
   return (
     <div className="flex justify-between items-center gap-4">
@@ -374,8 +376,10 @@ const CalibrationProcedureControls = ({
               modalId="start_procedure_modal"
               submitText="start"
               warningMessage={startProcedureWarningMessage}
-              showProcedureFileInput={true}
-              onProcedureFileChange={(value) => {
+              showInputField={false}
+              inputLabel="procedure_file name"
+              inputPlaceholder="enter procedure_file name"
+              onInputChange={(value) => {
                 setProcedureFile(value);
               }}
               onClick={() => {
@@ -410,8 +414,10 @@ const CalibrationProcedureControls = ({
                     restarting the calibration procedure will reset all unsaved
                     progress.
               `}
-              showProcedureFileInput={true}
-              onProcedureFileChange={(value) => {
+              showInputField={false}
+              inputLabel="procedure_file name"
+              inputPlaceholder="enter procedure_file name"
+              onInputChange={(value) => {
                 setProcedureFile(value);
               }}
               onClick={() => {
@@ -515,6 +521,12 @@ const CalibrationProcedureControls = ({
               modalId="apply_procedure_modal"
               submitText="apply"
               warningMessage={applyProcedureWarningMessage}
+              showInputField={true}
+              inputLabel="calibration_file name"
+              inputPlaceholder="enter calibration_file name"
+              onInputChange={(value) => {
+                setCalibrationFileName(value);
+              }}
               onClick={() => {
                 const formData = new FormData();
                 formData.append("id", id ?? "");
@@ -523,7 +535,7 @@ const CalibrationProcedureControls = ({
                   Intent.Enum.apply_calibration_procedure,
                 );
                 formData.append("hardware_name", hardware_name ?? "");
-                formData.append("calibration_file", calibrationFile);
+                formData.append("calibration_file", calibrationFileName);
                 submit(formData, {
                   method: "POST",
                 });
@@ -550,7 +562,12 @@ export function ErrorBoundary() {
   const { hardware_name } = useParams();
   return (
     <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto flex flex-col gap-4">
-      <CalibrationProcedureControls started={false} />
+      <CalibrationProcedureControls
+        started={false}
+        calibrationFile=""
+        currentProcedureFile=""
+        calibrationProcedureIsComplete={false}
+      />
       <div className="card bg-base-100  shadow-xl">
         <div className="card-body">
           <WrenchScrewdriverIcon className="w-10 h-10" />
@@ -574,7 +591,7 @@ export default function CalibrateHardware() {
   console.log("procedureFile", procedureFile);
   const actionData = useActionData<typeof action>();
   const calibrationProcedureIsComplete =
-    state.completed_actions.length === actions.length;
+    state?.completed_actions?.length === actions?.length;
 
   useEffect(() => {
     if (actionData?.error) {
