@@ -14,28 +14,30 @@ import { ChangeEvent, FocusEvent } from "react";
 // Custom templates for form styling
 function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
   return (
-    <div className="flex flex-col gap-4 flex-1">
+    <div>
       {props.title && (
-        <div className="flex flex-col gap-4">
+        <div className="">
           <div className="card-title">{props.title}</div>
           {props.description && <p>{props.description}</p>}
         </div>
       )}
-      {props.properties.map((element, index) => (
-        <div key={index} className="property-wrapper">
-          {element.content}
-        </div>
-      ))}
+      <div className="grid grid-cols-2 gap-4">
+        {props.properties.map((element, index) => (
+          <div key={index} className="property-wrapper">
+            {element.content}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function CustomFieldTemplate(props: FieldTemplateProps) {
-  const { classNames, style, help, description, errors, children } = props;
+  const { classNames, style, help, description, errors, children, label } =
+    props;
   return (
-    <div className={`${classNames} flex flex-col gap-2`} style={style}>
+    <div className={`${classNames}`} style={style}>
       {children}
-      {description}
       {errors}
       {help}
     </div>
@@ -52,6 +54,8 @@ function BaseInputTemplate(props: BaseInputTemplateProps) {
     placeholder,
     disabled,
     readonly,
+    label,
+    description,
     onChange,
     onChangeOverride,
     onBlur,
@@ -76,18 +80,22 @@ function BaseInputTemplate(props: BaseInputTemplateProps) {
   const inputProps = { ...rest, ...getInputProps(schema, type, options) };
 
   return (
-    <input
-      className="input input-bordered max-w-xs"
-      id={id}
-      value={value}
-      placeholder={placeholder}
-      disabled={disabled}
-      readOnly={readonly}
-      onChange={onChangeOverride || onTextChange}
-      onBlur={onTextBlur}
-      onFocus={onTextFocus}
-      {...inputProps}
-    />
+    <fieldset className="fieldset ">
+      <legend className="fieldset-legend">{label}</legend>
+      <input
+        className="input input-bordered max-w-xs"
+        id={id}
+        value={value}
+        placeholder={placeholder}
+        disabled={disabled}
+        readOnly={readonly}
+        onChange={onChangeOverride || onTextChange}
+        onBlur={onTextBlur}
+        onFocus={onTextFocus}
+        {...inputProps}
+      />
+      <p className="label">{schema.description}</p>
+    </fieldset>
   );
 }
 
@@ -116,7 +124,6 @@ interface SchemaFormProps {
   onSubmit: (data: any) => void;
   title?: string;
   submitText?: string;
-  cardLayout?: boolean;
 }
 
 export default function SchemaForm({
@@ -126,7 +133,6 @@ export default function SchemaForm({
   onSubmit,
   title,
   submitText,
-  cardLayout = true,
 }: SchemaFormProps) {
   // Merge custom UI schema with provided one
   const mergedUiSchema = {
@@ -145,7 +151,7 @@ export default function SchemaForm({
 
   const formComponent = (
     <Form
-      className="flex flex-col gap-4 flex-1 justify-between"
+      className="bg-base-200 border-base-300 rounded-box w-xs border p-4 "
       validator={validator}
       schema={mergedSchema}
       uiSchema={mergedUiSchema}
@@ -161,14 +167,6 @@ export default function SchemaForm({
       }}
     />
   );
-
-  if (cardLayout) {
-    return (
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body flex-1">{formComponent}</div>
-      </div>
-    );
-  }
 
   return formComponent;
 }
