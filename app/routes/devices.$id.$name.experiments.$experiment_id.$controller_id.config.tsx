@@ -5,7 +5,6 @@ import {
   useRouteLoaderData,
 } from "@remix-run/react";
 import { EvolverConfigWithoutDefaults } from "client";
-import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { db } from "~/utils/db.server";
@@ -74,7 +73,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
   const [experiments] = await results;
 
-  // get the classinfo for the experiment_id_cn
   const classinfo = experiments[experiment_id].controllers.find(
     (controller) => controller.config.name == controller_id,
   )?.classinfo;
@@ -112,7 +110,7 @@ export default function Controllers() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="font-mono">{`${experiment_id} > ${controller_id} > config`}</div>
+      <div className="font-mono">{`${experiment_id} > ${controller_id}`}</div>
       <div className="bg-base-300 rounded-box relative overflow-x-auto">
         {Object.entries(experiments)
           .filter(([experimentId]) => experimentId == experiment_id)

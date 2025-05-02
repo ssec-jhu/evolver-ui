@@ -63,7 +63,6 @@ export function ErrorBoundary() {
 
 export default function ExperimentLogs() {
   const { logs } = useLoaderData<typeof loader>();
-  console.log(logs);
   const LogTables = Object.keys(logs).map((key, ix) => (
     <LogTable key={key + ix} title={key} logs={logs[key]} />
   ));

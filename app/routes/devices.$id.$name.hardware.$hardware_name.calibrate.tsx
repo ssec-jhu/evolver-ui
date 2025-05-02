@@ -587,8 +587,6 @@ export default function CalibrateHardware() {
   const { actions, state, calibrationFile, procedureFile } =
     useLoaderData<typeof loader>();
 
-  console.log("calibrationFile", calibrationFile);
-  console.log("procedureFile", procedureFile);
   const actionData = useActionData<typeof action>();
   const calibrationProcedureIsComplete =
     state?.completed_actions?.length === actions?.length;
