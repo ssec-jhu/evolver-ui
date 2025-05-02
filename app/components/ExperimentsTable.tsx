@@ -14,64 +14,67 @@ export function ExperimentsTable({
 
   const rows = [];
 
-  Object.entries(experiments).forEach(([key, { enabled, controllers }], ix) => {
-    rows.push(
-      <tr key={key + ix} className={clsx("font-mono")}>
-        <td className="font-mono">
-          <Link
-            className={clsx(pathElements.includes(key) && "underline")}
-            to={`/devices/${id}/${name}/experiments/${key}`}
-          >
-            {key}
-          </Link>
-        </td>
-        <td>{enabled ? "enabled" : "disabled"}</td>
-        <td className="font-mono">
-          <ul className="list">
-            {controllers?.map(
-              ({ classinfo, config: { name: controllerName } }, ix) => {
-                return (
-                  <li
-                    className={clsx(
-                      "list-row",
-                      controllerName === currentPath && "underline",
-                    )}
-                    key={classinfo + ix}
-                  >
-                    <div className="opacity-30 font-mono flex items-center">
-                      {ix + 1}
-                    </div>
-                    <Link
-                      className="list-col-grow flex items-center"
-                      to={`/devices/${id}/${name}/experiments/${key}/logs#${controllerName}`}
+  Object.entries(experiments).forEach(
+    ([experiment_name, { enabled, controllers }], ix) => {
+      rows.push(
+        <tr key={experiment_name + ix} className={clsx("font-mono")}>
+          <td className="font-mono">
+            <Link
+              className={clsx(
+                pathElements.includes(experiment_name) && "underline",
+              )}
+              to={`/devices/${id}/${name}/experiments/${experiment_name}`}
+            >
+              {experiment_name}
+            </Link>
+          </td>
+          <td>{enabled ? "enabled" : "disabled"}</td>
+          <td>
+            <Link
+              className={clsx("btn btn-outline join-item")}
+              to={`/devices/${id}/${name}/experiments/${experiment_name}/logs#logs`}
+            >
+              logs
+            </Link>
+          </td>
+
+          <td className="font-mono">
+            <ul className="list">
+              {controllers?.map(
+                ({ classinfo, config: { name: controllerName } }, ix) => {
+                  return (
+                    <li
+                      className={clsx(
+                        "list-row",
+                        controllerName === currentPath && "underline",
+                      )}
+                      key={classinfo + ix}
                     >
-                      {controllerName}
-                    </Link>
+                      <div className="opacity-30 font-mono flex items-center">
+                        {ix + 1}
+                      </div>
+                      <div className="list-col-grow flex items-center">
+                        {controllerName}
+                      </div>
 
-                    <div className="join">
-                      <Link
-                        className={clsx("btn btn-outline join-item")}
-                        to={`/devices/${id}/${name}/experiments/${key}#${controllerName + "config"}`}
-                      >
-                        config
-                      </Link>
-
-                      <Link
-                        className={clsx("btn btn-outline join-item")}
-                        to={`/devices/${id}/${name}/experiments/${key}/logs#${controllerName}`}
-                      >
-                        log
-                      </Link>
-                    </div>
-                  </li>
-                );
-              },
-            )}
-          </ul>
-        </td>
-      </tr>,
-    );
-  });
+                      <div className="join">
+                        <Link
+                          className={clsx("btn btn-outline join-item")}
+                          to={`/devices/${id}/${name}/experiments/${experiment_name}/${controllerName}/config#${controllerName + "config"}`}
+                        >
+                          config
+                        </Link>
+                      </div>
+                    </li>
+                  );
+                },
+              )}
+            </ul>
+          </td>
+        </tr>,
+      );
+    },
+  );
 
   return (
     <table className="table">
@@ -79,6 +82,7 @@ export function ExperimentsTable({
         <tr>
           <th>name</th>
           <th>state</th>
+          <th>logs</th>
           <th>controllers</th>
         </tr>
       </thead>

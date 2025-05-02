@@ -1,4 +1,4 @@
-import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
+import { WrenchScrewdriverIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import { createClient } from "@hey-api/client-fetch";
 import { Link, useLoaderData } from "@remix-run/react";
 import { db } from "~/utils/db.server";
@@ -63,14 +63,28 @@ export function ErrorBoundary() {
 
 export default function ExperimentLogs() {
   const { logs } = useLoaderData<typeof loader>();
-  const logTables = Object.keys(logs).map((key, ix) => (
+  console.log(logs);
+  const LogTables = Object.keys(logs).map((key, ix) => (
     <LogTable key={key + ix} title={key} logs={logs[key]} />
   ));
+  const LogView =
+    Object.keys(logs).length > 0 ? (
+      LogTables
+    ) : (
+      <div className="flex flex-col items-center justify-center p-4 bg-base-300 rounded-box relative overflow-x-auto">
+        <div className="card bg-base-100  shadow-xl">
+          <div className="card-body">
+            <p>No log data yet</p>
+          </div>
+        </div>
+      </div>
+    );
   return (
-    <div>
+    <div id={"logs"}>
       <div className="divider"></div>
       <div className="font-mono">logs</div>
-      {logTables}
+      <div className="divider"></div>
+      {LogView}
     </div>
   );
 }
