@@ -56,7 +56,7 @@ export function ErrorBoundary() {
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  const { id } = params;
+  const { id, experiment_id, controller_id } = params;
   const targetDevice = await db.device.findUnique({ where: { device_id: id } });
 
   const { url } = targetDevice;
@@ -74,11 +74,28 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
   const [experiments] = await results;
 
-  return { experiments };
+  // get the classinfo for the experiment_id_cn
+  const classinfo = experiments[experiment_id].controllers.find(
+    (controller) => controller.config.name == controller_id,
+  )?.classinfo;
+
+  const controllerClassinfoSchema = await Evolver.schema({
+    query: {
+      classinfo: classinfo,
+    },
+  });
+
+  const fullyQualifiedConfigProperty = `config.experiments.${experiment_id}.controllers.[controller.config.name === ${controller_id}]`;
+
+  return {
+    experiments,
+    classinfoSchema: controllerClassinfoSchema.data,
+    fullyQualifiedConfigProperty,
+  };
 }
 
 export default function Controllers() {
-  const { id, experiment_id, controller_id } = useParams();
+  const { experiment_id, controller_id } = useParams();
   const { experiments } = useLoaderData<typeof loader>();
 
   const loaderData = useRouteLoaderData<typeof loader>(
