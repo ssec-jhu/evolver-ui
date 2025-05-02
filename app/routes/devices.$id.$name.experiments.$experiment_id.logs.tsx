@@ -81,9 +81,7 @@ export default function ExperimentLogs() {
     );
   return (
     <div id={"logs"}>
-      <div className="divider"></div>
       <div className="font-mono">logs</div>
-      <div className="divider"></div>
       {LogView}
     </div>
   );

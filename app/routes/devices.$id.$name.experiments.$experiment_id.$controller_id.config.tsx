@@ -78,7 +78,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 }
 
 export default function Controllers() {
-  const { id, experiment_id, name } = useParams();
+  const { id, experiment_id, controller_id } = useParams();
   const { experiments } = useLoaderData<typeof loader>();
 
   const loaderData = useRouteLoaderData<typeof loader>(
@@ -94,22 +94,26 @@ export default function Controllers() {
   }
 
   return (
-    <div className="bg-base-300 rounded-box relative overflow-x-auto">
-      {Object.entries(experiments)
-        .filter(([experimentId]) => experimentId == experiment_id)
-        .map(([experimentId, experimentData]) => (
-          <div key={experimentId}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="flex flex-col gap-4">
+      <div className="font-mono">{`${experiment_id} > ${controller_id} > config`}</div>
+      <div className="bg-base-300 rounded-box relative overflow-x-auto">
+        {Object.entries(experiments)
+          .filter(([experimentId]) => experimentId == experiment_id)
+          .map(([experimentId, experimentData]) => (
+            <div key={experimentId}>
               {experimentData.controllers &&
-                experimentData.controllers.map((controller, idx) => (
-                  <ControllerConfig
-                    key={`${experimentId}-controller-${idx}`}
-                    controller={controller}
-                  />
-                ))}
+                experimentData.controllers
+                  .filter(
+                    (controller) => controller.config.name == controller_id,
+                  )
+                  .map((controller, idx) => (
+                    <div key={`${experimentId}-controller-${idx}`}>
+                      <ControllerConfig controller={controller} />
+                    </div>
+                  ))}
             </div>
-          </div>
-        ))}
+          ))}
+      </div>
     </div>
   );
 }
