@@ -284,7 +284,9 @@ export default function Device() {
             to={"./config"}
             className={clsx(
               "tab",
-              lastPathElement === "config" && "tab-active",
+              lastPathElement === "config" &&
+                !pathElements.includes("experiments") &&
+                "tab-active",
               "tab-border-3",
             )}
           >

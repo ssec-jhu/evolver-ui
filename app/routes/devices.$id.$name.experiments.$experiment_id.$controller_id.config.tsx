@@ -1,6 +1,5 @@
 import {
   Link,
-  Outlet,
   useLoaderData,
   useParams,
   useRouteLoaderData,
@@ -20,12 +19,19 @@ export const handle = {
   breadcrumb: ({
     params,
   }: {
-    params: { id: string; experiment_id: string; name: string };
+    params: {
+      id: string;
+      experiment_id: string;
+      name: string;
+      controller_id: string;
+    };
   }) => {
-    const { id, experiment_id, name } = params;
+    const { id, experiment_id, name, controller_id } = params;
     return (
-      <Link to={`/devices/${id}/${name}/experiments/${experiment_id}`}>
-        {experiment_id}
+      <Link
+        to={`/devices/${id}/${name}/experiments/${experiment_id}/${controller_id}/config`}
+      >
+        {controller_id}
       </Link>
     );
   },
@@ -73,6 +79,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export default function Controllers() {
   const { id, experiment_id, name } = useParams();
+  const { experiments } = useLoaderData<typeof loader>();
 
   const loaderData = useRouteLoaderData<typeof loader>(
     "routes/devices.$id.$name",
@@ -86,29 +93,23 @@ export default function Controllers() {
     }
   }
 
-  if (!evolverConfig.experiments[experiment_id]) {
-    return (
-      <div className="flex flex-col items-center">
-        <CogIcon className="h-20 w-20" />
-        <div>{`No experiment with name: ${experiment_id} was found in config.`}</div>
-        <div
-          className="tooltip"
-          data-tip="use the configuration editor to add hardware "
-        >
-          <Link
-            className="link text-primary"
-            to={`/devices/${id}/${name}/config`}
-          >
-            add experiment
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-base-300 rounded-box relative overflow-x-auto">
-      <Outlet />
+      {Object.entries(experiments)
+        .filter(([experimentId]) => experimentId == experiment_id)
+        .map(([experimentId, experimentData]) => (
+          <div key={experimentId}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {experimentData.controllers &&
+                experimentData.controllers.map((controller, idx) => (
+                  <ControllerConfig
+                    key={`${experimentId}-controller-${idx}`}
+                    controller={controller}
+                  />
+                ))}
+            </div>
+          </div>
+        ))}
     </div>
   );
 }

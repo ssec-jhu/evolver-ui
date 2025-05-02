@@ -619,9 +619,12 @@ export default function CalibrateHardware() {
             currentProcedureFile={procedureFile}
             calibrationProcedureIsComplete={calibrationProcedureIsComplete}
           />
-          <div className="card bg-base-100  shadow-xl">
-            <div className="card-body">
-              <p>no running calibration procedure detected</p>
+
+          <div className="flex flex-col items-center justify-center p-4 bg-base-300 rounded-box relative overflow-x-auto">
+            <div className="card bg-base-100  shadow-xl">
+              <div className="card-body">
+                <p>no running calibration procedure detected</p>
+              </div>
             </div>
           </div>
         </div>
