@@ -107,7 +107,7 @@ export default function Controllers() {
   }
 
   return (
-    <div className="bg-base-300 rounded-box relative overflow-x-auto">
+    <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
       <Outlet />
     </div>
   );

@@ -98,12 +98,13 @@ export default function Controllers() {
   }
 
   return (
-    <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
-      <ExperimentsTable
-        evolverConfig={evolverConfig}
-        experiments={experiments}
-      />
-
+    <div className="flex flex-col gap-4">
+      <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
+        <ExperimentsTable
+          evolverConfig={evolverConfig}
+          experiments={experiments}
+        />
+      </div>
       <Outlet />
     </div>
   );
