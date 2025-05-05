@@ -21,3 +21,4 @@ coverage
 /playwright/.cache/
 /vitest-report
 audit.json
+/.react-router/types
