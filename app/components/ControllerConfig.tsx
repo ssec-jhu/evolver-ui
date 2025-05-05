@@ -5,6 +5,7 @@ import SchemaForm from "./SchemaForm";
 import {
   loader,
   action,
+  Intent,
 } from "~/routes/devices.$id.$name.experiments.$experiment_id.$controller_id.config";
 
 type ControllerConfigProps = {
@@ -46,7 +47,7 @@ export function ControllerConfig({
     toast.dismiss();
 
     const formData = new FormData();
-    formData.append("intent", "update_controller");
+    formData.append("intent", Intent.Enum.update_controller);
     formData.append("id", id || "");
     formData.append("experiment_id", experiment_id || "");
     formData.append("controller_id", controller_id || "");

@@ -96,7 +96,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
   };
 }
 
-const Intent = z.enum(["update_controller"], {
+export const Intent = z.enum(["update_controller"], {
   required_error: "an intent is required",
   invalid_type_error: "must be one of: update_controller",
 });
