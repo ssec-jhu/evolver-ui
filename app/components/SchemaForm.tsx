@@ -4,7 +4,6 @@ import {
   FieldTemplateProps,
   getInputProps,
   getSubmitButtonOptions,
-  ObjectFieldTemplateProps,
   RJSFSchema,
   SubmitButtonProps,
 } from "@rjsf/utils";
@@ -117,7 +116,6 @@ export default function SchemaForm({
       name: { type: "string", title: "Name" },
     },
   };
-  debugger;
   const formComponent = (
     <Form
       className="flex flex-col gap-4"
