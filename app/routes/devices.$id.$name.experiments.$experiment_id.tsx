@@ -1,10 +1,4 @@
-import {
-  Link,
-  Outlet,
-  useLoaderData,
-  useParams,
-  useRouteLoaderData,
-} from "@remix-run/react";
+import { Link, Outlet, useParams, useRouteLoaderData } from "@remix-run/react";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
@@ -14,7 +8,6 @@ import { db } from "~/utils/db.server";
 import * as Evolver from "client/services.gen";
 
 import { createClient } from "@hey-api/client-fetch";
-import { ControllerConfig } from "~/components/ControllerConfig";
 
 export const handle = {
   breadcrumb: ({

@@ -33,8 +33,7 @@ function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
 }
 
 function CustomFieldTemplate(props: FieldTemplateProps) {
-  const { classNames, style, help, description, errors, children, label } =
-    props;
+  const { classNames, style, help, errors, children } = props;
   return (
     <div className={`${classNames}`} style={style}>
       {children}
@@ -55,7 +54,6 @@ function BaseInputTemplate(props: BaseInputTemplateProps) {
     disabled,
     readonly,
     label,
-    description,
     onChange,
     onChangeOverride,
     onBlur,
@@ -101,8 +99,7 @@ function BaseInputTemplate(props: BaseInputTemplateProps) {
 
 function CustomSubmitButton(props: SubmitButtonProps) {
   const { uiSchema } = props;
-  const { submitText, norender, ...submitButtonOptions } =
-    getSubmitButtonOptions(uiSchema);
+  const { submitText, norender } = getSubmitButtonOptions(uiSchema);
 
   if (norender) {
     return null;
@@ -120,8 +117,8 @@ function CustomSubmitButton(props: SubmitButtonProps) {
 interface SchemaFormProps {
   schema: RJSFSchema;
   uiSchema?: object;
-  formData?: any;
-  onSubmit: (data: any) => void;
+  formData?: object;
+  onSubmit: (arg: object) => void;
   title?: string;
   submitText?: string;
 }
@@ -138,7 +135,9 @@ export default function SchemaForm({
   const mergedUiSchema = {
     ...uiSchema,
     "ui:submitButtonOptions": {
-      ...((uiSchema as any)?.["ui:submitButtonOptions"] || {}),
+      ...((uiSchema as { "ui:submitButtonOptions": object })?.[
+        "ui:submitButtonOptions"
+      ] || {}),
       submitText,
     },
   };
