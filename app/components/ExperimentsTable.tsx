@@ -60,7 +60,7 @@ export function ExperimentsTable({
                       <div className="join">
                         <Link
                           className={clsx("btn btn-outline join-item")}
-                          to={`/devices/${id}/${name}/experiments/${experiment_name}/${controllerName}/config#${controllerName + "config"}`}
+                          to={`/devices/${id}/${name}/experiments/${experiment_name}/controllers/${controllerName}/config#${controllerName + "config"}`}
                         >
                           config
                         </Link>

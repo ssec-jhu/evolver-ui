@@ -6,7 +6,7 @@ import {
   loader,
   action,
   Intent,
-} from "~/routes/devices.$id.$name.experiments.$experiment_id.$controller_id.config";
+} from "~/routes/devices.$id.$name.experiments.$experiment_id.controllers.$controller_id.config";
 
 type ControllerConfigProps = {
   controller: {
