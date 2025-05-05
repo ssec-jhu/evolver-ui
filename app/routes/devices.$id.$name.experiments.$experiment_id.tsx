@@ -1,8 +1,8 @@
-import { Link, Outlet, useParams, useRouteLoaderData } from "@remix-run/react";
+import { Link, Outlet, useParams, useRouteLoaderData } from "react-router";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
-import { LoaderFunctionArgs } from "@remix-run/node";
+import { LoaderFunctionArgs } from "react-router";
 import { db } from "~/utils/db.server";
 
 import * as Evolver from "client/services.gen";

@@ -1,4 +1,4 @@
-import { Link, Outlet, useParams, useRouteLoaderData } from "@remix-run/react";
+import { Link, Outlet, useParams, useRouteLoaderData } from "react-router";
 
 import { HardwareTable } from "~/components/HardwareTable";
 import { loader } from "./devices.$id.$name";

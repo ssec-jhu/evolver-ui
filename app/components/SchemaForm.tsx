@@ -1,13 +1,12 @@
 import Form from "@rjsf/core";
-import {
+import rjsfutils, {
   BaseInputTemplateProps,
   FieldTemplateProps,
-  getInputProps,
-  getSubmitButtonOptions,
   ObjectFieldTemplateProps,
   RJSFSchema,
   SubmitButtonProps,
 } from "@rjsf/utils";
+const { getInputProps, getSubmitButtonOptions } = rjsfutils;
 import validator from "@rjsf/validator-ajv8";
 import { ChangeEvent, FocusEvent } from "react";
 

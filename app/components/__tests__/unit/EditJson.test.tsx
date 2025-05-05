@@ -1,10 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { createRemixStub } from "@remix-run/testing";
+import { createRoutesStub } from "react-router";
 import { data } from "./testData";
 import { EditJson } from "../../EditJson.client";
 
-const RemixStub = createRemixStub([
+const RemixStub = createRoutesStub([
   {
     path: "/",
     Component: () => <EditJson data={data} mode="view" setData={() => null} />,

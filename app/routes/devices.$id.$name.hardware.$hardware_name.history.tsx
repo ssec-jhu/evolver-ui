@@ -1,12 +1,6 @@
 import { createClient } from "@hey-api/client-fetch";
-import { LoaderFunctionArgs } from "@remix-run/node";
-import {
-  Link,
-  useLoaderData,
-  useParams,
-  useRouteLoaderData,
-  useSearchParams,
-} from "@remix-run/react";
+import { LoaderFunctionArgs } from "react-router";
+import { Link, useLoaderData, useParams, useRouteLoaderData, useSearchParams } from "react-router";
 import * as Evolver from "client/services.gen";
 import { db } from "~/utils/db.server";
 import { HardwareLineChart } from "~/components/LineChart";

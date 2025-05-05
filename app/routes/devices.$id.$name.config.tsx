@@ -6,7 +6,7 @@ import {
   useRouteLoaderData,
   useSearchParams,
   useSubmit,
-} from "@remix-run/react";
+} from "react-router";
 import { EditJson } from "~/components/EditJson.client";
 import { ClientOnly } from "remix-utils/client-only";
 import { useEffect, useState } from "react";
@@ -14,7 +14,7 @@ import { exportData } from "~/utils/exportData";
 import { type loader } from "./devices.$id.$name";
 import { handleFileUpload } from "~/utils/handleFileUpload";
 import { EvolverConfigWithoutDefaults } from "client";
-import { ActionFunctionArgs, redirect } from "@remix-run/node";
+import { ActionFunctionArgs, redirect } from "react-router";
 import { parseWithZod } from "@conform-to/zod";
 import { z } from "zod";
 import { createClient } from "@hey-api/client-fetch";

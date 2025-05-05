@@ -1,4 +1,4 @@
-import { Link, useParams } from "@remix-run/react";
+import { Link, useParams } from "react-router";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 

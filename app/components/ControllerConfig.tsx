@@ -1,4 +1,4 @@
-import { useLoaderData, useParams, useSubmit } from "@remix-run/react";
+import { useLoaderData, useParams, useSubmit } from "react-router";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
 import SchemaForm from "./SchemaForm";
