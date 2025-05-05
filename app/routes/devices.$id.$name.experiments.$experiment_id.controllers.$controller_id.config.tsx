@@ -250,7 +250,7 @@ export async function action({ request }: ActionFunctionArgs) {
         const newControllerName = parsedControllerConfig.name || controller_id;
 
         return redirect(
-          `/devices/${id}/${name}/experiments/${experiment_id}/${newControllerName}/config#${newControllerName}config`,
+          `/devices/${id}/${name}/experiments/${experiment_id}/controllers/${newControllerName}/config#${newControllerName}config`,
         );
       } catch (error) {
         return submission.reply({
