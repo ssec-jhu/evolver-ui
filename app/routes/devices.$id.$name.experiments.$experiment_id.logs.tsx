@@ -1,4 +1,4 @@
-import { WrenchScrewdriverIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { createClient } from "@hey-api/client-fetch";
 import { Link, useLoaderData } from "@remix-run/react";
 import { db } from "~/utils/db.server";

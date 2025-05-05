@@ -1,23 +1,24 @@
-import {
-  WrenchIcon,
-  AdjustmentsVerticalIcon,
-} from "@heroicons/react/24/outline";
-
 import { useLoaderData, useParams, useSubmit } from "@remix-run/react";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
 import SchemaForm from "./SchemaForm";
-import { loader } from "~/routes/devices.$id.$name.experiments.$experiment_id.$controller_id.config";
+import {
+  loader,
+  action,
+} from "~/routes/devices.$id.$name.experiments.$experiment_id.$controller_id.config";
 
 type ControllerConfigProps = {
   controller: {
     classinfo: string;
     config: Record<string, unknown>;
   };
-  actionData?: any;
+  actionData?: typeof action;
 };
 
-export function ControllerConfig({ controller, actionData }: ControllerConfigProps) {
+export function ControllerConfig({
+  controller,
+  actionData,
+}: ControllerConfigProps) {
   const controllerName = controller.config.name as string;
   const loaderData = useLoaderData<typeof loader>();
   const { id, experiment_id, controller_id } = useParams();
@@ -41,16 +42,16 @@ export function ControllerConfig({ controller, actionData }: ControllerConfigPro
     }
   }, [actionData]);
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data) => {
     toast.dismiss();
-    
+
     const formData = new FormData();
     formData.append("intent", "update_controller");
     formData.append("id", id || "");
     formData.append("experiment_id", experiment_id || "");
     formData.append("controller_id", controller_id || "");
     formData.append("controller_config", JSON.stringify(data));
-    
+
     submit(formData, {
       method: "POST",
     });
