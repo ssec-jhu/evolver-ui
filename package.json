@@ -9,7 +9,7 @@
     "bootstrap_dev_db": "npx prisma migrate dev --name init",
     "bootstrap_prod_db": "npx prisma migrate deploy && npx prisma generate",
     "bootstrap_evolver_ts_client": "npx @hey-api/openapi-ts -i openapi.json -o client",
-    "build": "npm install && npm run bootstrap_prod_db && npm run bootstrap_evolver_ts_client && react-router build",
+    "build": "npm install --legacy-peer-deps && npm run bootstrap_prod_db && npm run bootstrap_evolver_ts_client && react-router build",
     "dev": "npm run bootstrap_dev_db && npm run bootstrap_evolver_ts_client && react-router dev",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -81,11 +81,6 @@
     "vite": "^6.3.5",
     "vite-tsconfig-paths": "^4.2.1",
     "vitest": "^2.1.9"
-  },
-  "overrides": {
-    "@rjsf/utils@^6.x": "6.0.0-beta.1",
-    "@rjsf/core@^6.x": "6.0.0-beta.1",
-    "@rjsf/validator-ajv8@^6.x": "6.0.0-beta.1"
   },
   "engines": {
     "node": ">=20.0.0"
