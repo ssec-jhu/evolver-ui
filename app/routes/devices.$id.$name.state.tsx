@@ -1,9 +1,8 @@
-import { createClient } from "@hey-api/client-fetch";
 import { LoaderFunctionArgs } from "react-router";
 import { Link, useLoaderData, useParams, useRouteLoaderData } from "react-router";
 import * as Evolver from "client/services.gen";
 import { FilterableVialGrid } from "~/components/VialGrid";
-import { db } from "~/utils/db.server";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 import { loader as rootLoader } from "~/root";
 
 const VIAL_COUNT = 16;
@@ -17,18 +16,21 @@ export const handle = {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
-  const { data } = await Evolver.state({ client: evolverClient });
-  const describeEvolver = await Evolver.describe({ client: evolverClient });
-  const vials = describeEvolver?.data?.config?.vials;
-  return {
-    vials: vials,
-    evolverState: data,
-  };
+  
+  try {
+    const { evolverClient } = await getEvolverClientForDevice(id);
+    
+    const { data } = await Evolver.state({ client: evolverClient });
+    const describeEvolver = await Evolver.describe({ client: evolverClient });
+    const vials = describeEvolver?.data?.config?.vials;
+    
+    return {
+      vials: vials,
+      evolverState: data,
+    };
+  } catch (error) {
+    throw new Error("Failed to load device state: " + (error.message || "Unknown error"));
+  }
 }
 
 export default function Hardware() {

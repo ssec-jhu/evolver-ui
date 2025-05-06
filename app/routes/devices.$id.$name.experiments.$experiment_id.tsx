@@ -8,11 +8,9 @@ import {
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
-import { db } from "~/utils/db.server";
 
 import * as Evolver from "client/services.gen";
-
-import { createClient } from "@hey-api/client-fetch";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 
 export const handle = {
   breadcrumb: ({
@@ -49,12 +47,7 @@ export function ErrorBoundary() {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
-
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
+  const { evolverClient } = await getEvolverClientForDevice(id);
 
   const results = Promise.allSettled([
     Evolver.getExperimentsExperimentGet({

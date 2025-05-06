@@ -9,14 +9,12 @@ import {
 } from "react-router";
 import { EvolverConfigWithoutDefaults } from "client";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
-import { db } from "~/utils/db.server";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
 import { toast as notify } from "react-toastify";
 import * as Evolver from "client/services.gen";
 import { useEffect } from "react";
-
-import { createClient } from "@hey-api/client-fetch";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 import { ControllerConfig } from "~/components/ControllerConfig";
 
 export const handle = {
@@ -61,12 +59,7 @@ export function ErrorBoundary() {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id, experiment_id, controller_id } = params;
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
-
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
+  const { evolverClient } = await getEvolverClientForDevice(id);
 
   const results = Promise.allSettled([
     Evolver.getExperimentsExperimentGet({
@@ -122,19 +115,12 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const { intent, id } = submission.value;
 
-  // Get the device URL from the database
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+  try {
+    const { evolverClient, url } = await getEvolverClientForDevice(id);
+    // Extract device name from params or URL
+    const name = new URL(url).hostname;
 
-  if (!targetDevice) {
-    return submission.reply({ formErrors: ["Device not found"] });
-  }
-
-  const { url, name } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
-
-  switch (intent) {
+    switch (intent) {
     case Intent.Enum.update_controller: {
       const { controller_config, experiment_id, controller_id } =
         submission.value;
@@ -268,11 +254,16 @@ export async function action({ request }: ActionFunctionArgs) {
       break;
   }
 
-  return submission.reply({
-    formErrors: [
-      "Could not find the specified controller in the configuration",
-    ],
-  });
+    return submission.reply({
+      formErrors: [
+        "Could not find the specified controller in the configuration",
+      ],
+    });
+  } catch (error) {
+    return submission.reply({ 
+      formErrors: ["Failed to connect to device: " + (error.message || "Unknown error")] 
+    });
+  }
 }
 
 export default function Controllers() {

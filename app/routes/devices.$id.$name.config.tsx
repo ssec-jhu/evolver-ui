@@ -17,10 +17,10 @@ import { EvolverConfigWithoutDefaults } from "client";
 import { ActionFunctionArgs, redirect } from "react-router";
 import { parseWithZod } from "@conform-to/zod";
 import { z } from "zod";
-import { createClient } from "@hey-api/client-fetch";
 import * as Evolver from "client/services.gen";
 import { toast as notify } from "react-toastify";
 import { db } from "~/utils/db.server";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
@@ -67,19 +67,10 @@ export async function action({ request }: ActionFunctionArgs) {
   }
   const { intent, id, data, name } = submission.value;
 
-  // use the db to get the url for that device id...
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+  try {
+    const { evolverClient } = await getEvolverClientForDevice(id);
 
-  if (!targetDevice) {
-    return submission.reply({ formErrors: ["device not found"] });
-  }
-
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
-
-  switch (intent) {
+    switch (intent) {
     case UpdateDeviceIntentEnum.Enum.update_evolver:
       try {
         const { response, error } = await Evolver.update({
@@ -130,6 +121,11 @@ export async function action({ request }: ActionFunctionArgs) {
       }
     default:
       return null;
+    }
+  } catch (error) {
+    return submission.reply({ 
+      formErrors: ["Failed to connect to device: " + (error.message || "Unknown error")] 
+    });
   }
 }
 

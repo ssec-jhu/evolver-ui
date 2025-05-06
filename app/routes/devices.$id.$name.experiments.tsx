@@ -3,10 +3,9 @@ import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { LoaderFunctionArgs } from "react-router";
-import { db } from "~/utils/db.server";
 import * as Evolver from "client/services.gen";
-import { createClient } from "@hey-api/client-fetch";
 import { ExperimentsTable } from "~/components/ExperimentsTable";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
@@ -35,24 +34,24 @@ export function ErrorBoundary() {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+  
+  try {
+    const { evolverClient } = await getEvolverClientForDevice(id);
 
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
+    const results = Promise.allSettled([
+      Evolver.getExperimentsExperimentGet({
+        client: evolverClient,
+      }),
+    ]).then((results) => {
+      return results.map((result) => result.value.data);
+    });
 
-  const results = Promise.allSettled([
-    Evolver.getExperimentsExperimentGet({
-      client: evolverClient,
-    }),
-  ]).then((results) => {
-    return results.map((result) => result.value.data);
-  });
+    const [experiments] = await results;
 
-  const [experiments] = await results;
-
-  return { experiments };
+    return { experiments };
+  } catch (error) {
+    throw new Error("Failed to load experiments: " + (error.message || "Unknown error"));
+  }
 }
 
 export default function Controllers() {

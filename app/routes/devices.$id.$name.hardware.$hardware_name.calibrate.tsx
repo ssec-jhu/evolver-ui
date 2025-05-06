@@ -1,4 +1,3 @@
-import { createClient } from "@hey-api/client-fetch";
 import { toast as notify } from "react-toastify";
 import {
   ActionFunctionArgs,
@@ -11,13 +10,13 @@ import {
 } from "react-router";
 import * as Evolver from "client/services.gen";
 import CalibratorActionForm from "~/components/CalibratorActionForm";
-import { db } from "~/utils/db.server";
 import clsx from "clsx";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
 import { useEffect, useState } from "react";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { WarningModal } from "~/components/Modals";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 
 const Intent = z.enum(
   [
@@ -101,19 +100,10 @@ export async function action({ request }: ActionFunctionArgs) {
   }
   const { intent, id } = submission.value;
 
-  // use the db to get the url for that device id...(used to init the client)
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+  try {
+    const { evolverClient } = await getEvolverClientForDevice(id);
 
-  if (!targetDevice) {
-    return submission.reply({ formErrors: ["device not found"] });
-  }
-
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
-
-  switch (intent) {
+    switch (intent) {
     case Intent.Enum.dispatch_action:
       try {
         const procedureState =
@@ -235,20 +225,23 @@ export async function action({ request }: ActionFunctionArgs) {
     default:
       return submission.reply();
   }
-  return submission.reply({
-    formErrors: ["unknown error"],
-  });
+    return submission.reply({
+      formErrors: ["unknown error"],
+    });
+  } catch (error) {
+    return submission.reply({ 
+      formErrors: ["Failed to connect to device: " + (error.message || "Unknown error")] 
+    });
+  }
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id, hardware_name } = params;
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
-  const { url } = targetDevice ?? { url: "" };
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
-  const { data: procedureActions } =
-    await Evolver.getCalibratorActionsHardwareHardwareNameCalibratorProcedureActionsGet(
+  
+  try {
+    const { evolverClient } = await getEvolverClientForDevice(id);
+    const { data: procedureActions } =
+      await Evolver.getCalibratorActionsHardwareHardwareNameCalibratorProcedureActionsGet(
       {
         path: {
           hardware_name: hardware_name ?? "",
@@ -278,12 +271,15 @@ export async function loader({ params }: LoaderFunctionArgs) {
   const calibrationFile = hardware?.calibrator?.calibration_file || "";
   const procedureFile = hardware?.calibrator?.procedure_file || "";
 
-  return {
-    actions: procedureActions?.actions,
-    state: procedureState,
-    calibrationFile,
-    procedureFile,
-  };
+    return {
+      actions: procedureActions?.actions,
+      state: procedureState,
+      calibrationFile,
+      procedureFile,
+    };
+  } catch (error) {
+    throw new Error("Failed to load hardware calibration data: " + (error.message || "Unknown error"));
+  }
 }
 
 const CalibrationProcedure = ({ actions, state }) => {

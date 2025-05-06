@@ -1,11 +1,9 @@
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
-import { createClient } from "@hey-api/client-fetch";
 import { Link, useLoaderData } from "react-router";
-import { db } from "~/utils/db.server";
-
 import * as Evolver from "client/services.gen";
 import { LoaderFunctionArgs } from "react-router";
 import LogTable from "~/components/LogTable";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 export const handle = {
   breadcrumb: ({
     params,
@@ -23,23 +21,24 @@ export const handle = {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id, experiment_id } = params;
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
-  const { url } = targetDevice ?? { url: "" };
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
-
-  const results = Promise.allSettled([
-    Evolver.getExperimentLogsExperimentExperimentNameLogsGet({
-      client: evolverClient,
-      path: { experiment_name: experiment_id },
-    }),
-  ]).then((results) => {
-    return results.map((result) => result.value.data);
-  });
-
-  const [logs] = await results;
-  return { logs: logs.data };
+  
+  try {
+    const { evolverClient } = await getEvolverClientForDevice(id);
+    
+    const results = Promise.allSettled([
+      Evolver.getExperimentLogsExperimentExperimentNameLogsGet({
+        client: evolverClient,
+        path: { experiment_name: experiment_id },
+      }),
+    ]).then((results) => {
+      return results.map((result) => result.value.data);
+    });
+    
+    const [logs] = await results;
+    return { logs: logs.data };
+  } catch (error) {
+    throw new Error("Failed to load experiment logs: " + (error.message || "Unknown error"));
+  }
 }
 
 export function ErrorBoundary() {
