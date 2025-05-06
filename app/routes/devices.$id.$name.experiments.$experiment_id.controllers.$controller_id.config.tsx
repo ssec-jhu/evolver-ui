@@ -300,7 +300,13 @@ export default function Controllers() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="font-mono">{`experiment controller parameters`}</div>
+      <div className="font-mono breadcrumbs">
+        <ul>
+          <li>{experiment_id}</li>
+          <li>{controller_id}</li>
+          <li>configuration</li>
+        </ul>
+      </div>
 
       <div className="bg-base-300 rounded-box relative overflow-x-auto">
         {Object.entries(experiments)

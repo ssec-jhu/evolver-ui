@@ -1,4 +1,4 @@
-import { useLoaderData, useParams, useSubmit } from "react-router";
+import { Link, useLoaderData, useParams, useSubmit } from "react-router";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
 import SchemaForm from "./SchemaForm";
@@ -20,7 +20,7 @@ export function ControllerConfig({
   controller,
   actionData,
 }: ControllerConfigProps) {
-  const loaderData = useLoaderData<typeof loader>();
+  const { classinfo, classinfoSchema } = useLoaderData<typeof loader>();
   const { id, experiment_id, controller_id } = useParams();
   const submit = useSubmit();
 
@@ -57,12 +57,12 @@ export function ControllerConfig({
     });
   };
 
-  const originalSchema = loaderData?.classinfoSchema.config;
+  const originalSchema = classinfoSchema?.config;
 
   // replace the schema.properties.name (which is an anyOf - and makes no sense from UI) with a string field (which is what it is.)
   const schemaToUse = {
     ...originalSchema,
-    title: `${experiment_id}, ${controller_id}`,
+    title: `configuration`,
     properties: {
       ...originalSchema.properties,
       name: { type: "string", title: "Name" },
@@ -70,7 +70,23 @@ export function ControllerConfig({
   };
 
   return (
-    <div id={controller_id + "config"}>
+    <div className="flex flex-col gap-4" id={controller_id + "config"}>
+      <div className="card card-border bg-base-100 shadow-sm">
+        <div className="card-body">
+          <div className="card-title font-mono">info</div>
+          <ul className="font-sans">
+            <li>
+              <span className="font-mono">class: </span>
+              {classinfo}
+            </li>
+          </ul>
+          <div className="justify-end card-actions">
+            <Link className="btn btn-primary" to={`/devices/${id}/list/config`}>
+              edit
+            </Link>
+          </div>
+        </div>
+      </div>
       <SchemaForm
         schema={schemaToUse}
         formData={controller.config}

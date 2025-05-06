@@ -64,7 +64,7 @@ export default function ObjectFieldTemplate<
   return (
     <div className={`form-control ${isRoot ? "" : ""}`}>
       {title && (
-        <div className="card-title">
+        <div className="card-title font-mono">
           <TitleFieldTemplate
             id={titleId<T>(idSchema)}
             title={title}
@@ -85,7 +85,7 @@ export default function ObjectFieldTemplate<
         />
       )}
       <div
-        className={`grid grid-cols-1 gap-${description ? 3 : 4} ${isRoot ? "" : "mb-4"}`}
+        className={`grid grid-cols-3 gap-${description ? 3 : 4} ${isRoot ? "" : "mb-4"}`}
       >
         {properties.map((element, index) =>
           element.hidden ? (

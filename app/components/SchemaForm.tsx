@@ -87,7 +87,7 @@ function CustomSubmitButton(props: SubmitButtonProps) {
   return (
     <div className="card-actions justify-end">
       <button className="btn btn-primary" type="submit">
-        {submitText || "Submit"}
+        {submitText || "save"}
       </button>
     </div>
   );
