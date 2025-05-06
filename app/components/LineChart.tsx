@@ -12,6 +12,7 @@ import {
 import { vialColors } from "~/utils/chart/colors";
 import groupBy from "lodash/groupBy";
 import { HistoricDatum } from "client";
+import { LabelPosition } from "recharts/types/component/Label";
 
 const processData = (
   data: HistoricDatum[],
@@ -39,11 +40,29 @@ const processEvents = (data: HistoricDatum[], vials: string[]) => {
   const filtered = data.filter((entry) =>
     entry.vial ? vials.includes(`${entry.vial}`) : true,
   );
-  return filtered.map((entry) => ({
+
+  // Map events to a consistent format
+  const mappedEvents = filtered.map((entry) => ({
     timestamp: Math.round(entry.timestamp),
     vial: `vial_${entry.vial}`,
     data: entry.data,
   }));
+
+  // Deduplicate the events using a Map with composite keys
+  const uniqueEvents = new Map();
+
+  mappedEvents.forEach((event) => {
+    // Create a composite key using timestamp + message
+    const key = `${event.timestamp}_${event.data.message}`;
+
+    // Only add if not already in the map
+    if (!uniqueEvents.has(key)) {
+      uniqueEvents.set(key, event);
+    }
+  });
+
+  // Convert back to array
+  return Array.from(uniqueEvents.values());
 };
 
 export const HardwareLineChart = ({
@@ -76,7 +95,44 @@ export const HardwareLineChart = ({
             }
           />
           <YAxis domain={["auto", "auto"]} />
-          <Tooltip />
+          <Tooltip
+            labelFormatter={(unixTime) =>
+              new Date(unixTime * 1000).toLocaleTimeString()
+            }
+            formatter={(value, name, props) => {
+              // Find the index of this line to get the correct color
+              const vialName = name as string;
+              const vialNumber = vialName.replace("vial_", "");
+              const index = vials.indexOf(vialNumber);
+              // Return value and color information
+              return [
+                value,
+                vialName.replace("vial_", "Vial "),
+                vialColors[index % vialColors.length],
+              ];
+            }}
+            contentStyle={{
+              backgroundColor: "rgba(40, 44, 52, 0.9)", // Dark background
+              borderRadius: "8px",
+              border: "none",
+              boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.15)",
+              padding: "10px",
+              color: "white", // White text
+            }}
+            itemStyle={{
+              padding: "4px 0",
+              color: "white", // White text for items
+            }}
+            labelStyle={{
+              fontWeight: "bold",
+              marginBottom: "6px",
+              color: "white", // White text for label
+            }}
+            cursor={{ stroke: "#ccc", strokeWidth: 1 }}
+            wrapperStyle={{
+              outline: "none",
+            }}
+          />
           <Legend />
           {vials.map((vial: string, index: number) => (
             <Line
@@ -86,16 +142,31 @@ export const HardwareLineChart = ({
               stroke={vialColors[index % vialColors.length]}
               name={`Vial ${vial}`}
               connectNulls={true}
+              dot={false}
             />
           ))}
-          {eventData.map((event) => (
-            <ReferenceLine
-              key={`${event.timestamp}${event.data.message}`}
-              x={event.timestamp}
-              label={event.data.message}
-              stroke="red"
-            />
-          ))}
+          {eventData.map((event, idx) => {
+            const positions = [
+              "insideTopLeft",
+              "insideBottomLeft",
+              "insideTopRight",
+              "insideBottomRight",
+            ];
+            const labelPosition = positions[
+              idx % positions.length
+            ] as LabelPosition;
+            return (
+              <ReferenceLine
+                key={`${event.timestamp}${event.data.message}`}
+                x={event.timestamp}
+                label={{
+                  value: event.data.message,
+                  fill: "red",
+                  position: labelPosition,
+                }}
+              />
+            );
+          })}
         </LineChart>
       </ResponsiveContainer>
       <div className="divider"></div>
