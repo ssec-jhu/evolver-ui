@@ -15,73 +15,71 @@ const DataTable = ({
 }) => {
   const { name, id } = useParams();
   return (
-    <div className="overflow-x-auto">
-      <table className="table table-xs w-full">
-        <thead>
-          <tr>
-            <th>
-              <Link
-                className={"font-mono text-primary"}
-                to={`/devices/${id}/${name}/hardware`}
-              >
-                {vialIndex}
-              </Link>{" "}
-            </th>
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(data).map((mainKey) =>
-            Object.keys(data[mainKey]).map((subKey: string, subIndex) => {
-              let renderSubKey = true;
-              if (
-                excludedProperties.includes(subKey) ||
-                filteredProperties.includes(subKey)
-              ) {
-                renderSubKey = false;
-              }
-              return (
-                <tr key={`${mainKey}-${subKey}`}>
-                  {subIndex === 0 && (
-                    <td
-                      rowSpan={Object.keys(data[mainKey]).length}
-                      className="text-center font-mono"
+    <table className="table w-full">
+      <thead>
+        <tr>
+          <th>
+            <Link
+              className={"font-mono text-primary"}
+              to={`/devices/${id}/${name}/hardware`}
+            >
+              {vialIndex}
+            </Link>{" "}
+          </th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {Object.keys(data).map((mainKey) =>
+          Object.keys(data[mainKey]).map((subKey: string, subIndex) => {
+            let renderSubKey = true;
+            if (
+              excludedProperties.includes(subKey) ||
+              filteredProperties.includes(subKey)
+            ) {
+              renderSubKey = false;
+            }
+            return (
+              <tr key={`${mainKey}-${subKey}`}>
+                {subIndex === 0 && (
+                  <td
+                    rowSpan={Object.keys(data[mainKey]).length}
+                    className="text-center font-mono"
+                  >
+                    <Link
+                      className="link"
+                      to={`/devices/${id}/${name}/hardware/${mainKey}/history?vials=${vialIndex}`}
                     >
-                      <Link
-                        className="link"
-                        to={`/devices/${id}/${name}/hardware/${mainKey}/history?vials=${vialIndex}`}
-                      >
-                        {mainKey}
-                      </Link>
-                    </td>
-                  )}
-                  {renderSubKey && (
-                    <td>
-                      <Link
-                        className="link font-mono"
-                        to={`/devices/${id}/${name}/hardware/${mainKey}/history?properties=${subKey}&vials=${vialIndex}`}
-                      >
-                        {subKey}
-                      </Link>
-                    </td>
-                  )}
-                  {renderSubKey && (
-                    <td>
-                      {typeof data[mainKey][subKey] === "number"
-                        ? Number(data[mainKey][subKey].toFixed(3)) % 1 === 0
-                          ? data[mainKey][subKey].toFixed(0)
-                          : data[mainKey][subKey].toFixed(3)
-                        : data[mainKey][subKey] || "-"}
-                    </td>
-                  )}
-                </tr>
-              );
-            }),
-          )}
-        </tbody>
-      </table>
-    </div>
+                      {mainKey}
+                    </Link>
+                  </td>
+                )}
+                {renderSubKey && (
+                  <td>
+                    <Link
+                      className="link font-mono"
+                      to={`/devices/${id}/${name}/hardware/${mainKey}/history?properties=${subKey}&vials=${vialIndex}`}
+                    >
+                      {subKey}
+                    </Link>
+                  </td>
+                )}
+                {renderSubKey && (
+                  <td>
+                    {typeof data[mainKey][subKey] === "number"
+                      ? Number(data[mainKey][subKey].toFixed(3)) % 1 === 0
+                        ? data[mainKey][subKey].toFixed(0)
+                        : data[mainKey][subKey].toFixed(3)
+                      : data[mainKey][subKey] || "-"}
+                  </td>
+                )}
+              </tr>
+            );
+          }),
+        )}
+      </tbody>
+    </table>
   );
 };
 
@@ -204,7 +202,7 @@ export function FilterableVialGrid({
       <div
         key={index}
         className={clsx(
-          "relative flex items-center justify-center aspect-square border font-bold rounded-md bg-base-200",
+          "relative flex aspect-square border font-bold rounded-md bg-base-200",
           !hasData && "border-2 border-gray-300",
           hasData && "border-4 border-primary",
         )}

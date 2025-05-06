@@ -58,6 +58,7 @@ export function ControllerConfig({
   };
 
   const originalSchema = classinfoSchema?.config;
+  const defaultName = classinfo.split(".").pop();
 
   // replace the schema.properties.name (which is an anyOf - and makes no sense from UI) with a string field (which is what it is.)
   const schemaToUse = {
@@ -65,7 +66,12 @@ export function ControllerConfig({
     title: `configuration`,
     properties: {
       ...originalSchema.properties,
-      name: { type: "string", title: "Name" },
+      name: {
+        type: "string",
+        title: "Name",
+        default: defaultName,
+        description: `Name of the controller`,
+      },
     },
   };
 
