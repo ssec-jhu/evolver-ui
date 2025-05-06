@@ -1,10 +1,16 @@
 import { createClient } from "@hey-api/client-fetch";
 import { toast as notify } from "react-toastify";
-import { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { Link, useActionData, useLoaderData, useParams, useSubmit } from "react-router";
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  Link,
+  useActionData,
+  useLoaderData,
+  useParams,
+  useSubmit,
+} from "react-router";
 import * as Evolver from "client/services.gen";
-import CalibratorActionForm from "~/components/CalibratorActionForm.client";
-import { ClientOnly } from "remix-utils/client-only";
+import CalibratorActionForm from "~/components/CalibratorActionForm";
 import { db } from "~/utils/db.server";
 import clsx from "clsx";
 import { z } from "zod";
@@ -298,18 +304,12 @@ const CalibrationProcedure = ({ actions, state }) => {
       });
     };
     return (
-      <ClientOnly
-        key={action.description}
-        fallback={<span className="skeleton h-32"></span>}
-      >
-        {() => (
-          <CalibratorActionForm
-            action={{ ...action, is_complete: isComplete }}
-            index={ix}
-            dispatchAction={dispatchAction}
-          />
-        )}
-      </ClientOnly>
+      <CalibratorActionForm
+        key={action.name}
+        action={{ ...action, is_complete: isComplete }}
+        index={ix}
+        dispatchAction={dispatchAction}
+      />
     );
   });
 };
