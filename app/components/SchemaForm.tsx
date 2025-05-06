@@ -85,7 +85,7 @@ function CustomSubmitButton(props: SubmitButtonProps) {
   }
 
   return (
-    <div className="card-actions justify-end align-bottom">
+    <div className="card-actions justify-end">
       <button className="btn btn-primary" type="submit">
         {submitText || "Submit"}
       </button>
@@ -95,11 +95,8 @@ function CustomSubmitButton(props: SubmitButtonProps) {
 
 interface SchemaFormProps {
   schema: RJSFSchema;
-  uiSchema?: object;
   formData?: object;
   onSubmit: (arg: object) => void;
-  title?: string;
-  submitText?: string;
 }
 
 export default function SchemaForm({
@@ -107,32 +104,23 @@ export default function SchemaForm({
   formData,
   onSubmit,
 }: SchemaFormProps) {
-  // replace the schema.name with a schema that
-  // Replace schema title with description
-  const schemaToUse = {
-    ...schema,
-    properties: {
-      ...schema.properties,
-      name: { type: "string", title: "Name" },
-    },
-  };
-  const formComponent = (
-    <Form
-      className="flex flex-col gap-4"
-      validator={validator}
-      schema={schemaToUse}
-      formData={formData}
-      onSubmit={({ formData }) => onSubmit(formData)}
-      templates={{
-        ButtonTemplates: {
-          SubmitButton: CustomSubmitButton,
-        },
-        ObjectFieldTemplate,
-        BaseInputTemplate,
-        FieldTemplate: CustomFieldTemplate,
-      }}
-    />
+  return (
+    <div className="card bg-base-100 shadow-sm">
+      <Form
+        className="card-body"
+        validator={validator}
+        schema={schema}
+        formData={formData}
+        onSubmit={({ formData }) => onSubmit(formData)}
+        templates={{
+          ButtonTemplates: {
+            SubmitButton: CustomSubmitButton,
+          },
+          ObjectFieldTemplate,
+          BaseInputTemplate,
+          FieldTemplate: CustomFieldTemplate,
+        }}
+      />
+    </div>
   );
-
-  return formComponent;
 }

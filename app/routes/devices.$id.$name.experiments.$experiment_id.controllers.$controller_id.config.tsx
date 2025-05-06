@@ -91,6 +91,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
   return {
     experiments,
     classinfoSchema: controllerClassinfoSchema.data,
+    classinfo,
   };
 }
 
@@ -277,7 +278,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function Controllers() {
   const actionData = useActionData<typeof action>();
   const { experiment_id, controller_id } = useParams();
-  const { experiments } = useLoaderData<typeof loader>();
+  const { experiments, classinfo } = useLoaderData<typeof loader>();
 
   useEffect(() => {
     if (actionData?.formErrors?.length) {
@@ -299,7 +300,8 @@ export default function Controllers() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="font-mono">{`${experiment_id} > ${controller_id}`}</div>
+      <div className="font-mono">{`experiment controller parameters`}</div>
+
       <div className="bg-base-300 rounded-box relative overflow-x-auto">
         {Object.entries(experiments)
           .filter(([experimentId]) => experimentId == experiment_id)
@@ -315,6 +317,7 @@ export default function Controllers() {
                       <ControllerConfig
                         controller={controller}
                         actionData={actionData}
+                        classinfo={classinfo}
                       />
                     </div>
                   ))}

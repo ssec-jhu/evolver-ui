@@ -20,7 +20,6 @@ export function ControllerConfig({
   controller,
   actionData,
 }: ControllerConfigProps) {
-  const controllerName = controller.config.name as string;
   const loaderData = useLoaderData<typeof loader>();
   const { id, experiment_id, controller_id } = useParams();
   const submit = useSubmit();
@@ -58,14 +57,24 @@ export function ControllerConfig({
     });
   };
 
+  const originalSchema = loaderData?.classinfoSchema.config;
+
+  // replace the schema.properties.name (which is an anyOf - and makes no sense from UI) with a string field (which is what it is.)
+  const schemaToUse = {
+    ...originalSchema,
+    title: `${experiment_id}, ${controller_id}`,
+    properties: {
+      ...originalSchema.properties,
+      name: { type: "string", title: "Name" },
+    },
+  };
+
   return (
-    <div id={controllerName + "config"}>
+    <div id={controller_id + "config"}>
       <SchemaForm
-        schema={loaderData.classinfoSchema.config}
+        schema={schemaToUse}
         formData={controller.config}
         onSubmit={handleSubmit}
-        title="Controller Configuration"
-        submitText="Save Changes"
       />
     </div>
   );

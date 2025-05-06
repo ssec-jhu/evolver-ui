@@ -1,8 +1,13 @@
-import { Link, Outlet, useParams, useRouteLoaderData } from "react-router";
+import {
+  Link,
+  Outlet,
+  useParams,
+  useRouteLoaderData,
+  LoaderFunctionArgs,
+} from "react-router";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
-import { LoaderFunctionArgs } from "react-router";
 import { db } from "~/utils/db.server";
 
 import * as Evolver from "client/services.gen";
@@ -81,7 +86,7 @@ export default function Controllers() {
 
   if (!evolverConfig.experiments[experiment_id]) {
     return (
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box items-center">
         <CogIcon className="h-20 w-20" />
         <div>{`No experiment with name: ${experiment_id} was found in config.`}</div>
         <div

@@ -62,18 +62,18 @@ export default function ObjectFieldTemplate<
   const isRoot = idSchema.$id === "root";
 
   return (
-    <div
-      className={`form-control ${isRoot ? "bg-base-100 p-6 rounded-xl shadow-lg" : ""}`}
-    >
+    <div className={`form-control ${isRoot ? "" : ""}`}>
       {title && (
-        <TitleFieldTemplate
-          id={titleId<T>(idSchema)}
-          title={title}
-          required={required}
-          schema={schema}
-          uiSchema={uiSchema}
-          registry={registry}
-        />
+        <div className="card-title">
+          <TitleFieldTemplate
+            id={titleId<T>(idSchema)}
+            title={title}
+            required={required}
+            schema={schema}
+            uiSchema={uiSchema}
+            registry={registry}
+          />
+        </div>
       )}
       {description && (
         <DescriptionFieldTemplate
