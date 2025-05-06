@@ -16,102 +16,75 @@ const DataTable = ({
 }) => {
   const { name, id } = useParams();
   const VialTableView = () => (
-    <table className="table">
-      <thead>
-        <tr>
-          <th>
-            <Link
-              className={"font-mono text-primary"}
-              to={`/devices/${id}/${name}/hardware`}
-            >
-              {vialIndex}
-            </Link>{" "}
-          </th>
-          <th></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {Object.keys(data).map((mainKey) =>
-          Object.keys(data[mainKey]).map((subKey: string, subIndex) => {
-            let renderSubKey = true;
-            if (
-              excludedProperties.includes(subKey) ||
-              filteredProperties.includes(subKey)
-            ) {
-              renderSubKey = false;
-            }
-            return (
-              <tr key={`${mainKey}-${subKey}`}>
-                {subIndex === 0 && (
-                  <td
-                    rowSpan={Object.keys(data[mainKey]).length}
-                    className="text-center font-mono"
-                  >
-                    <Link
-                      className="link"
-                      to={`/devices/${id}/${name}/hardware/${mainKey}/history?vials=${vialIndex}`}
+    <div className="overflow-x-auto">
+      <table className="table table-xs ">
+        <thead>
+          <tr>
+            <th>
+              <Link
+                className={"font-mono "}
+                to={`/devices/${id}/${name}/hardware`}
+              >
+                {vialIndex}
+              </Link>{" "}
+            </th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.keys(data).map((mainKey) =>
+            Object.keys(data[mainKey]).map((subKey: string, subIndex) => {
+              let renderSubKey = true;
+              if (
+                excludedProperties.includes(subKey) ||
+                filteredProperties.includes(subKey)
+              ) {
+                renderSubKey = false;
+              }
+              return (
+                <tr key={`${mainKey}-${subKey}`}>
+                  {subIndex === 0 && (
+                    <td
+                      rowSpan={Object.keys(data[mainKey]).length}
+                      className="text-center font-mono"
                     >
-                      {mainKey}
-                    </Link>
-                  </td>
-                )}
-                {renderSubKey && (
-                  <td>
-                    <Link
-                      className="link font-mono"
-                      to={`/devices/${id}/${name}/hardware/${mainKey}/history?properties=${subKey}&vials=${vialIndex}`}
-                    >
-                      {subKey}
-                    </Link>
-                  </td>
-                )}
-                {renderSubKey && (
-                  <td>
-                    {typeof data[mainKey][subKey] === "number"
-                      ? Number(data[mainKey][subKey].toFixed(3)) % 1 === 0
-                        ? data[mainKey][subKey].toFixed(0)
-                        : data[mainKey][subKey].toFixed(3)
-                      : data[mainKey][subKey] || "-"}
-                  </td>
-                )}
-              </tr>
-            );
-          }),
-        )}
-      </tbody>
-    </table>
-  );
-  return (
-    <div>
-      {/* Open the modal using document.getElementById('ID').showModal() method */}
-      <button
-        className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        onClick={() =>
-          document.getElementById("expand_vial_table_modal").showModal()
-        }
-      >
-        <ArrowsPointingOutIcon className="w-5 h-5" />
-      </button>
-      <dialog
-        id="expand_vial_table_modal"
-        className="modal modal-bottom sm:modal-middle"
-      >
-        <div className="modal-box">
-          <VialTableView />
-          <div className="modal-action">
-            <form method="dialog">
-              {/* if there is a button in form, it will close the modal */}
-              <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-                ✕
-              </button>
-            </form>
-          </div>
-        </div>
-      </dialog>
-      <VialTableView />
+                      <Link
+                        className="link"
+                        to={`/devices/${id}/${name}/hardware/${mainKey}/history?vials=${vialIndex}`}
+                      >
+                        {mainKey}
+                      </Link>
+                    </td>
+                  )}
+                  {renderSubKey && (
+                    <td>
+                      <Link
+                        className="link font-mono"
+                        to={`/devices/${id}/${name}/hardware/${mainKey}/history?properties=${subKey}&vials=${vialIndex}`}
+                      >
+                        {subKey}
+                      </Link>
+                    </td>
+                  )}
+                  {renderSubKey && (
+                    <td>
+                      {typeof data[mainKey][subKey] === "number"
+                        ? Number(data[mainKey][subKey].toFixed(3)) % 1 === 0
+                          ? data[mainKey][subKey].toFixed(0)
+                          : data[mainKey][subKey].toFixed(3)
+                        : data[mainKey][subKey] || "-"}
+                    </td>
+                  )}
+                </tr>
+              );
+            }),
+          )}
+        </tbody>
+      </table>
     </div>
   );
+  return <VialTableView />;
 };
 
 export function FilterableVialGrid({
@@ -176,11 +149,10 @@ export function FilterableVialGrid({
       <div
         key={index}
         className={clsx(
-          "p-2",
           "overflow-scroll",
-          "relative flex aspect-square border font-bold rounded-md bg-base-200",
-          !hasData && "border-2 border-gray-300",
-          hasData && "border-4 border-primary",
+          "aspect-square border rounded-lg",
+          !hasData && "border-1 border-gray-300",
+          hasData && "border-2 border-primary",
         )}
       >
         {hasData && (
