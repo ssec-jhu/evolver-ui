@@ -14,7 +14,7 @@ const DataTable = ({
   filteredProperties?: string[];
 }) => {
   const { name, id } = useParams();
-  const VialTableView = () => (
+  return (
     <div className="overflow-x-auto">
       <table className="table table-xs">
         <thead>
@@ -83,7 +83,6 @@ const DataTable = ({
       </table>
     </div>
   );
-  return <VialTableView />;
 };
 
 export function FilterableVialGrid({

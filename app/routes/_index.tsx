@@ -1,9 +1,9 @@
-import { redirectDocument } from "react-router";
+import { redirect } from "react-router";
 
 export function Component() {
   return null;
 }
 
 export async function loader() {
-  return redirectDocument("/devices/list");
+  return redirect("/devices/list");
 }
