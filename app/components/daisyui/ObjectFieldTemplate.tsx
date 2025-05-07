@@ -1,15 +1,17 @@
-import {
+import pkg from "@rjsf/utils";
+const {
   canExpand,
   descriptionId,
-  FormContextType,
   getTemplate,
   getUiOptions,
-  ObjectFieldTemplateProps,
-  RJSFSchema,
-  StrictRJSFSchema,
   titleId,
   buttonId,
-} from "@rjsf/utils";
+} = pkg;
+
+type FormContextType = pkg.FormContextType;
+type ObjectFieldTemplateProps = pkg.ObjectFieldTemplateProps;
+type RJSFSchema = pkg.RJSFSchema;
+type StrictRJSFSchema = pkg.StrictRJSFSchema;
 
 /** The `ObjectFieldTemplate` component renders a layout for object fields in the form
  * with DaisyUI styling. It handles:

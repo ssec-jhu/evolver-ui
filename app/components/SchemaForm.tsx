@@ -1,12 +1,14 @@
 import Form from "@rjsf/core";
-import {
-  BaseInputTemplateProps,
-  FieldTemplateProps,
+import pkg from "@rjsf/utils";
+const {
   getInputProps,
   getSubmitButtonOptions,
-  RJSFSchema,
-  SubmitButtonProps,
-} from "@rjsf/utils";
+} = pkg;
+
+type BaseInputTemplateProps = pkg.BaseInputTemplateProps;
+type FieldTemplateProps = pkg.FieldTemplateProps;
+type RJSFSchema = pkg.RJSFSchema;
+type SubmitButtonProps = pkg.SubmitButtonProps;
 import ObjectFieldTemplate from "./daisyui/ObjectFieldTemplate";
 import validator from "@rjsf/validator-ajv8";
 import { ChangeEvent, FocusEvent } from "react";
