@@ -1,5 +1,5 @@
-import { LoaderFunctionArgs } from "react-router";
 import {
+  LoaderFunctionArgs,
   Link,
   useLoaderData,
   useParams,

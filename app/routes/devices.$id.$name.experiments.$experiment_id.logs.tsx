@@ -1,7 +1,6 @@
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
-import { Link, useLoaderData } from "react-router";
+import { Link, useLoaderData, LoaderFunctionArgs } from "react-router";
 import * as Evolver from "client/services.gen";
-import { LoaderFunctionArgs } from "react-router";
 import LogTable from "~/components/LogTable";
 import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 export const handle = {

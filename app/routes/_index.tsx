@@ -1,4 +1,4 @@
-import { redirect, redirectDocument } from "react-router";
+import { redirectDocument } from "react-router";
 
 export function Component() {
   return null;

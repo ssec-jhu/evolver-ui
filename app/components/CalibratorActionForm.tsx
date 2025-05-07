@@ -1,9 +1,6 @@
 import Form from "@rjsf/core";
 import pkg from "@rjsf/utils";
-const {
-  getInputProps,
-  getSubmitButtonOptions,
-} = pkg;
+const { getInputProps, getSubmitButtonOptions } = pkg;
 
 type BaseInputTemplateProps = pkg.BaseInputTemplateProps;
 type FieldTemplateProps = pkg.FieldTemplateProps;

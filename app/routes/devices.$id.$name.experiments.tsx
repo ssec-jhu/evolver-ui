@@ -4,11 +4,11 @@ import {
   useLoaderData,
   useParams,
   useRouteLoaderData,
+  LoaderFunctionArgs,
 } from "react-router";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
-import { LoaderFunctionArgs } from "react-router";
 import * as Evolver from "client/services.gen";
 import { ExperimentsTable } from "~/components/ExperimentsTable";
 import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
