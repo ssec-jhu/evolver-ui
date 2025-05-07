@@ -86,7 +86,7 @@ export const HardwareLineChart = ({
       <div className="flex justify-between items-center">
         <div className="font-mono">property: {property}</div>
         <div className="flex items-center gap-2">
-          <span className="text-sm">Event Lines</span>
+          <span className="text-sm">event lines</span>
           <label className="swap swap-rotate">
             <input
               type="checkbox"
@@ -161,28 +161,30 @@ export const HardwareLineChart = ({
               dot={false}
             />
           ))}
-          {showVerticalLines && eventData.map((event, idx) => {
-            const positions = [
-              "insideTopLeft",
-              "insideBottomLeft",
-              "insideTopRight",
-              "insideBottomRight",
-            ];
-            const labelPosition = positions[
-              idx % positions.length
-            ] as LabelPosition;
-            return (
-              <ReferenceLine
-                key={`${event.timestamp}${event.data.message}`}
-                x={event.timestamp}
-                label={{
-                  value: event.data.message,
-                  fill: "red",
-                  position: labelPosition,
-                }}
-              />
-            );
-          })}
+          {showVerticalLines &&
+            eventData.map((event, idx) => {
+              console.log(event);
+              const positions = [
+                "insideTopLeft",
+                "insideBottomLeft",
+                "insideTopRight",
+                "insideBottomRight",
+              ];
+              const labelPosition = positions[
+                idx % positions.length
+              ] as LabelPosition;
+              return (
+                <ReferenceLine
+                  key={`${event.timestamp}${event.data.message}`}
+                  x={event.timestamp}
+                  label={{
+                    value: event.data.message,
+                    fill: "red",
+                    position: labelPosition,
+                  }}
+                />
+              );
+            })}
         </LineChart>
       </ResponsiveContainer>
       <div className="divider"></div>
