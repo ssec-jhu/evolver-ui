@@ -1,11 +1,8 @@
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
-import { createClient } from "@hey-api/client-fetch";
-import { Link, useLoaderData } from "@remix-run/react";
-import { db } from "~/utils/db.server";
-
+import { Link, useLoaderData, LoaderFunctionArgs } from "react-router";
 import * as Evolver from "client/services.gen";
-import { LoaderFunctionArgs } from "@remix-run/node";
 import LogTable from "~/components/LogTable";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 export const handle = {
   breadcrumb: ({
     params,
@@ -23,23 +20,26 @@ export const handle = {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id, experiment_id } = params;
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
-  const { url } = targetDevice ?? { url: "" };
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
 
-  const results = Promise.allSettled([
-    Evolver.getExperimentLogsExperimentExperimentNameLogsGet({
-      client: evolverClient,
-      path: { experiment_name: experiment_id },
-    }),
-  ]).then((results) => {
-    return results.map((result) => result.value.data);
-  });
+  try {
+    const { evolverClient } = await getEvolverClientForDevice(id);
 
-  const [logs] = await results;
-  return { logs: logs.data };
+    const results = Promise.allSettled([
+      Evolver.getExperimentLogsExperimentExperimentNameLogsGet({
+        client: evolverClient,
+        path: { experiment_name: experiment_id },
+      }),
+    ]).then((results) => {
+      return results.map((result) => result.value.data);
+    });
+
+    const [logs] = await results;
+    return { logs: logs.data };
+  } catch (error) {
+    throw new Error(
+      "Failed to load experiment logs: " + (error.message || "Unknown error"),
+    );
+  }
 }
 
 export function ErrorBoundary() {
@@ -63,14 +63,25 @@ export function ErrorBoundary() {
 
 export default function ExperimentLogs() {
   const { logs } = useLoaderData<typeof loader>();
-  const logTables = Object.keys(logs).map((key, ix) => (
+  const LogTables = Object.keys(logs).map((key, ix) => (
     <LogTable key={key + ix} title={key} logs={logs[key]} />
   ));
+  const LogView =
+    Object.keys(logs).length > 0 ? (
+      LogTables
+    ) : (
+      <div className="flex flex-col items-center justify-center p-4 bg-base-300 rounded-box relative overflow-x-auto">
+        <div className="card bg-base-100  shadow-xl">
+          <div className="card-body">
+            <p>No log data yet</p>
+          </div>
+        </div>
+      </div>
+    );
   return (
-    <div>
-      <div className="divider"></div>
+    <div id={"logs"}>
       <div className="font-mono">logs</div>
-      {logTables}
+      {LogView}
     </div>
   );
 }

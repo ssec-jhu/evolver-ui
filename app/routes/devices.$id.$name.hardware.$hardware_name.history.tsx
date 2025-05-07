@@ -1,18 +1,17 @@
-import { createClient } from "@hey-api/client-fetch";
-import { LoaderFunctionArgs } from "@remix-run/node";
 import {
+  LoaderFunctionArgs,
   Link,
   useLoaderData,
   useParams,
   useRouteLoaderData,
   useSearchParams,
-} from "@remix-run/react";
+} from "react-router";
 import * as Evolver from "client/services.gen";
-import { db } from "~/utils/db.server";
 import { HardwareLineChart } from "~/components/LineChart";
 import { loader as rootLoader } from "~/root";
 import { WrenchScrewdriverIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import flatMap from "lodash/flatMap";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 
 export const handle = {
   breadcrumb: (
@@ -54,45 +53,47 @@ export function ErrorBoundary() {
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const { id, hardware_name } = params;
   const { searchParams } = new URL(request.url);
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
 
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
+  try {
+    const { evolverClient } = await getEvolverClientForDevice(id);
 
-  const vials = searchParams
-    .get("vials")
-    ?.split(",")
-    .map((str) => Number(str));
+    const vials = searchParams
+      .get("vials")
+      ?.split(",")
+      .map((str) => Number(str));
 
-  const properties = searchParams.get("properties")?.split(",");
+    const properties = searchParams.get("properties")?.split(",");
 
-  const results = Promise.allSettled([
-    Evolver.history({
-      query: {
-        name: hardware_name,
-      },
-      body: {
-        vials,
-        properties,
-        kinds: ["sensor"],
-      },
-      client: evolverClient,
-    }),
-    Evolver.history({
-      body: {
-        kinds: ["event"],
-      },
-      client: evolverClient,
-    }),
-  ]).then((results) => {
-    return results.map((result) => result.value.data);
-  });
+    const results = Promise.allSettled([
+      Evolver.history({
+        query: {
+          name: hardware_name,
+        },
+        body: {
+          vials,
+          properties,
+          kinds: ["sensor"],
+        },
+        client: evolverClient,
+      }),
+      Evolver.history({
+        body: {
+          kinds: ["event"],
+        },
+        client: evolverClient,
+      }),
+    ]).then((results) => {
+      return results.map((result) => result.value.data);
+    });
 
-  const [hist, events] = await results;
+    const [hist, events] = await results;
 
-  return { data: hist?.data, events: events?.data };
+    return { data: hist?.data, events: events?.data };
+  } catch (error) {
+    throw new Error(
+      "Failed to load hardware history: " + (error.message || "Unknown error"),
+    );
+  }
 }
 
 export default function Hardware() {

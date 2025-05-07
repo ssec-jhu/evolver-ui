@@ -6,7 +6,9 @@ import {
   useRouteLoaderData,
   useSearchParams,
   useSubmit,
-} from "@remix-run/react";
+  ActionFunctionArgs,
+  redirect,
+} from "react-router";
 import { EditJson } from "~/components/EditJson.client";
 import { ClientOnly } from "remix-utils/client-only";
 import { useEffect, useState } from "react";
@@ -14,13 +16,12 @@ import { exportData } from "~/utils/exportData";
 import { type loader } from "./devices.$id.$name";
 import { handleFileUpload } from "~/utils/handleFileUpload";
 import { EvolverConfigWithoutDefaults } from "client";
-import { ActionFunctionArgs, redirect } from "@remix-run/node";
 import { parseWithZod } from "@conform-to/zod";
 import { z } from "zod";
-import { createClient } from "@hey-api/client-fetch";
 import * as Evolver from "client/services.gen";
 import { toast as notify } from "react-toastify";
 import { db } from "~/utils/db.server";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
@@ -67,69 +68,67 @@ export async function action({ request }: ActionFunctionArgs) {
   }
   const { intent, id, data, name } = submission.value;
 
-  // use the db to get the url for that device id...
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+  try {
+    const { evolverClient } = await getEvolverClientForDevice(id);
 
-  if (!targetDevice) {
-    return submission.reply({ formErrors: ["device not found"] });
-  }
-
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
-
-  switch (intent) {
-    case UpdateDeviceIntentEnum.Enum.update_evolver:
-      try {
-        const { response, error } = await Evolver.update({
-          body: JSON.parse(data),
-          client: evolverClient,
-        });
-
-        if (error) {
-          const errors = {};
-          error.detail?.forEach(({ loc, msg }) => {
-            const errorKey = loc
-              .map((l) => {
-                switch (l) {
-                  case "body":
-                    return "config";
-                  default:
-                    return l;
-                }
-              })
-              .join(".");
-            errors[errorKey] = [msg];
+    switch (intent) {
+      case UpdateDeviceIntentEnum.Enum.update_evolver:
+        try {
+          const { response, error } = await Evolver.update({
+            body: JSON.parse(data),
+            client: evolverClient,
           });
 
-          if (errors) {
-            return submission.reply({ fieldErrors: errors });
+          if (error) {
+            const errors = {};
+            error.detail?.forEach(({ loc, msg }) => {
+              const errorKey = loc
+                .map((l) => {
+                  switch (l) {
+                    case "body":
+                      return "config";
+                    default:
+                      return l;
+                  }
+                })
+                .join(".");
+              errors[errorKey] = [msg];
+            });
+
+            if (errors) {
+              return submission.reply({ fieldErrors: errors });
+            }
           }
-        }
-        if (response.status !== 200) {
+          if (response.status !== 200) {
+            return submission.reply({
+              formErrors: [
+                `Got an unexpected response: ${response.status}. ${JSON.stringify(response)}`,
+              ],
+            });
+          }
+          // update the database with the new config's name
+          await db.device.update({
+            where: { device_id: id },
+            data: { name },
+          });
+          return redirect(`/devices/${id}/${name}/config?mode=view`);
+        } catch (error) {
           return submission.reply({
             formErrors: [
-              `Got an unexpected response: ${response.status}. ${JSON.stringify(response)}`,
+              "unable to update device",
+              " error object: " + JSON.stringify(error),
             ],
           });
         }
-        // update the database with the new config's name
-        await db.device.update({
-          where: { device_id: id },
-          data: { name },
-        });
-        return redirect(`/devices/${id}/${name}/config?mode=view`);
-      } catch (error) {
-        return submission.reply({
-          formErrors: [
-            "unable to update device",
-            " error object: " + JSON.stringify(error),
-          ],
-        });
-      }
-    default:
-      return null;
+      default:
+        return null;
+    }
+  } catch (error) {
+    return submission.reply({
+      formErrors: [
+        "Failed to connect to device: " + (error.message || "Unknown error"),
+      ],
+    });
   }
 }
 

@@ -1,5 +1,5 @@
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
-import { useFetcher, useLoaderData, useLocation } from "@remix-run/react";
+import { useFetcher, useLoaderData, useLocation } from "react-router";
 import { loader } from "~/root";
 
 export default function ThemeController() {

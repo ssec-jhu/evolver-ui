@@ -1,4 +1,4 @@
-import { json } from "@remix-run/node";
+import { json } from "react-router";
 
 /**
  * This helper function helps us to return the accurate HTTP status,

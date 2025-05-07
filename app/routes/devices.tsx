@@ -1,4 +1,4 @@
-import { Outlet, Link } from "@remix-run/react";
+import { Outlet, Link } from "react-router";
 
 export const handle = {
   breadcrumb: () => {

@@ -1,13 +1,12 @@
 import Form from "@rjsf/core";
-import {
-  BaseInputTemplateProps,
-  FieldTemplateProps,
-  getInputProps,
-  getSubmitButtonOptions,
-  ObjectFieldTemplateProps,
-  RJSFSchema,
-  SubmitButtonProps,
-} from "@rjsf/utils";
+import * as pkg from "@rjsf/utils";
+const { getInputProps, getSubmitButtonOptions } = pkg;
+
+type BaseInputTemplateProps = pkg.BaseInputTemplateProps;
+type FieldTemplateProps = pkg.FieldTemplateProps;
+type ObjectFieldTemplateProps = pkg.ObjectFieldTemplateProps;
+type RJSFSchema = pkg.RJSFSchema;
+type SubmitButtonProps = pkg.SubmitButtonProps;
 import validator from "@rjsf/validator-ajv8";
 import { ChangeEvent, FocusEvent } from "react";
 
