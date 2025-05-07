@@ -13,6 +13,7 @@ import { vialColors } from "~/utils/chart/colors";
 import groupBy from "lodash/groupBy";
 import { HistoricDatum } from "client";
 import { LabelPosition } from "recharts/types/component/Label";
+import { useState } from "react";
 
 const processData = (
   data: HistoricDatum[],
@@ -76,12 +77,27 @@ export const HardwareLineChart = ({
   events: HistoricDatum[];
   property: string;
 }) => {
+  const [showVerticalLines, setShowVerticalLines] = useState(true);
   const formattedData = processData(rawData, vials, property);
   const eventData = processEvents(events, vials);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="font-mono">property: {property}</div>
+      <div className="flex justify-between items-center">
+        <div className="font-mono">property: {property}</div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm">Event Lines</span>
+          <label className="swap swap-rotate">
+            <input
+              type="checkbox"
+              role="switch"
+              className="toggle toggle-sm"
+              checked={showVerticalLines}
+              onChange={() => setShowVerticalLines(!showVerticalLines)}
+            />
+          </label>
+        </div>
+      </div>
       <ResponsiveContainer width="100%" height={400}>
         <LineChart data={formattedData}>
           <CartesianGrid strokeDasharray="3 3" />
@@ -145,7 +161,7 @@ export const HardwareLineChart = ({
               dot={false}
             />
           ))}
-          {eventData.map((event, idx) => {
+          {showVerticalLines && eventData.map((event, idx) => {
             const positions = [
               "insideTopLeft",
               "insideBottomLeft",
