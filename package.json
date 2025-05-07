@@ -90,5 +90,8 @@
     "workerDirectory": [
       "public"
     ]
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-arm64-gnu": "^4.40.2"
   }
 }

@@ -1,5 +1,5 @@
 import Form from "@rjsf/core";
-import pkg from "@rjsf/utils";
+import * as pkg from "@rjsf/utils";
 const {
   getInputProps,
   getSubmitButtonOptions,
