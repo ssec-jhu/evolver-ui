@@ -121,138 +121,140 @@ export async function action({ request }: ActionFunctionArgs) {
     const name = new URL(url).hostname;
 
     switch (intent) {
-    case Intent.Enum.update_controller: {
-      const { controller_config, experiment_id, controller_id } =
-        submission.value;
+      case Intent.Enum.update_controller: {
+        const { controller_config, experiment_id, controller_id } =
+          submission.value;
 
-      // Get the current full configuration
-      const { data: describeData, error: describeError } =
-        await Evolver.describe({
-          client: evolverClient,
-        });
-
-      if (describeError) {
-        return submission.reply({
-          formErrors: ["Failed to retrieve device configuration"],
-        });
-      }
-
-      // Extract the configuration from the describe data
-      const deviceConfig = describeData.config as EvolverConfigWithoutDefaults;
-
-      // Create a deep copy of the device configuration
-      const configToUpdate = JSON.parse(JSON.stringify(deviceConfig));
-
-      // Make sure we have the experiments object
-      if (!configToUpdate.experiments) {
-        return submission.reply({
-          formErrors: ["Invalid configuration: missing experiments object"],
-        });
-      }
-
-      // Make sure the specified experiment exists
-      const experiment = configToUpdate.experiments[experiment_id];
-      if (!experiment) {
-        return submission.reply({
-          formErrors: [
-            `Experiment '${experiment_id}' not found in configuration`,
-          ],
-        });
-      }
-      // Make sure the experiment has a controllers array
-      if (!Array.isArray(experiment.controllers)) {
-        return submission.reply({
-          formErrors: [
-            `Experiment '${experiment_id}' does not have a controllers array`,
-          ],
-        });
-      }
-
-      // Find the specific controller by its name in the controllers array
-      const controllerIndex = experiment.controllers.findIndex(
-        (controller) =>
-          controller.config && controller.config.name === controller_id,
-      );
-
-      if (controllerIndex === -1) {
-        return submission.reply({
-          formErrors: [
-            `Controller '${controller_id}' not found in experiment '${experiment_id}'`,
-          ],
-        });
-      }
-
-      // Parse the new controller config
-      let parsedControllerConfig;
-      try {
-        parsedControllerConfig = JSON.parse(controller_config);
-      } catch (error) {
-        return submission.reply({
-          formErrors: ["Invalid controller configuration JSON"],
-        });
-      }
-
-      // Update just the controller's config, preserving other properties
-      configToUpdate.experiments[experiment_id].controllers[
-        controllerIndex
-      ].config = parsedControllerConfig;
-
-      // Send the updated config to the device
-      try {
-        const { response, error } = await Evolver.update({
-          body: configToUpdate,
-          client: evolverClient,
-        });
-
-        if (error) {
-          const errors = {};
-          error.detail?.forEach(({ loc, msg }) => {
-            const errorKey = loc
-              .map((l) => {
-                switch (l) {
-                  case "body":
-                    return "config";
-                  default:
-                    return l;
-                }
-              })
-              .join(".");
-            errors[errorKey] = [msg];
+        // Get the current full configuration
+        const { data: describeData, error: describeError } =
+          await Evolver.describe({
+            client: evolverClient,
           });
 
-          if (errors) {
-            return submission.reply({ fieldErrors: errors });
-          }
+        if (describeError) {
+          return submission.reply({
+            formErrors: ["Failed to retrieve device configuration"],
+          });
         }
 
-        if (response.status !== 200) {
+        // Extract the configuration from the describe data
+        const deviceConfig =
+          describeData.config as EvolverConfigWithoutDefaults;
+
+        // Create a deep copy of the device configuration
+        const configToUpdate = JSON.parse(JSON.stringify(deviceConfig));
+
+        // Make sure we have the experiments object
+        if (!configToUpdate.experiments) {
+          return submission.reply({
+            formErrors: ["Invalid configuration: missing experiments object"],
+          });
+        }
+
+        // Make sure the specified experiment exists
+        const experiment = configToUpdate.experiments[experiment_id];
+        if (!experiment) {
           return submission.reply({
             formErrors: [
-              `Got an unexpected response: ${response.status}. ${JSON.stringify(response)}`,
+              `Experiment '${experiment_id}' not found in configuration`,
+            ],
+          });
+        }
+        // Make sure the experiment has a controllers array
+        if (!Array.isArray(experiment.controllers)) {
+          return submission.reply({
+            formErrors: [
+              `Experiment '${experiment_id}' does not have a controllers array`,
             ],
           });
         }
 
-        // Get the new controller name from the updated config
-        const newControllerName = parsedControllerConfig.name || controller_id;
-
-        return redirect(
-          `/devices/${id}/${name}/experiments/${experiment_id}/controllers/${newControllerName}/config#${newControllerName}config`,
+        // Find the specific controller by its name in the controllers array
+        const controllerIndex = experiment.controllers.findIndex(
+          (controller) =>
+            controller.config && controller.config.name === controller_id,
         );
-      } catch (error) {
-        return submission.reply({
-          formErrors: [
-            "Unable to update controller configuration",
-            "Error: " + JSON.stringify(error),
-          ],
-        });
-      }
 
-      break;
+        if (controllerIndex === -1) {
+          return submission.reply({
+            formErrors: [
+              `Controller '${controller_id}' not found in experiment '${experiment_id}'`,
+            ],
+          });
+        }
+
+        // Parse the new controller config
+        let parsedControllerConfig;
+        try {
+          parsedControllerConfig = JSON.parse(controller_config);
+        } catch (error) {
+          return submission.reply({
+            formErrors: ["Invalid controller configuration JSON"],
+          });
+        }
+
+        // Update just the controller's config, preserving other properties
+        configToUpdate.experiments[experiment_id].controllers[
+          controllerIndex
+        ].config = parsedControllerConfig;
+
+        // Send the updated config to the device
+        try {
+          const { response, error } = await Evolver.update({
+            body: configToUpdate,
+            client: evolverClient,
+          });
+
+          if (error) {
+            const errors = {};
+            error.detail?.forEach(({ loc, msg }) => {
+              const errorKey = loc
+                .map((l) => {
+                  switch (l) {
+                    case "body":
+                      return "config";
+                    default:
+                      return l;
+                  }
+                })
+                .join(".");
+              errors[errorKey] = [msg];
+            });
+
+            if (errors) {
+              return submission.reply({ fieldErrors: errors });
+            }
+          }
+
+          if (response.status !== 200) {
+            return submission.reply({
+              formErrors: [
+                `Got an unexpected response: ${response.status}. ${JSON.stringify(response)}`,
+              ],
+            });
+          }
+
+          // Get the new controller name from the updated config
+          const newControllerName =
+            parsedControllerConfig.name || controller_id;
+
+          return redirect(
+            `/devices/${id}/${name}/experiments/${experiment_id}/controllers/${newControllerName}/config#${newControllerName}config`,
+          );
+        } catch (error) {
+          return submission.reply({
+            formErrors: [
+              "Unable to update controller configuration",
+              "Error: " + JSON.stringify(error),
+            ],
+          });
+        }
+
+        break;
+      }
+      default:
+        break;
     }
-    default:
-      break;
-  }
 
     return submission.reply({
       formErrors: [
@@ -260,8 +262,10 @@ export async function action({ request }: ActionFunctionArgs) {
       ],
     });
   } catch (error) {
-    return submission.reply({ 
-      formErrors: ["Failed to connect to device: " + (error.message || "Unknown error")] 
+    return submission.reply({
+      formErrors: [
+        "Failed to connect to device: " + (error.message || "Unknown error"),
+      ],
     });
   }
 }

@@ -22,3 +22,5 @@ coverage
 /vitest-report
 audit.json
 /.react-router
+
+**/.claude/settings.local.json

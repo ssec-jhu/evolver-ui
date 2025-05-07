@@ -104,144 +104,170 @@ export async function action({ request }: ActionFunctionArgs) {
     const { evolverClient } = await getEvolverClientForDevice(id);
 
     switch (intent) {
-    case Intent.Enum.dispatch_action:
-      try {
-        const procedureState =
-          await Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
-            {
-              body: {
-                action_name: submission.value.action_name,
-                payload: JSON.parse(submission.value.payload),
+      case Intent.Enum.dispatch_action:
+        try {
+          const procedureState =
+            await Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
+              {
+                body: {
+                  action_name: submission.value.action_name,
+                  payload: JSON.parse(submission.value.payload),
+                },
+                path: {
+                  hardware_name: submission.value.hardware_name,
+                },
+                client: evolverClient,
               },
-              path: {
-                hardware_name: submission.value.hardware_name,
-              },
-              client: evolverClient,
-            },
-          );
-        return procedureState.data;
-      } catch (error) {
-        return submission.reply({ formErrors: ["unable to dispatch action"] });
-      }
+            );
+          return procedureState.data;
+        } catch (error) {
+          return submission.reply({
+            formErrors: ["unable to dispatch action"],
+          });
+        }
 
-    case Intent.Enum.resume_calibration_procedure:
-      try {
-        const procedureState =
-          await Evolver.resumeCalibrationProcedureHardwareHardwareNameCalibratorProcedureResumePost(
-            {
-              path: {
-                hardware_name: submission.value.hardware_name,
+      case Intent.Enum.resume_calibration_procedure:
+        try {
+          const procedureState =
+            await Evolver.resumeCalibrationProcedureHardwareHardwareNameCalibratorProcedureResumePost(
+              {
+                path: {
+                  hardware_name: submission.value.hardware_name,
+                },
+                client: evolverClient,
               },
-              client: evolverClient,
-            },
-          );
-        return procedureState.data;
-      } catch (error) {
-        return submission.reply({
-          formErrors: [
-            "unable to resume calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem. If this is a new hardware, make sure to start the calibration procedure first.",
-          ],
-        });
-      }
-    case Intent.Enum.start_calibration_procedure:
-      try {
-        const procedureState =
-          await Evolver.startCalibrationProcedureHardwareHardwareNameCalibratorProcedureStartPost(
-            {
-              path: {
-                hardware_name: submission.value.hardware_name,
+            );
+          return procedureState.data;
+        } catch (error) {
+          return submission.reply({
+            formErrors: [
+              "unable to resume calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem. If this is a new hardware, make sure to start the calibration procedure first.",
+            ],
+          });
+        }
+      case Intent.Enum.start_calibration_procedure:
+        try {
+          const procedureState =
+            await Evolver.startCalibrationProcedureHardwareHardwareNameCalibratorProcedureStartPost(
+              {
+                path: {
+                  hardware_name: submission.value.hardware_name,
+                },
+                query: {
+                  procedure_file: submission.value.procedure_file,
+                },
+                client: evolverClient,
               },
-              query: {
-                procedure_file: submission.value.procedure_file,
-              },
-              client: evolverClient,
-            },
-          );
-        return procedureState.data;
-      } catch (error) {
-        return submission.reply({
-          formErrors: [
-            "unable to save calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem.",
-          ],
-        });
-      }
+            );
+          return procedureState.data;
+        } catch (error) {
+          return submission.reply({
+            formErrors: [
+              "unable to save calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem.",
+            ],
+          });
+        }
 
-    case Intent.Enum.save_calibration_procedure:
-      try {
-        const procedureState =
-          await Evolver.saveCalibrationProcedureHardwareHardwareNameCalibratorProcedureSavePost(
-            {
-              path: {
-                hardware_name: submission.value.hardware_name,
+      case Intent.Enum.save_calibration_procedure:
+        try {
+          const procedureState =
+            await Evolver.saveCalibrationProcedureHardwareHardwareNameCalibratorProcedureSavePost(
+              {
+                path: {
+                  hardware_name: submission.value.hardware_name,
+                },
+                client: evolverClient,
               },
-              client: evolverClient,
-            },
-          );
-        return procedureState.data;
-      } catch (error) {
-        return submission.reply({
-          formErrors: [
-            "unable to save calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem.",
-          ],
-        });
-      }
-    case Intent.Enum.apply_calibration_procedure:
-      try {
-        const procedureState =
-          await Evolver.applyCalibrationProcedureHardwareHardwareNameCalibratorProcedureApplyPost(
-            {
-              path: {
-                hardware_name: submission.value.hardware_name,
+            );
+          return procedureState.data;
+        } catch (error) {
+          return submission.reply({
+            formErrors: [
+              "unable to save calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem.",
+            ],
+          });
+        }
+      case Intent.Enum.apply_calibration_procedure:
+        try {
+          const procedureState =
+            await Evolver.applyCalibrationProcedureHardwareHardwareNameCalibratorProcedureApplyPost(
+              {
+                path: {
+                  hardware_name: submission.value.hardware_name,
+                },
+                query: {
+                  calibration_file: submission.value.calibration_file,
+                },
+                client: evolverClient,
               },
-              query: {
-                calibration_file: submission.value.calibration_file,
+            );
+          return procedureState.data;
+        } catch (error) {
+          return submission.reply({
+            formErrors: [
+              "unable to apply calibration, confirm calibration_file parameter is correct and exists on the evolver device filesystem.",
+            ],
+          });
+        }
+      case Intent.Enum.undo:
+        try {
+          const procedureState =
+            await Evolver.undoCalibrationProcedureActionHardwareHardwareNameCalibratorProcedureUndoPost(
+              {
+                path: {
+                  hardware_name: submission.value.hardware_name,
+                },
+                client: evolverClient,
               },
-              client: evolverClient,
-            },
-          );
-        return procedureState.data;
-      } catch (error) {
-        return submission.reply({
-          formErrors: [
-            "unable to apply calibration, confirm calibration_file parameter is correct and exists on the evolver device filesystem.",
-          ],
-        });
-      }
-    case Intent.Enum.undo:
-      try {
-        const procedureState =
-          await Evolver.undoCalibrationProcedureActionHardwareHardwareNameCalibratorProcedureUndoPost(
-            {
-              path: {
-                hardware_name: submission.value.hardware_name,
-              },
-              client: evolverClient,
-            },
-          );
-        return procedureState.data;
-      } catch (error) {
-        return submission.reply({ formErrors: ["unable to dispatch action"] });
-      }
-    default:
-      return submission.reply();
-  }
+            );
+          return procedureState.data;
+        } catch (error) {
+          return submission.reply({
+            formErrors: ["unable to dispatch action"],
+          });
+        }
+      default:
+        return submission.reply();
+    }
     return submission.reply({
       formErrors: ["unknown error"],
     });
   } catch (error) {
-    return submission.reply({ 
-      formErrors: ["Failed to connect to device: " + (error.message || "Unknown error")] 
+    return submission.reply({
+      formErrors: [
+        "Failed to connect to device: " + (error.message || "Unknown error"),
+      ],
     });
   }
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id, hardware_name } = params;
-  
+
   try {
     const { evolverClient } = await getEvolverClientForDevice(id);
     const { data: procedureActions } =
       await Evolver.getCalibratorActionsHardwareHardwareNameCalibratorProcedureActionsGet(
+        {
+          path: {
+            hardware_name: hardware_name ?? "",
+          },
+          client: evolverClient,
+        },
+      );
+
+    const { data: procedureState } =
+      await Evolver.getCalibratorStateHardwareHardwareNameCalibratorProcedureStateGet(
+        {
+          path: {
+            hardware_name: hardware_name ?? "",
+          },
+          client: evolverClient,
+        },
+      );
+
+    // Get hardware details to extract the calibration_file
+    const { data: hardware } = await Evolver.getHardwareHardwareHardwareNameGet(
       {
         path: {
           hardware_name: hardware_name ?? "",
@@ -250,26 +276,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
       },
     );
 
-  const { data: procedureState } =
-    await Evolver.getCalibratorStateHardwareHardwareNameCalibratorProcedureStateGet(
-      {
-        path: {
-          hardware_name: hardware_name ?? "",
-        },
-        client: evolverClient,
-      },
-    );
-
-  // Get hardware details to extract the calibration_file
-  const { data: hardware } = await Evolver.getHardwareHardwareHardwareNameGet({
-    path: {
-      hardware_name: hardware_name ?? "",
-    },
-    client: evolverClient,
-  });
-
-  const calibrationFile = hardware?.calibrator?.calibration_file || "";
-  const procedureFile = hardware?.calibrator?.procedure_file || "";
+    const calibrationFile = hardware?.calibrator?.calibration_file || "";
+    const procedureFile = hardware?.calibrator?.procedure_file || "";
 
     return {
       actions: procedureActions?.actions,
@@ -278,7 +286,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
       procedureFile,
     };
   } catch (error) {
-    throw new Error("Failed to load hardware calibration data: " + (error.message || "Unknown error"));
+    throw new Error(
+      "Failed to load hardware calibration data: " +
+        (error.message || "Unknown error"),
+    );
   }
 }
 

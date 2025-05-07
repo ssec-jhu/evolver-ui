@@ -99,7 +99,7 @@ export const HardwareLineChart = ({
             labelFormatter={(unixTime) =>
               new Date(unixTime * 1000).toLocaleTimeString()
             }
-            formatter={(value, name, props) => {
+            formatter={(value, name) => {
               // Find the index of this line to get the correct color
               const vialName = name as string;
               const vialNumber = vialName.replace("vial_", "");

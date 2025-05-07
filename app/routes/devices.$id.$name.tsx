@@ -87,7 +87,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
   const { evolverClient, url } = await getEvolverClientForDevice(id);
-  
+
   const describeEvolver = await Evolver.describe({ client: evolverClient });
   const evolverState = await Evolver.state({ client: evolverClient });
 

@@ -5,7 +5,13 @@ import { pingDevice } from "~/utils/pingDevice.server";
 import { db } from "~/utils/db.server";
 import { Prisma } from "@prisma/client";
 import { useForm, getFormProps, getInputProps } from "@conform-to/react";
-import { Form, Link, useActionData, useLoaderData, useSubmit } from "react-router";
+import {
+  Form,
+  Link,
+  useActionData,
+  useLoaderData,
+  useSubmit,
+} from "react-router";
 import clsx from "clsx";
 import { CloudIcon } from "@heroicons/react/24/outline";
 import { generateDeviceId } from "~/utils/generateDeviceId.server";

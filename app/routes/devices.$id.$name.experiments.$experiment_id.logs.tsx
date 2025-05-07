@@ -21,10 +21,10 @@ export const handle = {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id, experiment_id } = params;
-  
+
   try {
     const { evolverClient } = await getEvolverClientForDevice(id);
-    
+
     const results = Promise.allSettled([
       Evolver.getExperimentLogsExperimentExperimentNameLogsGet({
         client: evolverClient,
@@ -33,11 +33,13 @@ export async function loader({ params }: LoaderFunctionArgs) {
     ]).then((results) => {
       return results.map((result) => result.value.data);
     });
-    
+
     const [logs] = await results;
     return { logs: logs.data };
   } catch (error) {
-    throw new Error("Failed to load experiment logs: " + (error.message || "Unknown error"));
+    throw new Error(
+      "Failed to load experiment logs: " + (error.message || "Unknown error"),
+    );
   }
 }
 

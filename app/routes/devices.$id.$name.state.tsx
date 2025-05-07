@@ -1,5 +1,10 @@
 import { LoaderFunctionArgs } from "react-router";
-import { Link, useLoaderData, useParams, useRouteLoaderData } from "react-router";
+import {
+  Link,
+  useLoaderData,
+  useParams,
+  useRouteLoaderData,
+} from "react-router";
 import * as Evolver from "client/services.gen";
 import { FilterableVialGrid } from "~/components/VialGrid";
 import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
@@ -16,20 +21,22 @@ export const handle = {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
-  
+
   try {
     const { evolverClient } = await getEvolverClientForDevice(id);
-    
+
     const { data } = await Evolver.state({ client: evolverClient });
     const describeEvolver = await Evolver.describe({ client: evolverClient });
     const vials = describeEvolver?.data?.config?.vials;
-    
+
     return {
       vials: vials,
       evolverState: data,
     };
   } catch (error) {
-    throw new Error("Failed to load device state: " + (error.message || "Unknown error"));
+    throw new Error(
+      "Failed to load device state: " + (error.message || "Unknown error"),
+    );
   }
 }
 

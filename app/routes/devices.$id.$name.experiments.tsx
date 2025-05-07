@@ -1,4 +1,10 @@
-import { Link, Outlet, useLoaderData, useParams, useRouteLoaderData } from "react-router";
+import {
+  Link,
+  Outlet,
+  useLoaderData,
+  useParams,
+  useRouteLoaderData,
+} from "react-router";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
@@ -34,7 +40,7 @@ export function ErrorBoundary() {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
-  
+
   try {
     const { evolverClient } = await getEvolverClientForDevice(id);
 
@@ -50,7 +56,9 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
     return { experiments };
   } catch (error) {
-    throw new Error("Failed to load experiments: " + (error.message || "Unknown error"));
+    throw new Error(
+      "Failed to load experiments: " + (error.message || "Unknown error"),
+    );
   }
 }
 

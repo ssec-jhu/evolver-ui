@@ -1,7 +1,6 @@
 import { Link, useParams } from "react-router";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
-import { ArrowsPointingOutIcon } from "@heroicons/react/24/solid";
 
 const DataTable = ({
   data,
@@ -17,12 +16,12 @@ const DataTable = ({
   const { name, id } = useParams();
   const VialTableView = () => (
     <div className="overflow-x-auto">
-      <table className="table table-xs ">
+      <table className="table table-xs">
         <thead>
           <tr>
             <th>
               <Link
-                className={"font-mono "}
+                className={"font-mono"}
                 to={`/devices/${id}/${name}/hardware`}
               >
                 {vialIndex}
@@ -150,7 +149,7 @@ export function FilterableVialGrid({
         key={index}
         className={clsx(
           "overflow-scroll",
-          "aspect-square border rounded-lg",
+          "aspect-square border",
           !hasData && "border-1 border-gray-300",
           hasData && "border-2 border-primary",
         )}

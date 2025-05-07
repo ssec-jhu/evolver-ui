@@ -8,14 +8,14 @@ import { db } from "~/utils/db.server";
  * @throws Error if the device is not found
  */
 export async function getEvolverClientForDevice(deviceId: string) {
-  const targetDevice = await db.device.findUnique({ 
-    where: { device_id: deviceId } 
+  const targetDevice = await db.device.findUnique({
+    where: { device_id: deviceId },
   });
-  
+
   if (!targetDevice) {
     throw new Error("Device not found");
   }
-  
+
   const { url } = targetDevice;
   const evolverClient = createClient({
     baseUrl: url,

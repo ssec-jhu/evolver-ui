@@ -71,60 +71,62 @@ export async function action({ request }: ActionFunctionArgs) {
     const { evolverClient } = await getEvolverClientForDevice(id);
 
     switch (intent) {
-    case UpdateDeviceIntentEnum.Enum.update_evolver:
-      try {
-        const { response, error } = await Evolver.update({
-          body: JSON.parse(data),
-          client: evolverClient,
-        });
-
-        if (error) {
-          const errors = {};
-          error.detail?.forEach(({ loc, msg }) => {
-            const errorKey = loc
-              .map((l) => {
-                switch (l) {
-                  case "body":
-                    return "config";
-                  default:
-                    return l;
-                }
-              })
-              .join(".");
-            errors[errorKey] = [msg];
+      case UpdateDeviceIntentEnum.Enum.update_evolver:
+        try {
+          const { response, error } = await Evolver.update({
+            body: JSON.parse(data),
+            client: evolverClient,
           });
 
-          if (errors) {
-            return submission.reply({ fieldErrors: errors });
+          if (error) {
+            const errors = {};
+            error.detail?.forEach(({ loc, msg }) => {
+              const errorKey = loc
+                .map((l) => {
+                  switch (l) {
+                    case "body":
+                      return "config";
+                    default:
+                      return l;
+                  }
+                })
+                .join(".");
+              errors[errorKey] = [msg];
+            });
+
+            if (errors) {
+              return submission.reply({ fieldErrors: errors });
+            }
           }
-        }
-        if (response.status !== 200) {
+          if (response.status !== 200) {
+            return submission.reply({
+              formErrors: [
+                `Got an unexpected response: ${response.status}. ${JSON.stringify(response)}`,
+              ],
+            });
+          }
+          // update the database with the new config's name
+          await db.device.update({
+            where: { device_id: id },
+            data: { name },
+          });
+          return redirect(`/devices/${id}/${name}/config?mode=view`);
+        } catch (error) {
           return submission.reply({
             formErrors: [
-              `Got an unexpected response: ${response.status}. ${JSON.stringify(response)}`,
+              "unable to update device",
+              " error object: " + JSON.stringify(error),
             ],
           });
         }
-        // update the database with the new config's name
-        await db.device.update({
-          where: { device_id: id },
-          data: { name },
-        });
-        return redirect(`/devices/${id}/${name}/config?mode=view`);
-      } catch (error) {
-        return submission.reply({
-          formErrors: [
-            "unable to update device",
-            " error object: " + JSON.stringify(error),
-          ],
-        });
-      }
-    default:
-      return null;
+      default:
+        return null;
     }
   } catch (error) {
-    return submission.reply({ 
-      formErrors: ["Failed to connect to device: " + (error.message || "Unknown error")] 
+    return submission.reply({
+      formErrors: [
+        "Failed to connect to device: " + (error.message || "Unknown error"),
+      ],
     });
   }
 }
