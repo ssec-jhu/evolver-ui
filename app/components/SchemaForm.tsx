@@ -8,7 +8,6 @@ const {
   getTemplate,
   getUiOptions,
   titleId,
-  buttonId,
 } = pkg;
 
 type BaseInputTemplateProps = pkg.BaseInputTemplateProps;
@@ -106,7 +105,6 @@ function ObjectFieldTemplate<
         {canExpand<T, S, F>(schema, uiSchema, formData) && (
           <div className="flex justify-end">
             <AddButton
-              id={buttonId<T>(idSchema, "add")}
               className="rjsf-object-property-expand btn btn-primary btn-sm"
               onClick={onAddClick(schema)}
               disabled={disabled || readonly}

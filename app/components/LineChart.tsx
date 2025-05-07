@@ -86,15 +86,17 @@ export const HardwareLineChart = ({
       <div className="flex justify-between items-center">
         <div className="font-mono">property: {property}</div>
         <div className="flex items-center gap-2">
-          <span className="text-sm">event lines</span>
-          <label className="swap swap-rotate">
-            <input
-              type="checkbox"
-              role="switch"
-              className="toggle toggle-sm"
-              checked={showVerticalLines}
-              onChange={() => setShowVerticalLines(!showVerticalLines)}
-            />
+          <label className="flex items-center gap-2">
+            <span className="text-sm">event lines</span>
+            <span className="swap swap-rotate">
+              <input
+                type="checkbox"
+                role="switch"
+                className="toggle toggle-sm"
+                checked={showVerticalLines}
+                onChange={() => setShowVerticalLines(!showVerticalLines)}
+              />
+            </span>
           </label>
         </div>
       </div>
@@ -163,7 +165,6 @@ export const HardwareLineChart = ({
           ))}
           {showVerticalLines &&
             eventData.map((event, idx) => {
-              console.log(event);
               const positions = [
                 "insideTopLeft",
                 "insideBottomLeft",
