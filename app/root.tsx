@@ -113,7 +113,7 @@ export function ErrorBoundary() {
             {error.status} {error.statusText || error.data}
           </pre>
           <div className="flex flex-col">
-            <Link className="link" to="/devices/list" reloadDocument>
+            <Link className="link" to="/devices" reloadDocument>
               home
             </Link>
             <Link className="link" to="https://evolver.bio">

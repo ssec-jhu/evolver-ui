@@ -5,5 +5,5 @@ export function Component() {
 }
 
 export async function loader() {
-  return redirect("/devices/list");
+  return redirect("/devices");
 }

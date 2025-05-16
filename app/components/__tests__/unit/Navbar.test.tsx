@@ -6,7 +6,7 @@ import { createRoutesStub } from "react-router";
 const RemixStub = createRoutesStub([
   {
     path: "/",
-    Component: () => <Navbar pathname="/devices/list" />,
+    Component: () => <Navbar pathname="/devices" />,
     loader() {
       return { theme: "dark" };
     },
