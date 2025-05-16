@@ -48,6 +48,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@mswjs/data": "^0.16.2",
     "@playwright/test": "^1.45.3",
     "@react-router/dev": "^7.0.0",
     "@tailwindcss/typography": "^0.5.13",

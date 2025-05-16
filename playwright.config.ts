@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "path";
 
 /**
  * Read environment variables from file.
@@ -30,8 +31,15 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
+    
+    /* Automatically capture screenshots on test failures */
+    screenshot: "only-on-failure",
   },
 
+  /* Global setup script to run before tests */
+  // Uncomment this to use the global setup script
+  // globalSetup: path.join(__dirname, 'app/integration/global-setup.ts'),
+  
   /* Configure projects for major browsers */
   projects: [
     {

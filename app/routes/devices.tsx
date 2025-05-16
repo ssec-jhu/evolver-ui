@@ -153,17 +153,14 @@ export default function DevicesList() {
           <th>{ix + 1}</th>
           <td>{new Date(createdAt).toDateString()}</td>
           <td>
-            {status === "online" && (
+            {status === "online" ? (
               <Link to={`/devices/${device_id}/${name}/state`}>
-                <div
-                  className={clsx(status === "online" && "link link-primary")}
-                >
-                  {name}
+                <div className="link link-primary">
+                  {name || device_id}
                 </div>
               </Link>
-            )}
-            {status === "offline" && (
-              <div className={clsx("")}>{device_id}</div>
+            ) : (
+              <div>{name || device_id}</div>
             )}
           </td>
           <td>

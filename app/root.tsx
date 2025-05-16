@@ -56,12 +56,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     cookieHeader,
   )) || { theme: "dark" };
 
-  try {
-    // automatically add the local (running on same raspberry pi) device to the db
-    await db.device.create({ data: { ip_addr: "127.0.0.1" } });
-  } catch (error) {
-    // succeed anyway the local device is already in the db
-  }
   // make the theme available to the client side, daisy ui uses it to set the theme
   return { theme: cookie.theme, ENV: getClientEnv() };
 }

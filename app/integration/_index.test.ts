@@ -1,8 +1,9 @@
 import { test, expect } from "@playwright/test";
 
-test("redirects to devices list", async ({ page }) => {
+test("redirects to devices list", async ({ page }, testInfo) => {
   await page.goto("/", { waitUntil: "load" });
   // Wait for the redirect to complete
   await page.waitForURL("**/devices", { timeout: 5000 });
+  
   expect(page.url()).toBe(`http://localhost:50123/devices`);
 });
