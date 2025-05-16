@@ -1,20 +1,16 @@
 import {
   Link,
   Outlet,
-  useLoaderData,
   useParams,
   useRouteLoaderData,
-} from "@remix-run/react";
+  LoaderFunctionArgs,
+} from "react-router";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
-import { LoaderFunctionArgs } from "@remix-run/node";
-import { db } from "~/utils/db.server";
 
 import * as Evolver from "client/services.gen";
-
-import { createClient } from "@hey-api/client-fetch";
-import { ControllerConfig } from "~/components/ControllerConfig";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 
 export const handle = {
   breadcrumb: ({
@@ -51,12 +47,7 @@ export function ErrorBoundary() {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
-
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
+  const { evolverClient } = await getEvolverClientForDevice(id);
 
   const results = Promise.allSettled([
     Evolver.getExperimentsExperimentGet({
@@ -73,7 +64,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export default function Controllers() {
   const { id, experiment_id, name } = useParams();
-  const { experiments } = useLoaderData<typeof loader>();
 
   const loaderData = useRouteLoaderData<typeof loader>(
     "routes/devices.$id.$name",
@@ -89,7 +79,7 @@ export default function Controllers() {
 
   if (!evolverConfig.experiments[experiment_id]) {
     return (
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box items-center">
         <CogIcon className="h-20 w-20" />
         <div>{`No experiment with name: ${experiment_id} was found in config.`}</div>
         <div
@@ -108,22 +98,7 @@ export default function Controllers() {
   }
 
   return (
-    <div className="bg-base-300 rounded-box relative overflow-x-auto">
-      {Object.entries(experiments)
-        .filter(([experimentId]) => experimentId == experiment_id)
-        .map(([experimentId, experimentData]) => (
-          <div key={experimentId}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {experimentData.controllers &&
-                experimentData.controllers.map((controller, idx) => (
-                  <ControllerConfig
-                    key={`${experimentId}-controller-${idx}`}
-                    controller={controller}
-                  />
-                ))}
-            </div>
-          </div>
-        ))}
+    <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
       <Outlet />
     </div>
   );

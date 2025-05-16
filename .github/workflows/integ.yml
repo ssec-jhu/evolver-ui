@@ -21,6 +21,15 @@ jobs:
       run: echo "DATABASE_URL=$DATABASE_URL" >> .env && echo "DEFAULT_DEVICE_PORT=$DEFAULT_DEVICE_PORT" >> .env
     - name: Install dependencies
       run: npm ci --include=dev
+    # This fixes a known npm bug (#4828) with optional dependencies
+    # Rollup uses platform-specific binaries (Linux/Mac/Windows)
+    # When running in GitHub Actions (Linux), it needs the Linux-specific binary
+    # But npm sometimes fails to correctly resolve these platform-specific dependencies
+    - name: Fix rollup dependency issue
+      run: |
+        rm -rf node_modules/.cache
+        rm -rf node_modules/@rollup
+        npm install @rollup/rollup-linux-x64-gnu
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests

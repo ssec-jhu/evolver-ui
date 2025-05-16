@@ -1,4 +1,4 @@
-import { Link, useParams } from "@remix-run/react";
+import { Link, useParams } from "react-router";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 
@@ -16,12 +16,12 @@ const DataTable = ({
   const { name, id } = useParams();
   return (
     <div className="overflow-x-auto">
-      <table className="table table-xs w-full">
+      <table className="table table-xs">
         <thead>
           <tr>
             <th>
               <Link
-                className={"font-mono text-primary"}
+                className={"font-mono"}
                 to={`/devices/${id}/${name}/hardware`}
               >
                 {vialIndex}
@@ -85,61 +85,6 @@ const DataTable = ({
   );
 };
 
-export function VialGrid({
-  vialCount,
-  stateData,
-  excludedProperties = [],
-}: {
-  vialCount: number;
-  stateData: { [key: string]: { [key: string]: { [key: string]: number } } };
-  id: string;
-  excludedProperties?: string[];
-}) {
-  const gridItems = Array.from({ length: vialCount }, (_, index) => {
-    const indexString = index.toString();
-
-    // Find matching data in stateData based on indexString
-    const matchingData = Object.keys(stateData).reduce(
-      (acc, key) => {
-        if (stateData[key][indexString]) {
-          acc[key] = stateData[key][indexString];
-        }
-        return acc;
-      },
-      {} as { [key: string]: { [key: string]: number } },
-    );
-
-    // Spread matchingData into the return object
-    return { index, ...matchingData };
-  });
-  const cells = gridItems.map(({ index, ...data }) => {
-    const hasData = Object.keys(data).length > 0;
-    return (
-      <div
-        key={index}
-        className={clsx(
-          "relative flex items-center justify-center aspect-square border font-bold rounded-md",
-          !hasData && "border-2 border-gray-300",
-          hasData && "border-4 border-primary",
-        )}
-      >
-        <div className="absolute inset-0 flex items-center justify-center text-neutral opacity-50 font-mono">
-          <span className="block text-[5vw] leading-none">{index}</span>
-        </div>
-        {hasData && (
-          <DataTable
-            data={data}
-            vialIndex={index}
-            excludedProperties={excludedProperties}
-          />
-        )}
-      </div>
-    );
-  });
-
-  return <div className="grid grid-cols-4 grid-rows-4 gap-2">{cells}</div>;
-}
-
 export function FilterableVialGrid({
   vialCount,
   stateData,
@@ -156,7 +101,6 @@ export function FilterableVialGrid({
   // Extract all unique subkeys from the data, minus excludedProperties
   useEffect(() => {
     const subKeys = new Set<string>();
-
     Object.keys(stateData).forEach((mainKey) => {
       Object.values(stateData[mainKey]).forEach((vialData) => {
         Object.keys(vialData).forEach((subKey) => {
@@ -166,7 +110,6 @@ export function FilterableVialGrid({
         });
       });
     });
-
     setAvailableSubKeys(Array.from(subKeys));
   }, [stateData, excludedProperties]);
 
@@ -204,9 +147,10 @@ export function FilterableVialGrid({
       <div
         key={index}
         className={clsx(
-          "relative flex items-center justify-center aspect-square border font-bold rounded-md bg-base-200",
-          !hasData && "border-2 border-gray-300",
-          hasData && "border-4 border-primary",
+          "overflow-scroll",
+          "aspect-square border",
+          !hasData && "border-1 border-gray-300",
+          hasData && "border-2 border-primary",
         )}
       >
         {hasData && (
@@ -220,6 +164,7 @@ export function FilterableVialGrid({
       </div>
     );
   });
+
   const filterOptions = [
     <input
       key="showAllCheckbox"
@@ -229,6 +174,7 @@ export function FilterableVialGrid({
       value="showAllCheckbox"
       onChange={handleFilterChange}
       aria-label="show all"
+      checked={filteredProperties.length === 0}
     />,
     ...availableSubKeys.map((subKey) => (
       <input
@@ -239,6 +185,7 @@ export function FilterableVialGrid({
         value={subKey}
         onChange={handleFilterChange}
         aria-label={subKey}
+        checked={filteredProperties.includes(subKey)}
       />
     )),
   ];
@@ -251,7 +198,7 @@ export function FilterableVialGrid({
         {filterOptions.length > 0 && <div className="font-mono">filter:</div>}
         <div className="filter">{filterOptions}</div>
       </div>
-      <div className="grid grid-cols-4 grid-rows-4 gap-2">{cells}</div>
+      <div className="grid grid-cols-4 gap-2">{cells}</div>
     </div>
   );
 }

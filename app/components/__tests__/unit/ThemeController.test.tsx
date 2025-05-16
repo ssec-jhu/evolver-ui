@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { createRemixStub } from "@remix-run/testing";
+import { createRoutesStub } from "react-router";
 import ThemeController from "~/components/ThemeController";
 
-const RemixStub = createRemixStub([
+const RemixStub = createRoutesStub([
   {
     path: "/",
     Component: () => <ThemeController />,

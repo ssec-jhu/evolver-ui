@@ -6,24 +6,21 @@ import {
   useLocation,
   useActionData,
   useSubmit,
-} from "@remix-run/react";
-import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
   redirect,
-} from "@remix-run/node";
-import { createClient } from "@hey-api/client-fetch";
+} from "react-router";
 import * as Evolver from "client/services.gen";
 import clsx from "clsx";
 import { EvolverConfigWithoutDefaults } from "client";
 import { BeakerIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
-import { db } from "~/utils/db.server";
 import { PauseIcon, PlayIcon } from "@heroicons/react/24/solid";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
 import { toast as notify } from "react-toastify";
 import { useEffect } from "react";
 import { WarningModal } from "~/components/Modals";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 
 export const handle = {
   breadcrumb: (props: { params: { id: string; name: string } }) => {
@@ -62,49 +59,37 @@ export async function action({ request }: ActionFunctionArgs) {
   }
   const { intent, id, redirectTo } = submission.value;
 
-  // use the db to get the url for that device id...
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
+  try {
+    const { evolverClient } = await getEvolverClientForDevice(id);
 
-  if (!targetDevice) {
+    switch (intent) {
+      case Intent.Enum.start:
+        try {
+          await Evolver.startStartPost({ client: evolverClient });
+        } catch (error) {
+          return submission.reply({ formErrors: ["unable to start device"] });
+        }
+        break;
+      case Intent.Enum.stop:
+        try {
+          await Evolver.abortAbortPost({ client: evolverClient });
+        } catch (error) {
+          return submission.reply({ formErrors: ["unable to stop device"] });
+        }
+        break;
+      default:
+        return submission.reply();
+    }
+    return redirect(redirectTo);
+  } catch (error) {
     return submission.reply({ formErrors: ["device not found"] });
   }
-
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
-
-  switch (intent) {
-    case Intent.Enum.start:
-      try {
-        await Evolver.startStartPost({ client: evolverClient });
-      } catch (error) {
-        return submission.reply({ formErrors: ["unable to start device"] });
-      }
-      break;
-    case Intent.Enum.stop:
-      try {
-        await Evolver.abortAbortPost({ client: evolverClient });
-      } catch (error) {
-        return submission.reply({ formErrors: ["unable to stop device"] });
-      }
-      break;
-    default:
-      return submission.reply();
-  }
-  return redirect(redirectTo);
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
-  if (!targetDevice) {
-    throw Error("device not found");
-  }
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
+  const { evolverClient, url } = await getEvolverClientForDevice(id);
+
   const describeEvolver = await Evolver.describe({ client: evolverClient });
   const evolverState = await Evolver.state({ client: evolverClient });
 
@@ -284,7 +269,9 @@ export default function Device() {
             to={"./config"}
             className={clsx(
               "tab",
-              lastPathElement === "config" && "tab-active",
+              lastPathElement === "config" &&
+                !pathElements.includes("experiments") &&
+                "tab-active",
               "tab-border-3",
             )}
           >

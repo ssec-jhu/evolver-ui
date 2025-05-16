@@ -4,15 +4,14 @@ import {
   useLoaderData,
   useParams,
   useRouteLoaderData,
-} from "@remix-run/react";
+  LoaderFunctionArgs,
+} from "react-router";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
-import { LoaderFunctionArgs } from "@remix-run/node";
-import { db } from "~/utils/db.server";
 import * as Evolver from "client/services.gen";
-import { createClient } from "@hey-api/client-fetch";
 import { ExperimentsTable } from "~/components/ExperimentsTable";
+import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
@@ -41,24 +40,26 @@ export function ErrorBoundary() {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { id } = params;
-  const targetDevice = await db.device.findUnique({ where: { device_id: id } });
 
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
+  try {
+    const { evolverClient } = await getEvolverClientForDevice(id);
 
-  const results = Promise.allSettled([
-    Evolver.getExperimentsExperimentGet({
-      client: evolverClient,
-    }),
-  ]).then((results) => {
-    return results.map((result) => result.value.data);
-  });
+    const results = Promise.allSettled([
+      Evolver.getExperimentsExperimentGet({
+        client: evolverClient,
+      }),
+    ]).then((results) => {
+      return results.map((result) => result.value.data);
+    });
 
-  const [experiments] = await results;
+    const [experiments] = await results;
 
-  return { experiments };
+    return { experiments };
+  } catch (error) {
+    throw new Error(
+      "Failed to load experiments: " + (error.message || "Unknown error"),
+    );
+  }
 }
 
 export default function Controllers() {
@@ -98,12 +99,13 @@ export default function Controllers() {
   }
 
   return (
-    <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
-      <ExperimentsTable
-        evolverConfig={evolverConfig}
-        experiments={experiments}
-      />
-
+    <div className="flex flex-col gap-4">
+      <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
+        <ExperimentsTable
+          evolverConfig={evolverConfig}
+          experiments={experiments}
+        />
+      </div>
       <Outlet />
     </div>
   );

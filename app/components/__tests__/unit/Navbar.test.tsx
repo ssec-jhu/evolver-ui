@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import Navbar from "~/components/Navbar";
-import { createRemixStub } from "@remix-run/testing";
+import { createRoutesStub } from "react-router";
 
-const RemixStub = createRemixStub([
+const RemixStub = createRoutesStub([
   {
     path: "/",
     Component: () => <Navbar pathname="/devices/list" />,

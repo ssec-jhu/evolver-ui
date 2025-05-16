@@ -21,3 +21,6 @@ coverage
 /playwright/.cache/
 /vitest-report
 audit.json
+/.react-router
+
+**/.claude/settings.local.json

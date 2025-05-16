@@ -1,9 +1,4 @@
-import {
-  Link,
-  useLocation,
-  useParams,
-  useSearchParams,
-} from "@remix-run/react";
+import { Link, useLocation, useParams, useSearchParams } from "react-router";
 import { EvolverConfigWithoutDefaults } from "client";
 import clsx from "clsx";
 
