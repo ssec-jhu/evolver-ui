@@ -9,7 +9,6 @@ import {
   useLoaderData,
   useLocation,
   useMatches,
-  useRouteError,
   useSearchParams,
   ActionFunctionArgs,
   LoaderFunctionArgs,

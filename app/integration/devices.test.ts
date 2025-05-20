@@ -1,9 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { TEST_DEVICE_NAME } from "~/mocks/evolver";
 
-test("devices route renders the device list page", async ({
-  page,
-}, testInfo) => {
+test("devices route renders the device list page", async ({ page }) => {
   // Navigate to the devices route
   await page.goto("/devices/list", { waitUntil: "load" });
 
@@ -40,7 +38,7 @@ test("devices route renders the device list page", async ({
   await expect(statusBadge).toBeVisible();
 });
 
-test("adding a new device works correctly", async ({ page }, testInfo) => {
+test("adding a new device works correctly", async ({ page }) => {
   // Navigate to the devices route
   await page.goto("/devices/list", { waitUntil: "load" });
 
@@ -64,7 +62,7 @@ test("adding a new device works correctly", async ({ page }, testInfo) => {
   expect(count).toBeGreaterThanOrEqual(2); // Our original device plus the new one
 });
 
-test("device detail page and tab navigation", async ({ page }, testInfo) => {
+test("device detail page and tab navigation", async ({ page }) => {
   // First navigate to devices page
   await page.goto("/devices/list", { waitUntil: "load" });
 
