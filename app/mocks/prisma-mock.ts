@@ -2,7 +2,8 @@ import { db } from "./db-data";
 
 /**
  * Mock implementation of the Prisma client for use in integration tests
- * This mock client is a wrapper around a msw data api.
+ * This mock client is a thin wrapper around a msw data factory
+ * that has most of the actual db CRUD stuff we need
  */
 export const mockPrismaClient = {
   device: {

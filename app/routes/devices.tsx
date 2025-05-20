@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type ActionFunctionArgs, redirect } from "react-router";
+import { type ActionFunctionArgs, Outlet, redirect } from "react-router";
 import { parseWithZod, getZodConstraint } from "@conform-to/zod";
 import { pingDevice } from "~/utils/pingDevice.server";
 import { db } from "~/utils/db.server";
@@ -155,9 +155,7 @@ export default function DevicesList() {
           <td>
             {status === "online" ? (
               <Link to={`/devices/${device_id}/${name}/state`}>
-                <div className="link link-primary">
-                  {name || device_id}
-                </div>
+                <div className="link link-primary">{name || device_id}</div>
               </Link>
             ) : (
               <div>{name || device_id}</div>

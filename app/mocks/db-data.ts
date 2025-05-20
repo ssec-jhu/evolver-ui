@@ -1,6 +1,9 @@
 import { factory, primaryKey, drop } from "@mswjs/data";
 
-// Create a factory for our mock database
+/**
+ * Create a mock database using mswjs/data
+ * This is wrapped by the mock prisma client.
+ */
 export const db = factory({
   // Define the Device model based on our Prisma schema
   device: {

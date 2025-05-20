@@ -69,7 +69,11 @@ export default function App() {
   const breadcrumbs = matches
     .filter((match) => match.handle && match.handle.breadcrumb)
     .map((match, index) => {
-      return <li key={index}>{match.handle.breadcrumb(match, queryParams)}</li>;
+      return (
+        <li role="navigation" key={index}>
+          {match.handle.breadcrumb(match, queryParams)}
+        </li>
+      );
     });
 
   return (
