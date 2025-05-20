@@ -8,28 +8,30 @@ import { db } from "../mocks/db-data";
 test("verify: mock database is working", async ({ page }, testInfo) => {
   // Set this test to run first by giving it top priority
   test.slow();
-  
+
   // Navigate to the devices route
   await page.goto("/devices", { waitUntil: "load" });
-  
+
   // Check if our test device exists in the table
-  const testDeviceLink = page.locator('table a[href*="127.0.0.1:8080"]');
+  const testDeviceLink = page.locator('table a[href*="http://127.0.0.1:8080"]');
   await expect(testDeviceLink).toBeVisible();
-  
+
   // Verify that we can see our mocked device name
-  const deviceNameCell = page.locator('table a:has-text("Test Evolver Device")');
+  const deviceNameCell = page.locator(
+    'table a:has-text("Test Evolver Device")',
+  );
   await expect(deviceNameCell).toBeVisible();
-  
+
   // Verify that our device is marked as online
   const onlineBadge = page.locator('table .badge:has-text("online")');
   await expect(onlineBadge).toBeVisible();
-  
+
   console.log("Mock database setup verified successfully");
 });
 
 /**
  * Note about database persistence:
- * 
+ *
  * We're now using @mswjs/data to create an in-memory mock database.
  * This means:
  * 1. The database is reset for each test run

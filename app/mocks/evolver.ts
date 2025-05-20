@@ -21,28 +21,25 @@ const mockDevicesData = {
   },
 };
 
-// Simplified handlers for pingDevice function to work properly
+// handlers for pingDevice function to work properly
 export const handlers = [
   // Health check endpoint
   http.get(/\/healthz$/, () => {
-    console.log('[MSW] Intercepted healthz call');
     return HttpResponse.json({ status: 200 });
   }),
-  
+
   // Root endpoint for describe call
   http.get(/^http:\/\/[^/]+\/$/, ({ request }) => {
     const url = new URL(request.url);
     const hostname = url.hostname;
     const port = url.port;
     const deviceIP = `${hostname}:${port}`;
-    
-    console.log(`[MSW] Intercepted describe call for ${deviceIP}`);
-    
+
     const deviceData = mockDevicesData[deviceIP] || {
       state: { active: true },
       name: "Unknown Device",
     };
-    
+
     const response = {
       state: { ...deviceData.state },
       last_read: {},
@@ -55,38 +52,36 @@ export const handlers = [
         experiments: {},
         enable_control: true,
         interval: 60,
-        log_level: 20
-      }
+        log_level: 20,
+      },
     };
-    
-    console.log(`[MSW] Responding to describe with:`, response);
     return HttpResponse.json(response);
   }),
-  
+
   // State endpoint
   http.get(/\/state$/, ({ request }) => {
     const url = new URL(request.url);
     const hostname = url.hostname;
     const port = url.port;
     const deviceIP = `${hostname}:${port}`;
-    
+
     console.log(`[MSW] Intercepted state call for ${deviceIP}`);
-    
+
     const deviceData = mockDevicesData[deviceIP] || {
       state: { active: true },
       name: "Unknown Device",
     };
-    
+
     return HttpResponse.json(deviceData.state);
   }),
-  
+
   // Any other API endpoints
-  http.get('*', ({ request }) => {
+  http.get("*", ({ request }) => {
     console.log(`[MSW] Unhandled GET request: ${request.url}`);
     return HttpResponse.json({ success: true });
   }),
-  
-  http.post('*', ({ request }) => {
+
+  http.post("*", ({ request }) => {
     console.log(`[MSW] Unhandled POST request: ${request.url}`);
     return HttpResponse.json({ success: true });
   }),
