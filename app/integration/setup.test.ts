@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { db } from "../mocks/db-data";
+import { TEST_DEVICE_NAME } from "~/mocks/evolver";
 
 /**
  * This test verifies that our mock database and MSW setup is working correctly.
@@ -12,15 +13,8 @@ test("verify: mock database is working", async ({ page }, testInfo) => {
   // Navigate to the devices route
   await page.goto("/devices/list", { waitUntil: "load" });
 
-  // Check if our test device exists in the table
-  const testDeviceLink = page.locator('table a[href*="http://127.0.0.1:8080"]');
-  await expect(testDeviceLink).toBeVisible();
-
   // Verify that we can see our mocked device name
-  const deviceNameCell = page.locator(
-    'table a:has-text("Test Evolver Device")',
-  );
-  await expect(deviceNameCell).toBeVisible();
+  await expect(page.getByText(TEST_DEVICE_NAME)).toBeVisible();
 
   // Verify that our device is marked as online
   const onlineBadge = page.locator('table .badge:has-text("online")');

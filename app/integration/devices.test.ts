@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { TEST_DEVICE_NAME } from "~/mocks/evolver";
 
 test("devices route renders the device list page", async ({
   page,
@@ -31,7 +32,7 @@ test("devices route renders the device list page", async ({
 
   // Verify our test device is in the table
   const deviceLink = await page.locator("table td a", {
-    hasText: "Test Evolver Device",
+    hasText: TEST_DEVICE_NAME,
   });
   await expect(deviceLink).toBeVisible();
 
@@ -69,7 +70,7 @@ test("device detail page and tab navigation", async ({ page }, testInfo) => {
   await page.goto("/devices/list", { waitUntil: "load" });
 
   // Click on our pre-seeded mock device
-  await page.locator("table td a", { hasText: "Test Evolver Device" }).click();
+  await page.locator("table td a", { hasText: TEST_DEVICE_NAME }).click();
 
   // Wait for navigation to complete - should be redirected to the state tab
   await page.waitForURL(/\/devices\/.*\/.*\/state/);
@@ -81,7 +82,7 @@ test("device detail page and tab navigation", async ({ page }, testInfo) => {
   const breadcrumbDeviceName = await page.locator(
     ".breadcrumbs > ul > li:nth-child(2) > a",
     {
-      hasText: "Test Evolver Device",
+      hasText: TEST_DEVICE_NAME,
     },
   );
   await expect(breadcrumbDeviceName).toBeVisible();

@@ -98,8 +98,8 @@ export default function App() {
   );
 }
 
-export function ErrorBoundary() {
-  const error = useRouteError();
+export function ErrorBoundary({ error }) {
+  console.log("ROOT ERROR: ", error);
   if (isRouteErrorResponse(error)) {
     return (
       <Document title={error.statusText}>

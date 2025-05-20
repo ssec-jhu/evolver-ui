@@ -1,5 +1,8 @@
 import { http, HttpResponse } from "msw";
 
+// Shared constants for testing
+export const TEST_DEVICE_NAME = "TestEvolverDevice";
+
 // Create mock data for each device we want to support
 const mockDevicesData = {
   // Our standard test device
@@ -8,7 +11,7 @@ const mockDevicesData = {
       active: true,
       // Add other state properties as needed
     },
-    name: "Test Evolver Device",
+    name: TEST_DEVICE_NAME,
   },
 
   // Another device for adding in tests
