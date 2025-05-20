@@ -29,8 +29,6 @@ export function seedDatabase() {
     device_id: "test-device-id",
     name: TEST_DEVICE_NAME,
   });
-
-  console.log("Mock database seeded with test device");
 }
 
 // Initialize the database

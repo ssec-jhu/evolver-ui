@@ -99,7 +99,6 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }) {
-  console.log("ROOT ERROR: ", error);
   if (isRouteErrorResponse(error)) {
     return (
       <Document title={error.statusText}>

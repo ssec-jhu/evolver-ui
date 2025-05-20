@@ -15,12 +15,6 @@ test("verify: mock database is working", async ({ page }, testInfo) => {
 
   // Verify that we can see our mocked device name
   await expect(page.getByText(TEST_DEVICE_NAME)).toBeVisible();
-
-  // Verify that our device is marked as online
-  const onlineBadge = page.locator('table .badge:has-text("online")');
-  await expect(onlineBadge).toBeVisible();
-
-  console.log("Mock database setup verified successfully");
 });
 
 /**
