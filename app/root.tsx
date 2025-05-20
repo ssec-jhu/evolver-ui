@@ -113,6 +113,7 @@ export function ErrorBoundary() {
             <Link className="link" to="/devices/list" reloadDocument>
               home
             </Link>
+            {` `}
             <Link className="link" to="https://evolver.bio">
               forum
             </Link>
