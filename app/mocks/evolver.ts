@@ -47,7 +47,7 @@ export const handlers = [
       config: {
         name: deviceData.name,
         namespace: "test",
-        vial_layout: [1, 2, 3, 4],
+        vials: [...Array(16).keys()], // Creates array [0, 1, 2, ..., 15]
         hardware: {},
         experiments: {},
         enable_control: true,
@@ -72,7 +72,12 @@ export const handlers = [
       name: "Unknown Device",
     };
 
-    return HttpResponse.json(deviceData.state);
+    // Return the proper state structure expected by the component
+    return HttpResponse.json({
+      state: { od_sensor: {}, test: { value: 123 } },
+      last_read: { od_sensor: Date.now() / 1000, test: Date.now() / 1000 },
+      active: deviceData.state.active
+    });
   }),
 
   // Any other API endpoints

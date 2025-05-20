@@ -4,10 +4,10 @@ test("devices route renders the device list page", async ({
   page,
 }, testInfo) => {
   // Navigate to the devices route
-  await page.goto("/devices", { waitUntil: "load" });
+  await page.goto("/devices/list", { waitUntil: "load" });
 
   // Verify URL is correct
-  expect(page.url()).toBe("http://localhost:50123/devices");
+  expect(page.url()).toBe("http://localhost:50123/devices/list");
 
   // Check if the breadcrumb is present
   const breadcrumb = await page.getByRole("link", { name: "devices" });
@@ -15,7 +15,7 @@ test("devices route renders the device list page", async ({
 
   // Verify the breadcrumb links back to /devices
   const breadcrumbHref = await breadcrumb.getAttribute("href");
-  expect(breadcrumbHref).toBe("/devices");
+  expect(breadcrumbHref).toBe("/devices/list");
 
   // Check for the "Add" button which is now part of the devices page
   const addButton = await page.getByRole("button", { name: "Add" });
@@ -42,7 +42,7 @@ test("devices route renders the device list page", async ({
 
 test("adding a new device works correctly", async ({ page }, testInfo) => {
   // Navigate to the devices route
-  await page.goto("/devices", { waitUntil: "load" });
+  await page.goto("/devices/list", { waitUntil: "load" });
 
   // Add a new device with a different URL
   // Note: MSW will intercept this and our mock database will handle it
@@ -66,7 +66,7 @@ test("adding a new device works correctly", async ({ page }, testInfo) => {
 
 test("device detail page and tab navigation", async ({ page }, testInfo) => {
   // First navigate to devices page
-  await page.goto("/devices", { waitUntil: "load" });
+  await page.goto("/devices/list", { waitUntil: "load" });
 
   // Click on our pre-seeded mock device
   await page.locator("table td a", { hasText: "Test Evolver Device" }).click();

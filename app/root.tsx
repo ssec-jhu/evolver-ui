@@ -19,7 +19,6 @@ import { ReactNode } from "react";
 import "~/tailwind.css";
 import Navbar from "~/components/Navbar";
 import { GlobalLoading } from "~/components/GlobalLoading";
-import { db } from "~/utils/db.server";
 import { userPrefs } from "~/cookies.server";
 import { getClientEnv } from "~/utils/env.server";
 import { ToastContainer } from "react-toastify";
@@ -111,7 +110,7 @@ export function ErrorBoundary() {
             {error.status} {error.statusText || error.data}
           </pre>
           <div className="flex flex-col">
-            <Link className="link" to="/devices" reloadDocument>
+            <Link className="link" to="/devices/list" reloadDocument>
               home
             </Link>
             <Link className="link" to="https://evolver.bio">

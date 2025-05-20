@@ -19,9 +19,9 @@ export default function Navbar({ pathname = "" as string }): JSX.Element {
             role="button"
             className={clsx(
               "link",
-              pathname !== "/devices" && "link-hover",
+              pathname !== "/devices/list" && "link-hover",
             )}
-            to="/devices"
+            to="/devices/list"
           >
             devices
           </Link>

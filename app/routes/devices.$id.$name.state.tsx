@@ -29,6 +29,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
     const describeEvolver = await Evolver.describe({ client: evolverClient });
     const vials = describeEvolver?.data?.config?.vials;
 
+    console.log("loader returns", { vials: vials, evolverState: data });
     return {
       vials: vials,
       evolverState: data,

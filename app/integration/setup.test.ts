@@ -10,7 +10,7 @@ test("verify: mock database is working", async ({ page }, testInfo) => {
   test.slow();
 
   // Navigate to the devices route
-  await page.goto("/devices", { waitUntil: "load" });
+  await page.goto("/devices/list", { waitUntil: "load" });
 
   // Check if our test device exists in the table
   const testDeviceLink = page.locator('table a[href*="http://127.0.0.1:8080"]');
