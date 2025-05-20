@@ -149,10 +149,10 @@ export default function DevicesList() {
           <td>
             {status === "online" ? (
               <Link to={`/devices/${device_id}/${name}/state`}>
-                <div className="link link-primary">{name || device_id}</div>
+                <div className="link link-primary">{name}</div>
               </Link>
             ) : (
-              <div>{name || device_id}</div>
+              <div>{name}</div>
             )}
           </td>
           <td>

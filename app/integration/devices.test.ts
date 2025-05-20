@@ -14,11 +14,11 @@ test("devices route renders the device list page", async ({
   const breadcrumb = await page.getByRole("link", { name: "devices" });
   await expect(breadcrumb).toBeVisible();
 
-  // Verify the breadcrumb links back to /devices
+  // Verify the breadcrumb links back to /devices/list
   const breadcrumbHref = await breadcrumb.getAttribute("href");
   expect(breadcrumbHref).toBe("/devices/list");
 
-  // Check for the "Add" button which is now part of the devices page
+  // Check for the "Add" button
   const addButton = await page.getByRole("button", { name: "Add" });
   await expect(addButton).toBeVisible();
 
@@ -35,7 +35,6 @@ test("devices route renders the device list page", async ({
     hasText: TEST_DEVICE_NAME,
   });
   await expect(deviceLink).toBeVisible();
-
   // Verify the device status is online
   const statusBadge = await page.locator('table .badge:has-text("online")');
   await expect(statusBadge).toBeVisible();
@@ -46,7 +45,7 @@ test("adding a new device works correctly", async ({ page }, testInfo) => {
   await page.goto("/devices/list", { waitUntil: "load" });
 
   // Add a new device with a different URL
-  // Note: MSW will intercept this and our mock database will handle it
+  // Prisma Mock Client will handle this (MSW data api under the hood)
   await page.getByPlaceholder("url address").fill("http://192.168.1.100:8080");
   await page.getByRole("button", { name: "Add" }).click();
 

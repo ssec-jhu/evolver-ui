@@ -13,6 +13,7 @@ The integration tests use a combination of technologies to ensure reliable and i
 ## Test Data Setup
 
 The tests use a mock database setup that is:
+
 - Isolated: Tests don't affect the real SQLite database
 - Consistent: Pre-seeded with test data in each run
 - In-memory: No data persistence between test runs
@@ -35,6 +36,12 @@ To run the integration tests:
 
 ```bash
 npm run test:integ
+```
+
+To debug the integration tests playwright provides a `--debug` flag.
+
+```bash
+npm run test:integ -- --debug
 ```
 
 ## Test Organization
