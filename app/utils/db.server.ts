@@ -8,10 +8,8 @@ import { initMockDB, mockDB } from "../mocks/db";
 
 // Use the mock database in test mode, real database otherwise
 export const db = singleton("prisma", () => {
-  // Check if we're in test mode
   if (process.env.NODE_ENV === "test") {
-    // init the mock database - note that this closure is a singleton
-    // ensuring we only init (and therefore drop db and seed the mock db) once, regardless of how many times the db module is imported
+    // Init the mock database - note that this closure is a singleton
     const mockedDatabase = initMockDB(mockDB);
     return mockPrismaClient(mockedDatabase);
   }
