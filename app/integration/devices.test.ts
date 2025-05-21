@@ -74,7 +74,9 @@ test("device detail page and tab navigation", async ({ page }) => {
   expect(page.url()).toMatch(/\/devices\/.*\/.*\/state/);
 
   // Verify device name is displayed in the breadcrumb
-  const breadcrumbDeviceName = await page.getByRole("link", { name: TEST_DEVICE_NAME });
+  const breadcrumbDeviceName = await page.getByRole("link", {
+    name: TEST_DEVICE_NAME,
+  });
   await expect(breadcrumbDeviceName).toBeVisible();
 
   // Check for API and network links
@@ -82,6 +84,12 @@ test("device detail page and tab navigation", async ({ page }) => {
   const networkLink = await page.getByRole("link", { name: "network" });
   await expect(apiLink).toBeVisible();
   await expect(networkLink).toBeVisible();
+
+  // Assert href attributes are correct
+  const apiHref = await apiLink.getAttribute("href");
+  const networkHref = await networkLink.getAttribute("href");
+  expect(apiHref).toMatch(/\/docs$/);
+  expect(networkHref).toMatch(/\/network$/);
 
   // Check for status badge
   const onlineBadge = await page.getByText("online", { exact: true });
