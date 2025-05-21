@@ -9,7 +9,6 @@ import {
   useLoaderData,
   useLocation,
   useMatches,
-  useRouteError,
   useSearchParams,
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -19,7 +18,6 @@ import { ReactNode } from "react";
 import "~/tailwind.css";
 import Navbar from "~/components/Navbar";
 import { GlobalLoading } from "~/components/GlobalLoading";
-import { db } from "~/utils/db.server";
 import { userPrefs } from "~/cookies.server";
 import { getClientEnv } from "~/utils/env.server";
 import { ToastContainer } from "react-toastify";
@@ -56,12 +54,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     cookieHeader,
   )) || { theme: "dark" };
 
-  try {
-    // automatically add the local (running on same raspberry pi) device to the db
-    await db.device.create({ data: { ip_addr: "127.0.0.1" } });
-  } catch (error) {
-    // succeed anyway the local device is already in the db
-  }
   // make the theme available to the client side, daisy ui uses it to set the theme
   return { theme: cookie.theme, ENV: getClientEnv() };
 }
@@ -75,7 +67,11 @@ export default function App() {
   const breadcrumbs = matches
     .filter((match) => match.handle && match.handle.breadcrumb)
     .map((match, index) => {
-      return <li key={index}>{match.handle.breadcrumb(match, queryParams)}</li>;
+      return (
+        <li role="navigation" key={index}>
+          {match.handle.breadcrumb(match, queryParams)}
+        </li>
+      );
     });
 
   return (
@@ -101,8 +97,7 @@ export default function App() {
   );
 }
 
-export function ErrorBoundary() {
-  const error = useRouteError();
+export function ErrorBoundary({ error }) {
   if (isRouteErrorResponse(error)) {
     return (
       <Document title={error.statusText}>
@@ -116,6 +111,7 @@ export function ErrorBoundary() {
             <Link className="link" to="/devices/list" reloadDocument>
               home
             </Link>
+            {` `}
             <Link className="link" to="https://evolver.bio">
               forum
             </Link>

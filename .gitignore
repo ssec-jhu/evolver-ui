@@ -19,6 +19,7 @@ coverage
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/playwright
 /vitest-report
 audit.json
 /.react-router
