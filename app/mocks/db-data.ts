@@ -18,6 +18,7 @@ export const db = factory({
 });
 
 // Seed the database with initial data
+
 export function seedDatabase() {
   // Clear any existing data
   drop(db);
@@ -30,6 +31,3 @@ export function seedDatabase() {
     name: TEST_DEVICE_NAME,
   });
 }
-
-// Initialize the database
-seedDatabase();
