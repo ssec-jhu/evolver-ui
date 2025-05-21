@@ -17,17 +17,16 @@ export const db = factory({
   },
 });
 
-// Seed the database with initial data
+// Initialize the database with seed data when this module is imported
+// This ensures the database is ready for the mockPrismaClient
 
-export function seedDatabase() {
-  // Clear any existing data
-  drop(db);
+// Clear any existing data
+drop(db);
 
-  // Add our test device
-  db.device.create({
-    id: "test-id",
-    url: "http://127.0.0.1:8080",
-    device_id: "test-device-id",
-    name: TEST_DEVICE_NAME,
-  });
-}
+// Add our test device
+db.device.create({
+  id: "test-id",
+  url: "http://127.0.0.1:8080",
+  device_id: "test-device-id",
+  name: TEST_DEVICE_NAME,
+});

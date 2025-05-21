@@ -39,12 +39,13 @@ test("devices route renders the device list page", async ({ page }) => {
 });
 
 test("adding a new device works correctly", async ({ page }) => {
+  const NEW_DEVICE_URL = "http://www.testurl.com:8080";
   // Navigate to the devices route
   await page.goto("/devices/list", { waitUntil: "load" });
 
   // Add a new device with a different URL
   // Prisma Mock Client will handle this (MSW data api under the hood)
-  await page.getByPlaceholder("url address").fill("http://192.168.1.100:8080");
+  await page.getByPlaceholder("url address").fill(NEW_DEVICE_URL);
   await page.getByRole("button", { name: "Add" }).click();
 
   // Wait for navigation to complete
@@ -56,10 +57,11 @@ test("adding a new device works correctly", async ({ page }) => {
   // Navigate back to devices list
   await page.getByRole("link", { name: "devices" }).click();
 
-  // Check that both devices are now present
-  const deviceLinks = await page.locator('table a[href*=":8080"]');
-  const count = await deviceLinks.count();
-  expect(count).toBeGreaterThanOrEqual(2); // Our original device plus the new one
+  // Verify our test device is in the table
+  const newDeviceUrl = await page.locator("table a", {
+    hasText: NEW_DEVICE_URL,
+  });
+  await expect(newDeviceUrl).toBeVisible();
 });
 
 test("device detail page and tab navigation", async ({ page }) => {

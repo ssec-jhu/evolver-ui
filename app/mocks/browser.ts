@@ -1,12 +1,10 @@
 import { setupWorker } from "msw/browser";
 import { handlers } from "./evolver";
-import { seedDatabase } from "./db-data";
+import { db as mockDb } from "../utils/db.server";
 
-// Initialize the test database with seed data
-// Since the DB mock is a singleton, we can just call this once
-if (process.env.NODE_ENV === "test") {
-  seedDatabase();
-}
+// The mockPrismaClient is automatically used in test mode
+// No need to explicitly seed the database here as it will be
+// handled by the mockPrismaClient
 
 // see app/entry.client.ts for the worker.start() call
 export const worker = setupWorker(...handlers);
