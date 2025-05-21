@@ -20,9 +20,9 @@ The tests use a mock database setup that is:
 
 ### Mock Database Configuration
 
-- The mock database is defined in `app/mocks/db-data.ts`
+- The mock database is defined in `app/mocks/db.ts`
 - It's pre-seeded with a test device at `http://127.0.0.1:8080`
-- All Prisma client operations are mocked in `app/mocks/prisma-mock.ts`
+- All Prisma client operations are mocked in `app/mocks/prisma.ts`
 
 ### Network Request Mocking
 
@@ -57,4 +57,5 @@ When adding new tests, keep these points in mind:
 1. The mock database is already pre-seeded with a test device
 2. Any changes to the database during a test will not persist to other tests
 3. Extend the MSW handlers in `app/mocks/evolver.ts` if you need to mock additional API endpoints
-4. Extend the mock database schema in `app/mocks/db-data.ts` if you need additional data models
+4. Extend the mock database schema in `app/mocks/db.ts` if you need additional data models
+5. Extend the mock prisma client in `app/mocks/prisma.ts` if you need additional db client methods

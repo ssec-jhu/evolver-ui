@@ -1,4 +1,4 @@
-import { TMockDB } from "./db-data";
+import { TMockDB } from "./db";
 
 /**
  * Mock implementation of the Prisma client for use in integration tests

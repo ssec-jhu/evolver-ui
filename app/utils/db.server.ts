@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { singleton } from "./singleton.server";
-import { mockPrismaClient } from "../mocks/prisma-mock";
-import { initMockDB, mockDB } from "../mocks/db-data";
+import { mockPrismaClient } from "../mocks/prisma";
+import { initMockDB, mockDB } from "../mocks/db";
 
 // Hard-code a unique key, in this case "prisma", so we can look up the client when this module gets re-imported, by the dev server in this case.
 // Singleton basically stores the db module as a singleton in the global scope (i.e. that scope which persists between app-bundle re-imports (dev server restarts))
