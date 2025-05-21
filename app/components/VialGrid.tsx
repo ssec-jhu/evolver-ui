@@ -11,7 +11,7 @@ const RecursiveDataTable = ({
   depth = 0,
 }: {
   vialIndex: number;
-  data: any;
+  data: unknown;
   excludedProperties?: string[];
   filteredProperties?: string[];
   depth?: number;
