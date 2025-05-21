@@ -774,7 +774,7 @@
       },
       "post": {
         "summary": "Update Evolver",
-        "description": "Update the configuration of the eVolver.\n\nThis endpoint requires all fields in the configuration to be explicitly\nprovided, so does not support partial updates. To make a partial update,\nfirst obtain the full configuration using the `/` endpoint, modify the\nfields of interest, then POST the modified configuration back to this\nendpoint.\n\nnote:\n  Applying the configuration will replace the current eVolver in-memory\n  object with a new one. Experiments will continue as normal, but any\n  in-memory buffers within controllers will be lost. History will be\n  preserved via the built-in history server, so typically this will not\n  impact operations.",
+        "description": "Update the configuration of the eVOLVER.\n\nThis endpoint requires all fields in the configuration to be explicitly\nprovided, so does not support partial updates. To make a partial update,\nfirst obtain the full configuration using the `/` endpoint, modify the\nfields of interest, then POST the modified configuration back to this\nendpoint.\n\nnote:\n  Applying the configuration will replace the current eVOLVER in-memory\n  object with a new one. Experiments will continue as normal, but any\n  in-memory buffers within controllers will be lost. History will be\n  preserved via the built-in history server, so typically this will not\n  impact operations.",
         "operationId": "update",
         "requestBody": {
           "content": {
@@ -811,7 +811,7 @@
     "/state": {
       "get": {
         "summary": "Get State",
-        "description": "Return the current state of the eVolver.\n\nThe state refers to the sensor readings. This will be a dictionary mapping\nthe hardware name, and within that typically will be a mapping of vial\nnumber to the sensor Output model (which is specific to the particular\nhardware being reported).\n\nThis endpoint also contains a map of hardware name to the last read time of\nthe hardware, which can be used to determine the freshness of the data.\nAdditionally a flag `active` which is `True` if the control loop is enabled,\nmeaning physical actuation may be performed.",
+        "description": "Return the current state of the eVOLVER.\n\nThe state refers to the sensor readings. This will be a dictionary mapping\nthe hardware name, and within that typically will be a mapping of vial\nnumber to the sensor Output model (which is specific to the particular\nhardware being reported).\n\nThis endpoint also contains a map of hardware name to the last read time of\nthe hardware, which can be used to determine the freshness of the data.\nAdditionally a flag `active` which is `True` if the control loop is enabled,\nmeaning physical actuation may be performed.",
         "operationId": "state",
         "responses": {
           "200": {
@@ -1089,7 +1089,7 @@
     "/abort": {
       "post": {
         "summary": "Abort",
-        "description": "Abort the evolver.\n\nThis will stop the control loop, thus preventing any further physical\nactuation of the system. The endpoint also calls the `abort` method of the\neVolver manager, which in turn calls the `off` method of all hardware, to\nattempt to perform a clean shutdown.\n\nAbort does not stop sensor reads, so the state of the system can still be\ninquired to help ensure it arrived to a safe state.\n\nnote:\n    Shutting off hardware requires a command to be sent and acknowledged by\n    the hardware, and thus it cannot be guaranteed that all hardware will\n    successfully shut down. Physical intervention in the lab may be\n    required.",
+        "description": "Abort the evolver.\n\nThis will stop the control loop, thus preventing any further physical\nactuation of the system. The endpoint also calls the `abort` method of the\neVOLVER manager, which in turn calls the `off` method of all hardware, to\nattempt to perform a clean shutdown.\n\nAbort does not stop sensor reads, so the state of the system can still be\ninquired to help ensure it arrived to a safe state.\n\nnote:\n    Shutting off hardware requires a command to be sent and acknowledged by\n    the hardware, and thus it cannot be guaranteed that all hardware will\n    successfully shut down. Physical intervention in the lab may be\n    required.",
         "operationId": "abort_abort_post",
         "responses": {
           "200": {

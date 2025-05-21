@@ -1,25 +1,21 @@
-import { createClient } from "@hey-api/client-fetch";
 import { db } from "~/utils/db.server";
+import type { Device } from "@prisma/client";
 
 /**
- * Creates an Evolver client for a device by ID
- * @param deviceId The ID of the device to create a client for
- * @returns The Evolver client and device URL
+ * Gets device data from the database by ID
+ * @param deviceId The ID of the device to fetch
+ * @returns The device data from the database
  * @throws Error if the device is not found
  */
-export async function getEvolverClientForDevice(deviceId: string) {
-  const targetDevice = await db.device.findUnique({
+
+export async function getDeviceById(deviceId: string): Promise<Device> {
+  const device = await db.device.findUnique({
     where: { device_id: deviceId },
   });
 
-  if (!targetDevice) {
+  if (!device) {
     throw new Error("Device not found");
   }
 
-  const { url } = targetDevice;
-  const evolverClient = createClient({
-    baseUrl: url,
-  });
-
-  return { evolverClient, url };
+  return device;
 }

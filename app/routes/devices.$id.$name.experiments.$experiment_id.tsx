@@ -1,17 +1,13 @@
-import {
-  Link,
-  Outlet,
-  useParams,
-  useRouteLoaderData,
-  LoaderFunctionArgs,
-} from "react-router";
-import { EvolverConfigWithoutDefaults } from "client";
+import { Link, Outlet, useLoaderData, useParams } from "react-router";
+import type { Route } from "./+types/devices.$id.$name.experiments.$experiment_id";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 
 import * as Evolver from "client/services.gen";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo } from "~/cookies.server";
 import { ROUTES } from "~/utils/routes";
+import { DefaultHydrateFallback } from "~/components/HydrateFallback";
 
 export const handle = {
   breadcrumb: ({
@@ -45,46 +41,46 @@ export function ErrorBoundary() {
         </div>
       </div>
 
-      <Link to={ROUTES.device.config({ id, name })} className="link">
-        config
-      </Link>
+      {id && name && (
+        <Link to={ROUTES.device.config({ id, name })} className="link">
+          config
+        </Link>
+      )}
     </div>
   );
 }
 
-export async function loader({ params }: LoaderFunctionArgs) {
-  const { id } = params;
-  const { evolverClient } = await getEvolverClientForDevice(id);
+export async function loader({ request }: Route.LoaderArgs) {
+  return {
+    device: await deviceInfo.parse(request.headers.get("Cookie")),
+  };
+}
 
-  const results = Promise.allSettled([
+export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  const { device } = await serverLoader();
+
+  const evolverClient = createEvolverClient(device.url);
+
+  const [experiments] = await Promise.all([
     Evolver.getExperimentsExperimentGet({
       client: evolverClient,
     }),
-  ]).then((results) => {
-    return results.map((result) => result.value.data);
-  });
+  ]);
 
-  const [experiments] = await results;
+  return { experiments: experiments.data };
+}
 
-  return { experiments };
+clientLoader.hydrate = true as const;
+
+export function HydrateFallback() {
+  return <DefaultHydrateFallback />;
 }
 
 export default function Controllers() {
-  const { id, experiment_id, name } = useParams();
+  const { id, experiment_id, name } = useParams<Route.ActionArgs["params"]>();
+  const { experiments } = useLoaderData<typeof clientLoader>();
 
-  const loaderData = useRouteLoaderData<typeof loader>(
-    "routes/devices.$id.$name",
-  );
-  let evolverConfig = {} as EvolverConfigWithoutDefaults;
-
-  if (loaderData?.description?.config) {
-    const description = loaderData.description;
-    if (description && description.config) {
-      evolverConfig = description.config as EvolverConfigWithoutDefaults;
-    }
-  }
-
-  if (!evolverConfig.experiments[experiment_id]) {
+  if (experiments && experiment_id && !experiments[experiment_id]) {
     return (
       <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box items-center">
         <CogIcon className="h-20 w-20" />
@@ -93,12 +89,14 @@ export default function Controllers() {
           className="tooltip"
           data-tip="use the configuration editor to add hardware "
         >
-          <Link
-            className="link text-primary"
-            to={ROUTES.device.config({ id, name })}
-          >
-            add experiment
-          </Link>
+          {id && name && (
+            <Link
+              className="link text-primary"
+              to={ROUTES.device.config({ id, name })}
+            >
+              add experiment
+            </Link>
+          )}
         </div>
       </div>
     );

@@ -1,32 +1,26 @@
-import { useRouteLoaderData } from "react-router";
 import clsx from "clsx";
-import {
+import { JsonEditor, githubDarkTheme } from "json-edit-react";
+import type {
   FilterFunction,
   JsonData,
-  JsonEditor,
   NodeData,
   TypeFilterFunction,
-  githubDarkTheme,
-  githubLightTheme,
 } from "json-edit-react";
-import { loader as rootLoader } from "~/root";
 import { checkType } from "~/utils/checkType";
-import { EvolverConfigWithoutDefaults } from "client";
+import type { EvolverConfigWithoutDefaults } from "client";
 
 export function EditJson({
   data,
   mode,
   setData,
+  theme,
 }: {
   data: EvolverConfigWithoutDefaults;
   mode: "edit" | "view";
   setData: (arg0: EvolverConfigWithoutDefaults) => void;
+  theme: "dark" | "light";
 }) {
-  const { theme } = useRouteLoaderData<typeof rootLoader>("root") ?? {
-    theme: "dark",
-  };
-
-  const editorTheme = theme === "dark" ? githubDarkTheme : githubLightTheme;
+  const editorTheme = githubDarkTheme;
 
   const customizeText = ({ key, value }: NodeData) => {
     switch (key) {

@@ -1,6 +1,5 @@
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 import { useFetcher, useLoaderData, useLocation } from "react-router";
-import { loader } from "~/root";
 
 export default function ThemeController() {
   const { pathname, search } = useLocation();
@@ -9,7 +8,7 @@ export default function ThemeController() {
   const fetcher = useFetcher();
 
   // depends on root.tsx loader returning a theme
-  const { theme } = useLoaderData<typeof loader>();
+  const { theme } = useLoaderData();
 
   return (
     <label className="swap swap-rotate">
@@ -23,6 +22,7 @@ export default function ThemeController() {
           const newTheme = theme === "dark" ? "light" : "dark";
           formData.set("theme", newTheme);
           formData.set("redirectTo", pathname + search);
+          // handled by the root action which updates the userPrefs cookie.
           fetcher.submit(formData, { method: "POST" });
         }}
       ></input>

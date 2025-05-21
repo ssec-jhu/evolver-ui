@@ -15,17 +15,10 @@ type FieldTemplateProps = pkg.FieldTemplateProps;
 type RJSFSchema = pkg.RJSFSchema;
 type SubmitButtonProps = pkg.SubmitButtonProps;
 type ObjectFieldTemplateProps = pkg.ObjectFieldTemplateProps;
-type FormContextType = pkg.FormContextType;
-type StrictRJSFSchema = pkg.StrictRJSFSchema;
-
 import validator from "@rjsf/validator-ajv8";
-import { ChangeEvent, FocusEvent } from "react";
+import type { ChangeEvent, FocusEvent } from "react";
 
-function ObjectFieldTemplate<
-  T = unknown,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = Record<string, unknown>,
->(props: ObjectFieldTemplateProps<T, S, F>) {
+function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
   const {
     description,
     title,
@@ -40,18 +33,17 @@ function ObjectFieldTemplate<
     onAddClick,
     registry,
   } = props;
-  const uiOptions = getUiOptions<T, S, F>(uiSchema);
-  const TitleFieldTemplate = getTemplate<"TitleFieldTemplate", T, S, F>(
+  const uiOptions = getUiOptions(uiSchema);
+  const TitleFieldTemplate = getTemplate(
     "TitleFieldTemplate",
     registry,
     uiOptions,
   );
-  const DescriptionFieldTemplate = getTemplate<
+  const DescriptionFieldTemplate = getTemplate(
     "DescriptionFieldTemplate",
-    T,
-    S,
-    F
-  >("DescriptionFieldTemplate", registry, uiOptions);
+    registry,
+    uiOptions,
+  );
   // Button templates are not overridden in the uiSchema
   const {
     ButtonTemplates: { AddButton },
@@ -65,7 +57,7 @@ function ObjectFieldTemplate<
       {title && (
         <div className="card-title font-mono">
           <TitleFieldTemplate
-            id={titleId<T>(idSchema)}
+            id={titleId(idSchema)}
             title={title}
             required={required}
             schema={schema}
@@ -76,7 +68,7 @@ function ObjectFieldTemplate<
       )}
       {description && (
         <DescriptionFieldTemplate
-          id={descriptionId<T>(idSchema)}
+          id={descriptionId(idSchema)}
           description={description}
           schema={schema}
           uiSchema={uiSchema}
@@ -86,23 +78,31 @@ function ObjectFieldTemplate<
       <div
         className={`grid grid-cols-3 gap-${description ? 3 : 4} ${isRoot ? "" : "mb-4"}`}
       >
-        {properties.map((element, index) =>
-          element.hidden ? (
-            element.content
-          ) : (
-            <div
-              key={`${idSchema.$id}-${element.name}-${index}`}
-              className={
-                idSchema.$id === "root" && element.name === "tasks"
-                  ? "mt-2"
-                  : ""
-              }
-            >
-              {element.content}
-            </div>
-          ),
+        {properties.map(
+          (
+            element: {
+              hidden: boolean;
+              name: string;
+              content: string | JSX.Element;
+            },
+            index: number,
+          ) =>
+            element.hidden ? (
+              element.content
+            ) : (
+              <div
+                key={`${idSchema.$id}-${element.name}-${index}`}
+                className={
+                  idSchema.$id === "root" && element.name === "tasks"
+                    ? "mt-2"
+                    : ""
+                }
+              >
+                {element.content}
+              </div>
+            ),
         )}
-        {canExpand<T, S, F>(schema, uiSchema, formData) && (
+        {canExpand(schema, uiSchema, formData) && (
           <div className="flex justify-end">
             <AddButton
               className="rjsf-object-property-expand btn btn-primary btn-sm"
@@ -204,16 +204,24 @@ interface SchemaFormProps {
   schema: RJSFSchema;
   formData?: object;
   onSubmit: (arg: object) => void;
+  submitButtonCopy?: string;
 }
 
 export default function SchemaForm({
   schema,
   formData,
   onSubmit,
+  submitButtonCopy = "save",
 }: SchemaFormProps) {
+  const customUiSchema: pkg.UiSchema = {
+    "ui:submitButtonOptions": {
+      submitText: submitButtonCopy,
+    },
+  };
   return (
     <div className="card bg-base-100 shadow-sm">
       <Form
+        uiSchema={customUiSchema}
         className="card-body"
         validator={validator}
         schema={schema}

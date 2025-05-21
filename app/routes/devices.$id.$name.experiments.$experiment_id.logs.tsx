@@ -1,9 +1,13 @@
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
-import { Link, useLoaderData, LoaderFunctionArgs } from "react-router";
+import { Link, useLoaderData } from "react-router";
+import type { Route } from "./+types/devices.$id.$name.experiments.$experiment_id.logs";
 import * as Evolver from "client/services.gen";
-import LogTable from "~/components/LogTable";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import LogTable, { type LogLine } from "~/components/LogTable";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo } from "~/cookies.server";
 import { ROUTES } from "~/utils/routes";
+import { DefaultHydrateFallback } from "~/components/HydrateFallback";
+
 export const handle = {
   breadcrumb: ({
     params,
@@ -25,28 +29,33 @@ export const handle = {
   },
 };
 
-export async function loader({ params }: LoaderFunctionArgs) {
-  const { id, experiment_id } = params;
+export async function loader({ request }: Route.LoaderArgs) {
+  return {
+    device: await deviceInfo.parse(request.headers.get("Cookie")),
+  };
+}
 
-  try {
-    const { evolverClient } = await getEvolverClientForDevice(id);
+export async function clientLoader({
+  params,
+  serverLoader,
+}: Route.ClientLoaderArgs) {
+  const { device } = await serverLoader();
+  const { experiment_id } = params;
+  const evolverClient = createEvolverClient(device.url);
 
-    const results = Promise.allSettled([
-      Evolver.getExperimentLogsExperimentExperimentNameLogsGet({
-        client: evolverClient,
-        path: { experiment_name: experiment_id },
-      }),
-    ]).then((results) => {
-      return results.map((result) => result.value.data);
-    });
+  const [{ data }] = await Promise.all([
+    Evolver.getExperimentLogsExperimentExperimentNameLogsGet({
+      client: evolverClient,
+      path: { experiment_name: experiment_id },
+    }),
+  ]);
+  return { logs: (data as { data: object }).data as Record<string, LogLine[]> };
+}
 
-    const [logs] = await results;
-    return { logs: logs.data };
-  } catch (error) {
-    throw new Error(
-      "Failed to load experiment logs: " + (error.message || "Unknown error"),
-    );
-  }
+clientLoader.hydrate = true as const;
+
+export function HydrateFallback() {
+  return <DefaultHydrateFallback />;
 }
 
 export function ErrorBoundary() {
@@ -69,7 +78,7 @@ export function ErrorBoundary() {
 }
 
 export default function ExperimentLogs() {
-  const { logs } = useLoaderData<typeof loader>();
+  const { logs } = useLoaderData<typeof clientLoader>();
   const LogTables = Object.keys(logs).map((key, ix) => (
     <LogTable key={key + ix} title={key} logs={logs[key]} />
   ));

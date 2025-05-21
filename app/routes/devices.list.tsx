@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { type ActionFunctionArgs, redirect } from "react-router";
+import type { Route } from "./+types/devices.list";
 import { parseWithZod, getZodConstraint } from "@conform-to/zod";
 import { pingDevice } from "~/utils/pingDevice.server";
 import { db } from "~/utils/db.server";
@@ -18,6 +19,7 @@ import { CloudIcon } from "@heroicons/react/24/outline";
 import { generateDeviceId } from "~/utils/generateDeviceId.server";
 import { toast as notify } from "react-toastify";
 import { useEffect } from "react";
+import { DefaultErrorBoundary } from "~/components/DefaultErrorBoundary";
 
 const IntentEnum = z.enum(["add_device", "delete_device"], {
   required_error: "intent is required",
@@ -107,6 +109,16 @@ export const loader = async () => {
   return results;
 };
 
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  return (
+    <DefaultErrorBoundary
+      error={error}
+      title="Error loading devices"
+      subtitle="Unable to load the device list. Please check your connection and try again."
+    />
+  );
+}
+
 export default function DevicesList() {
   const loaderData = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
@@ -149,7 +161,12 @@ export default function DevicesList() {
           <td>{new Date(createdAt).toDateString()}</td>
           <td>
             {status === "online" ? (
-              <Link to={ROUTES.device.state({ id: device_id, name })}>
+              <Link
+                to={ROUTES.device.state({
+                  id: device_id,
+                  name: name.toString(),
+                })}
+              >
                 <div className="link link-primary">{name}</div>
               </Link>
             ) : (

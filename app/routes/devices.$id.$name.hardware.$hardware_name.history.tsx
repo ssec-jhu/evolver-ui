@@ -1,18 +1,14 @@
-import {
-  LoaderFunctionArgs,
-  Link,
-  useLoaderData,
-  useParams,
-  useRouteLoaderData,
-  useSearchParams,
-} from "react-router";
+import { Link, useLoaderData, useParams, useSearchParams } from "react-router";
 import * as Evolver from "client/services.gen";
 import { HardwareLineChart } from "~/components/LineChart";
-import { loader as rootLoader } from "~/root";
 import { WrenchScrewdriverIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import flatMap from "lodash/flatMap";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo } from "~/cookies.server";
 import { ROUTES } from "~/utils/routes";
+import type { Route } from "./+types/devices.$id.$name.hardware.$hardware_name.history";
+import { DefaultHydrateFallback } from "~/components/HydrateFallback";
+import { getClientEnv } from "~/utils/env.server";
 
 export const handle = {
   breadcrumb: (
@@ -56,58 +52,67 @@ export function ErrorBoundary() {
   );
 }
 
-export async function loader({ params, request }: LoaderFunctionArgs) {
-  const { id, hardware_name } = params;
+export async function loader({ request }: Route.LoaderArgs) {
+  return {
+    device: await deviceInfo.parse(request.headers.get("Cookie")),
+    ENV: getClientEnv(),
+  };
+}
+
+export async function clientLoader({
+  params,
+  request,
+  serverLoader,
+}: Route.ClientLoaderArgs) {
+  const { hardware_name } = params;
   const { searchParams } = new URL(request.url);
 
-  try {
-    const { evolverClient } = await getEvolverClientForDevice(id);
+  const { device, ENV } = await serverLoader();
+  const { url } = device;
 
-    const vials = searchParams
-      .get("vials")
-      ?.split(",")
-      .map((str) => Number(str));
+  const evolverClient = createEvolverClient(url);
 
-    const properties = searchParams.get("properties")?.split(",");
+  const vials = searchParams
+    .get("vials")
+    ?.split(",")
+    .map((str) => Number(str));
 
-    const results = Promise.allSettled([
-      Evolver.history({
-        query: {
-          name: hardware_name,
-        },
-        body: {
-          vials,
-          properties,
-          kinds: ["sensor"],
-        },
-        client: evolverClient,
-      }),
-      Evolver.history({
-        body: {
-          kinds: ["event"],
-        },
-        client: evolverClient,
-      }),
-    ]).then((results) => {
-      return results.map((result) => result.value.data);
-    });
+  const properties = searchParams.get("properties")?.split(",");
 
-    const [hist, events] = await results;
+  const [sensorHistory, deviceEvents] = await Promise.all([
+    Evolver.history({
+      query: {
+        name: hardware_name,
+      },
+      body: {
+        vials,
+        properties,
+        kinds: ["sensor"],
+      },
+      client: evolverClient,
+    }),
+    Evolver.history({
+      body: {
+        kinds: ["event"],
+      },
+      client: evolverClient,
+    }),
+  ]).then((results) => {
+    return results.map((result) => result.data);
+  });
 
-    return { data: hist?.data, events: events?.data };
-  } catch (error) {
-    throw new Error(
-      "Failed to load hardware history: " + (error.message || "Unknown error"),
-    );
-  }
+  return { data: sensorHistory?.data, events: deviceEvents?.data, ENV };
+}
+
+clientLoader.hydrate = true as const;
+
+export function HydrateFallback() {
+  return <DefaultHydrateFallback />;
 }
 
 export default function Hardware() {
-  const { data, events } = useLoaderData<typeof loader>();
-  const {
-    ENV: { EXCLUDED_PROPERTIES },
-  } = useRouteLoaderData<typeof rootLoader>("root");
-  const excludedProperties = EXCLUDED_PROPERTIES?.split(",") ?? [];
+  const { data, events, ENV } = useLoaderData<typeof clientLoader>();
+  const excludedProperties = ENV?.EXCLUDED_PROPERTIES?.split(",") ?? [];
   const [searchParams] = useSearchParams();
   const { hardware_name } = useParams();
 
@@ -120,8 +125,9 @@ export default function Hardware() {
     );
   }
   const hardwareHistory = data[hardware_name];
+
   const allHardwareVialsProperties = Object.keys(
-    hardwareHistory[0].data,
+    hardwareHistory[0]?.data ?? {},
   ).filter((property) => excludedProperties.includes(property) === false);
 
   // shape of data is not ideal here, we have a struct mapping event name to
@@ -148,22 +154,17 @@ export default function Hardware() {
     ];
   }
 
-  const charts = [];
-  selectedProperties.forEach((property) => {
-    const chart = (
+  const charts = selectedProperties.map((property) => {
+    return (
       <HardwareLineChart
+        key={`${hardware_name}-${property}`}
         rawData={hardwareHistory}
         vials={selectedVials}
         property={property}
         events={allEvents}
       />
     );
-    charts.push(chart);
   });
 
-  return (
-    <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
-      {charts}
-    </div>
-  );
+  return <div className="flex flex-col gap-4">{charts}</div>;
 }

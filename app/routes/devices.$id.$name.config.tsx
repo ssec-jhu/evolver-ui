@@ -3,26 +3,30 @@ import {
   useActionData,
   useLocation,
   useParams,
-  useRouteLoaderData,
   useSearchParams,
   useSubmit,
-  ActionFunctionArgs,
   redirect,
+  useLoaderData,
 } from "react-router";
+import type { Route } from "./+types/devices.$id.$name.config";
 import { ROUTES } from "~/utils/routes";
-import { EditJson } from "~/components/EditJson.client";
-import { ClientOnly } from "remix-utils/client-only";
+import { EditJson } from "~/components/EditJson";
 import { useEffect, useState } from "react";
 import { exportData } from "~/utils/exportData";
-import { type loader } from "./devices.$id.$name";
 import { handleFileUpload } from "~/utils/handleFileUpload";
-import { EvolverConfigWithoutDefaults } from "client";
+import type { EvolverConfigWithoutDefaults } from "client";
 import { parseWithZod } from "@conform-to/zod";
 import { z } from "zod";
 import * as Evolver from "client/services.gen";
-import { toast as notify } from "react-toastify";
 import { db } from "~/utils/db.server";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo, userPrefs } from "~/cookies.server";
+import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
+import { evolverApiCall } from "~/utils/evolverApiCall";
+import type { Prisma } from "@prisma/client";
+import { toast as notify } from "react-toastify";
+import { DefaultHydrateFallback } from "~/components/HydrateFallback";
+import { DefaultErrorBoundary } from "~/components/DefaultErrorBoundary";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
@@ -31,15 +35,9 @@ export const handle = {
   },
 };
 
-// The action function is typically responsible for handling the form submission at the route.
-// Since the action function can handle different form submissions, we use intent to determine the action to take.
-// Branching on the intent field of the submitted form.
-// In this case, the intent is to update the evolver config. Later there may be an intent to delete a config, or undo a change etc...
-// Refs: https://sergiodxa.com/articles/multiple-forms-per-route-in-remix
-
 const UpdateDeviceIntentEnum = z.enum(["update_evolver"], {
   required_error: "an intent is required",
-  invalid_type_error: "must be one of, update_device",
+  invalid_type_error: "must be one of, update_evolver",
 });
 
 const schema = z.object({
@@ -56,10 +54,42 @@ const schema = z.object({
   ),
   // Assume this is valid, client side AJV validation.
   data: z.string({ required_error: "an evolver config is required" }),
+  url: z.string().url(),
 });
 
-export async function action({ request }: ActionFunctionArgs) {
+// Server action handles database operations, no Evolver API call should go here.
+export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
+  const submission = parseWithZod(formData, { schema: schema });
+
+  if (submission.status !== "success") {
+    return { ...submission.reply(), success: false };
+  }
+
+  const { intent, id, name } = submission.value;
+
+  switch (intent) {
+    case UpdateDeviceIntentEnum.Enum.update_evolver: {
+      // Update the database with the new config's name
+      const device = await (db.device as Prisma.DeviceDelegate).update({
+        where: { device_id: id },
+        data: { name },
+      });
+      return { device, success: true };
+    }
+    default:
+      return { success: false };
+  }
+}
+
+// Client action handles Evolver API calls
+export async function clientAction({
+  request,
+  serverAction,
+}: Route.ClientActionArgs) {
+  // Clone the request to avoid consuming the body, it's also needed for the server action.
+  const clonedRequest = request.clone();
+  const formData = await clonedRequest.formData();
 
   // prelim validation, just checks request has intent, ip and a config.
   const submission = parseWithZod(formData, { schema: schema });
@@ -67,110 +97,108 @@ export async function action({ request }: ActionFunctionArgs) {
   if (submission.status !== "success") {
     return submission.reply();
   }
-  const { intent, id, data, name } = submission.value;
+  const { intent, id, data, name, url } = submission.value;
 
   try {
-    const { evolverClient } = await getEvolverClientForDevice(id);
+    const evolverClient = createEvolverClient(url);
 
     switch (intent) {
-      case UpdateDeviceIntentEnum.Enum.update_evolver:
-        try {
-          const { response, error } = await Evolver.update({
-            body: JSON.parse(data),
-            client: evolverClient,
-          });
-
-          if (error) {
-            const errors = {};
-            error.detail?.forEach(({ loc, msg }) => {
-              const errorKey = loc
-                .map((l) => {
-                  switch (l) {
-                    case "body":
-                      return "config";
-                    default:
-                      return l;
-                  }
-                })
-                .join(".");
-              errors[errorKey] = [msg];
-            });
-
-            if (errors) {
-              return submission.reply({ fieldErrors: errors });
-            }
-          }
-          if (response.status !== 200) {
-            return submission.reply({
-              formErrors: [
-                `Got an unexpected response: ${response.status}. ${JSON.stringify(response)}`,
-              ],
-            });
-          }
-          // update the database with the new config's name
-          await db.device.update({
-            where: { device_id: id },
-            data: { name },
-          });
-          return redirect(`${ROUTES.device.config({ id, name })}?mode=view`);
-        } catch (error) {
-          return submission.reply({
-            formErrors: [
-              "unable to update device",
-              " error object: " + JSON.stringify(error),
-            ],
-          });
-        }
+      case UpdateDeviceIntentEnum.Enum.update_evolver: {
+        await Promise.all([
+          evolverApiCall(
+            () =>
+              Evolver.update({
+                body: JSON.parse(data),
+                client: evolverClient,
+              }),
+            intent,
+          ),
+          // Server action handles the same request, so no arg params in the call
+          serverAction(),
+        ]);
+        return redirect(`${ROUTES.device.config({ id, name })}?mode=view`);
+      }
       default:
-        return null;
+        return { success: false };
     }
   } catch (error) {
-    return submission.reply({
-      formErrors: [
-        "Failed to connect to device: " + (error.message || "Unknown error"),
-      ],
-    });
+    let errorMessage =
+      "An unexpected error occurred while updating the configuration";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    return {
+      ...submission.reply({
+        formErrors: [errorMessage],
+      }),
+      success: false,
+    };
   }
+}
+export async function loader({ request }: Route.LoaderArgs) {
+  // read user preferences from the client's cookie, this means user preference can be persisted between refreshes.
+  const cookieHeader = request.headers.get("Cookie");
+  const cookie: { theme: "dark" | "light" } = (await userPrefs.parse(
+    cookieHeader,
+  )) || { theme: "dark" };
+
+  return {
+    device: await deviceInfo.parse(request.headers.get("Cookie")),
+    theme: cookie.theme,
+  };
+}
+
+export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  const { device, theme } = await serverLoader();
+  const evolverClient = createEvolverClient(device.url); // (5) create an Evolver client.
+
+  const [describeEvolver, evolverState] = await Promise.all([
+    Evolver.describe({ client: evolverClient }),
+    Evolver.state({ client: evolverClient }),
+  ]);
+
+  return {
+    device,
+    description: describeEvolver.data,
+    ok: true,
+    state: evolverState.data,
+    theme,
+  };
+}
+
+// Necessary when both clientLoader and loader on the same route and you want to hydrate with the clientLoader data.
+clientLoader.hydrate = true as const;
+
+export function HydrateFallback() {
+  return <DefaultHydrateFallback />;
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  return (
+    <DefaultErrorBoundary
+      error={error}
+      title="Error loading device configuration"
+      subtitle="Unable to load the device configuration. Please ensure the device is online and try again."
+    />
+  );
 }
 
 export default function DeviceConfig() {
-  const { id } = useParams();
+  const { description, theme, device } = useLoaderData<typeof clientLoader>();
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname } = useLocation();
+  const { id } = useParams<Route.LoaderArgs["params"]>();
+  const { url } = device;
 
   // This should be what comes back from the action at /devices/:id that the form was submitted to.
-  const actionData = useActionData<typeof action>();
+  const actionData = useActionData<typeof clientAction>();
 
   const submit = useSubmit();
   const mode = searchParams.get("mode") === "edit" ? "edit" : "view";
 
-  const loaderData = useRouteLoaderData<typeof loader>(
-    "routes/devices.$id.$name",
-  );
-  let description;
-
-  if (loaderData?.description?.config) {
-    description = loaderData.description;
-  }
-
   const evolverConfig = description?.config as EvolverConfigWithoutDefaults;
 
-  useEffect(() => {
-    if (actionData?.error) {
-      if (typeof actionData.error === "string") {
-        notify.error(actionData.error);
-      }
-      if (typeof actionData.error === "object") {
-        const errorMessages: string[] = [];
-        Object.entries(actionData.error).forEach(([key, value]) => {
-          errorMessages.push(`${key}: ${value}`);
-        });
-        errorMessages.forEach((message) => {
-          notify.error(message);
-        });
-      }
-    }
-  }, [actionData]);
+  useFormErrorNotifications(actionData);
 
   const [updatedEvolverConfig, setEvolverConfig] =
     useState<typeof evolverConfig>(evolverConfig);
@@ -224,6 +252,7 @@ export default function DeviceConfig() {
                 notify.dismiss();
                 const formData = new FormData();
                 formData.append("id", id ?? "");
+                formData.append("url", url);
                 // get the name from the updated evolver config.
                 formData.append("name", updatedEvolverConfig.name);
                 formData.append(
@@ -236,7 +265,7 @@ export default function DeviceConfig() {
                 });
               }}
             >
-              Save
+              save
             </button>
             <button
               className="btn"
@@ -248,21 +277,18 @@ export default function DeviceConfig() {
                 notify.dismiss();
               }}
             >
-              Cancel
+              cancel
             </button>
           </div>
         )}
         <div className="flex items-start gap-4 mb-8 justify-between">
-          <ClientOnly fallback={<h1>...loading</h1>}>
-            {() => (
-              <EditJson
-                key={pathname}
-                data={updatedEvolverConfig}
-                mode={mode}
-                setData={setEvolverConfig}
-              />
-            )}
-          </ClientOnly>
+          <EditJson
+            key={pathname}
+            data={updatedEvolverConfig}
+            mode={mode}
+            setData={setEvolverConfig}
+            theme={theme}
+          />
         </div>
       </div>
     </div>

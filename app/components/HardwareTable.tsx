@@ -1,6 +1,6 @@
 import { Link, useLocation, useParams, useSearchParams } from "react-router";
 import { ROUTES } from "../utils/routes";
-import { EvolverConfigWithoutDefaults } from "client";
+import type { EvolverConfigWithoutDefaults } from "client";
 import clsx from "clsx";
 
 export function HardwareTable({
@@ -56,8 +56,7 @@ export function HardwareTable({
           key === hardwareName &&
             vials?.length === currentVials?.length &&
             "btn-active",
-          "font-mono",
-          "font-extralight",
+          "font-sans",
         )}
         key={"all"}
         to={

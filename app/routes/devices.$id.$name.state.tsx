@@ -1,5 +1,5 @@
 import {
-  LoaderFunctionArgs,
+  data,
   Link,
   useLoaderData,
   useParams,
@@ -7,10 +7,15 @@ import {
 } from "react-router";
 import * as Evolver from "client/services.gen";
 import { FilterableVialGrid } from "~/components/VialGrid";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
-import { loader as rootLoader } from "~/root";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo } from "~/cookies.server";
 import { ROUTES } from "~/utils/routes";
+import type { Route } from "./+types/devices.$id.$name.state";
+import { DefaultHydrateFallback } from "~/components/HydrateFallback";
+import { getDeviceById } from "~/utils/evolverClient.server";
+import { DefaultErrorBoundary } from "~/components/DefaultErrorBoundary";
 
+// TODO: don't do this, i think the evolver config has layout dims.
 const VIAL_COUNT = 16;
 
 export const handle = {
@@ -20,42 +25,68 @@ export const handle = {
   },
 };
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ params }: Route.LoaderArgs) {
   const { id } = params;
+  const device = await getDeviceById(id);
+  return data(
+    { device },
+    {
+      headers: {
+        "Set-Cookie": await deviceInfo.serialize(device),
+      },
+    },
+  );
+}
 
-  try {
-    const { evolverClient } = await getEvolverClientForDevice(id);
+export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  const {
+    device: { url },
+  } = await serverLoader();
 
-    const { data } = await Evolver.state({ client: evolverClient });
-    const describeEvolver = await Evolver.describe({ client: evolverClient });
-    const vials = describeEvolver?.data?.config?.vials;
+  const evolverClient = createEvolverClient(url);
 
-    return {
-      vials: vials,
-      evolverState: data,
-    };
-  } catch (error) {
-    throw new Error(
-      "Failed to load device state: " + (error.message || "Unknown error"),
-    );
-  }
+  const [describeEvolver, evolverState] = await Promise.all([
+    Evolver.describe({ client: evolverClient }),
+    Evolver.state({ client: evolverClient }),
+  ]);
+
+  return {
+    vials: describeEvolver?.data?.config?.vials,
+    evolverState: evolverState.data,
+  };
+}
+
+clientLoader.hydrate = true as const;
+
+export function HydrateFallback() {
+  return <DefaultHydrateFallback />;
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  return (
+    <DefaultErrorBoundary
+      error={error}
+      title="Error loading device state"
+      subtitle="Unable to load the device state. Please ensure the device is online and try again."
+    />
+  );
 }
 
 export default function Hardware() {
-  const { id } = useParams();
-  const { evolverState } = useLoaderData<typeof loader>();
+  const { id } = useParams<Route.LoaderArgs["params"]>();
+  const { evolverState } = useLoaderData<typeof clientLoader>();
 
   const {
     ENV: { EXCLUDED_PROPERTIES },
-  } = useRouteLoaderData<typeof rootLoader>("root");
+  } = useRouteLoaderData("root");
 
   const excludedProperties = EXCLUDED_PROPERTIES?.split(",") ?? [];
 
   return (
     <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
       <FilterableVialGrid
-        stateData={evolverState.state}
-        id={id}
+        stateData={evolverState?.state ?? {}}
+        id={id ?? ""}
         vialCount={VIAL_COUNT}
         excludedProperties={excludedProperties}
       />

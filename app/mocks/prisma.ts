@@ -1,4 +1,4 @@
-import { TMockDB } from "./db";
+import type { TMockDB } from "./db";
 
 /**
  * Mock implementation of the Prisma client for use in integration tests
@@ -8,7 +8,11 @@ import { TMockDB } from "./db";
 export function mockPrismaClient(db: TMockDB) {
   return {
     device: {
-      findUnique: async ({ where }) => {
+      findUnique: async ({
+        where,
+      }: {
+        where: { device_id?: string; id?: string; url?: string };
+      }) => {
         // If looking up by device_id
         if (where.device_id) {
           return db.device.findFirst({

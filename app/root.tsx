@@ -10,12 +10,11 @@ import {
   useLocation,
   useMatches,
   useSearchParams,
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
   redirect,
+  type UIMatch,
 } from "react-router";
 import { ROUTES } from "./utils/routes";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import "~/tailwind.css";
 import Navbar from "~/components/Navbar";
 import { GlobalLoading } from "~/components/GlobalLoading";
@@ -23,8 +22,9 @@ import { userPrefs } from "~/cookies.server";
 import { getClientEnv } from "~/utils/env.server";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import type { Route } from "./+types/root";
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
   const cookieHeader = request.headers.get("Cookie");
   const cookie = (await userPrefs.parse(cookieHeader)) || {};
   const formData = await request.formData();
@@ -48,7 +48,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
   // read user preferences from the client's cookie, this means user preference can be persisted between refreshes.
   const cookieHeader = request.headers.get("Cookie");
   const cookie: { theme: "dark" | "light" } = (await userPrefs.parse(
@@ -59,6 +59,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return { theme: cookie.theme, ENV: getClientEnv() };
 }
 
+export type THandle = {
+  breadcrumb: (match: UIMatch, queryParams: URLSearchParams) => ReactNode;
+};
+
 export default function App() {
   const { theme } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
@@ -66,11 +70,11 @@ export default function App() {
   const matches = useMatches();
 
   const breadcrumbs = matches
-    .filter((match) => match.handle && match.handle.breadcrumb)
+    .filter((match) => match.handle && (match.handle as THandle).breadcrumb)
     .map((match, index) => {
       return (
         <li role="navigation" key={index}>
-          {match.handle.breadcrumb(match, queryParams)}
+          {(match.handle as THandle).breadcrumb(match, queryParams)}
         </li>
       );
     });
@@ -98,7 +102,7 @@ export default function App() {
   );
 }
 
-export function ErrorBoundary({ error }) {
+export function ErrorBoundary({ error }: { error: unknown }) {
   if (isRouteErrorResponse(error)) {
     return (
       <Document title={error.statusText}>
@@ -126,8 +130,6 @@ export function ErrorBoundary({ error }) {
       <div>
         <h1>Error</h1>
         <p>{error.message}</p>
-        <p>The stack trace is:</p>
-        <pre>{error.stack}</pre>
       </div>
     );
   }
