@@ -93,7 +93,7 @@ test("device detail page and tab navigation", async ({ page }) => {
   await expect(networkLink).toBeVisible();
 
   // Check for status badge
-  const onlineBadge = await page.getByText("online");
+  const onlineBadge = await page.locator('.badge:has-text("online")');
   await expect(onlineBadge).toBeVisible();
 
   // Check for navigation tabs
