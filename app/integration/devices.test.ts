@@ -29,12 +29,10 @@ test("devices route renders the device list page", async ({ page }) => {
   await expect(table).toBeVisible();
 
   // Verify our test device is in the table
-  const deviceLink = await page.locator("table td a", {
-    hasText: TEST_DEVICE_NAME,
-  });
+  const deviceLink = await page.getByRole("link", { name: TEST_DEVICE_NAME });
   await expect(deviceLink).toBeVisible();
   // Verify the device status is online
-  const statusBadge = await page.locator('table .badge:has-text("online")');
+  const statusBadge = await page.getByText("online", { exact: true });
   await expect(statusBadge).toBeVisible();
 });
 
@@ -58,9 +56,7 @@ test("adding a new device works correctly", async ({ page }) => {
   await page.getByRole("link", { name: "devices" }).click();
 
   // Verify our test device is in the table
-  const newDeviceUrl = await page.locator("table a", {
-    hasText: NEW_DEVICE_URL,
-  });
+  const newDeviceUrl = await page.getByRole("link", { name: NEW_DEVICE_URL });
   await expect(newDeviceUrl).toBeVisible();
 });
 
@@ -69,7 +65,7 @@ test("device detail page and tab navigation", async ({ page }) => {
   await page.goto("/devices/list", { waitUntil: "load" });
 
   // Click on our pre-seeded mock device
-  await page.locator("table td a", { hasText: TEST_DEVICE_NAME }).click();
+  await page.getByRole("link", { name: TEST_DEVICE_NAME }).click();
 
   // Wait for navigation to complete - should be redirected to the state tab
   await page.waitForURL(/\/devices\/.*\/.*\/state/);
@@ -78,12 +74,7 @@ test("device detail page and tab navigation", async ({ page }) => {
   expect(page.url()).toMatch(/\/devices\/.*\/.*\/state/);
 
   // Verify device name is displayed in the breadcrumb
-  const breadcrumbDeviceName = await page.locator(
-    ".breadcrumbs > ul > li:nth-child(2) > a",
-    {
-      hasText: TEST_DEVICE_NAME,
-    },
-  );
+  const breadcrumbDeviceName = await page.getByRole("link", { name: TEST_DEVICE_NAME });
   await expect(breadcrumbDeviceName).toBeVisible();
 
   // Check for API and network links
@@ -93,11 +84,11 @@ test("device detail page and tab navigation", async ({ page }) => {
   await expect(networkLink).toBeVisible();
 
   // Check for status badge
-  const onlineBadge = await page.locator('.badge:has-text("online")');
+  const onlineBadge = await page.getByText("online", { exact: true });
   await expect(onlineBadge).toBeVisible();
 
   // Check for navigation tabs
-  const stateTabs = page.locator(".tabs");
+  const stateTabs = page.getByRole("tablist");
   await expect(stateTabs).toBeVisible();
 
   // Verify all tabs are present

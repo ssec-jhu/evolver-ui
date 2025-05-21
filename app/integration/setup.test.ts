@@ -13,8 +13,6 @@ test("verify: mock database is working", async ({ page }) => {
   await page.goto("/devices/list", { waitUntil: "load" });
 
   // Verify our test device is in the table
-  const deviceLink = await page.locator("table td a", {
-    hasText: TEST_DEVICE_NAME,
-  });
+  const deviceLink = await page.getByRole("link", { name: TEST_DEVICE_NAME });
   await expect(deviceLink).toBeVisible();
 });
