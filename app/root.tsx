@@ -14,6 +14,7 @@ import {
   LoaderFunctionArgs,
   redirect,
 } from "react-router";
+import { ROUTES } from "./utils/routes";
 import { ReactNode } from "react";
 import "~/tailwind.css";
 import Navbar from "~/components/Navbar";
@@ -108,7 +109,7 @@ export function ErrorBoundary({ error }) {
             {error.status} {error.statusText || error.data}
           </pre>
           <div className="flex flex-col">
-            <Link className="link" to="/devices/list" reloadDocument>
+            <Link className="link" to={ROUTES.static.devices} reloadDocument>
               home
             </Link>
             {` `}
@@ -149,7 +150,7 @@ function Document(props: {
         <Meta />
         <Links />
       </head>
-      <body className="pl-4 pr-4 pb-4">
+      <body>
         <GlobalLoading />
         {props.children}
         <ScrollRestoration />

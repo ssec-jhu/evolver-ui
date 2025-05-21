@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import ThemeController from "./ThemeController";
 import clsx from "clsx";
+import { ROUTES } from "../utils/routes";
 
 export default function Navbar({ pathname = "" as string }): JSX.Element {
   return (
@@ -8,8 +9,8 @@ export default function Navbar({ pathname = "" as string }): JSX.Element {
       <div className="mx-auto max-w-6xl flex flex-wrap justify-between gap-4 min-h-16 items-center">
         <div className="flex-1">
           <div className="flex items-center space-x-1">
-            <Link to="/" className="text-primary ">
-              Evolver
+            <Link to={ROUTES.static.root} className="text-primary ">
+              eVolver
             </Link>
           </div>
         </div>
@@ -19,9 +20,9 @@ export default function Navbar({ pathname = "" as string }): JSX.Element {
             role="button"
             className={clsx(
               "link",
-              pathname !== "/devices/list" && "link-hover",
+              pathname !== ROUTES.static.devices && "link-hover",
             )}
-            to="/devices/list"
+            to={ROUTES.static.devices}
           >
             devices
           </Link>

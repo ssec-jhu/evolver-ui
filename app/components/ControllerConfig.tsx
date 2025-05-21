@@ -7,6 +7,7 @@ import {
   action,
   Intent,
 } from "~/routes/devices.$id.$name.experiments.$experiment_id.controllers.$controller_id.config";
+import { ROUTES } from "~/utils/routes";
 
 type ControllerConfigProps = {
   controller: {
@@ -21,7 +22,7 @@ export function ControllerConfig({
   actionData,
 }: ControllerConfigProps) {
   const { classinfo, classinfoSchema } = useLoaderData<typeof loader>();
-  const { id, experiment_id, controller_id } = useParams();
+  const { id, name, experiment_id, controller_id } = useParams();
   const submit = useSubmit();
 
   // Display any error messages from the action
@@ -87,7 +88,10 @@ export function ControllerConfig({
             </li>
           </ul>
           <div className="justify-end card-actions">
-            <Link className="btn btn-primary" to={`/devices/${id}/list/config`}>
+            <Link
+              className="btn btn-primary"
+              to={ROUTES.device.config({ id, name })}
+            >
               edit
             </Link>
           </div>

@@ -1,4 +1,5 @@
 import { Link, Outlet, useParams, useRouteLoaderData } from "react-router";
+import { ROUTES } from "~/utils/routes";
 
 import { HardwareTable } from "~/components/HardwareTable";
 import { loader } from "./devices.$id.$name";
@@ -12,7 +13,7 @@ export const handle = {
     params: { id: string; hardware_name: string; name: string };
   }) => {
     const { id, name } = params;
-    return <Link to={`/devices/${id}/${name}/hardware`}>hardware</Link>;
+    return <Link to={ROUTES.device.hardware.list({ id, name })}>hardware</Link>;
   },
 };
 
@@ -44,7 +45,7 @@ export default function Hardware() {
         >
           <Link
             className="link text-primary"
-            to={`/devices/${id}/${name}/config`}
+            to={ROUTES.device.config({ id, name })}
           >
             add hardware
           </Link>

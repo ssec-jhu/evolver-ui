@@ -6,6 +6,7 @@ import {
   useRouteLoaderData,
   LoaderFunctionArgs,
 } from "react-router";
+import { ROUTES } from "~/utils/routes";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
@@ -16,7 +17,9 @@ import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
     const { id, name } = params;
-    return <Link to={`/devices/${id}/${name}/experiments`}>experiments</Link>;
+    return (
+      <Link to={ROUTES.device.experiment.list({ id, name })}>experiments</Link>
+    );
   },
 };
 
@@ -31,7 +34,7 @@ export function ErrorBoundary() {
         </div>
       </div>
 
-      <Link to={`/devices/${id}/${name}/config`} className="link">
+      <Link to={ROUTES.device.config({ id, name })} className="link">
         config
       </Link>
     </div>
@@ -89,7 +92,7 @@ export default function Controllers() {
         >
           <Link
             className="link text-primary"
-            to={`/devices/${id}/${name}/config`}
+            to={ROUTES.device.config({ id, name })}
           >
             add experiment
           </Link>

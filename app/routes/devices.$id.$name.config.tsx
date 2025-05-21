@@ -9,6 +9,7 @@ import {
   ActionFunctionArgs,
   redirect,
 } from "react-router";
+import { ROUTES } from "~/utils/routes";
 import { EditJson } from "~/components/EditJson.client";
 import { ClientOnly } from "remix-utils/client-only";
 import { useEffect, useState } from "react";
@@ -26,7 +27,7 @@ import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
     const { id, name } = params;
-    return <Link to={`/devices/${id}/${name}/config`}>config</Link>;
+    return <Link to={ROUTES.device.config({ id, name })}>config</Link>;
   },
 };
 
@@ -111,7 +112,7 @@ export async function action({ request }: ActionFunctionArgs) {
             where: { device_id: id },
             data: { name },
           });
-          return redirect(`/devices/${id}/${name}/config?mode=view`);
+          return redirect(`${ROUTES.device.config({ id, name })}?mode=view`);
         } catch (error) {
           return submission.reply({
             formErrors: [

@@ -16,6 +16,7 @@ import * as Evolver from "client/services.gen";
 import { useEffect } from "react";
 import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 import { ControllerConfig } from "~/components/ControllerConfig";
+import { ROUTES } from "~/utils/routes";
 
 export const handle = {
   breadcrumb: ({
@@ -31,7 +32,12 @@ export const handle = {
     const { id, experiment_id, name, controller_id } = params;
     return (
       <Link
-        to={`/devices/${id}/${name}/experiments/${experiment_id}/${controller_id}/config`}
+        to={ROUTES.device.experiment.controllers.current.config({
+          id,
+          name,
+          experimentId: experiment_id,
+          controllerId: controller_id,
+        })}
       >
         {controller_id}
       </Link>
@@ -50,7 +56,7 @@ export function ErrorBoundary() {
         </div>
       </div>
 
-      <Link to={`/devices/${id}/${name}/config`} className="link">
+      <Link to={ROUTES.device.config({ id, name })} className="link">
         config
       </Link>
     </div>
@@ -239,7 +245,12 @@ export async function action({ request }: ActionFunctionArgs) {
             parsedControllerConfig.name || controller_id;
 
           return redirect(
-            `/devices/${id}/${name}/experiments/${experiment_id}/controllers/${newControllerName}/config#${newControllerName}config`,
+            `${ROUTES.device.experiment.controllers.current.config({
+              id,
+              name,
+              experimentId: experiment_id,
+              controllerId: newControllerName,
+            })}#${newControllerName}config`,
           );
         } catch (error) {
           return submission.reply({

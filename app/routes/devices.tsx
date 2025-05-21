@@ -1,8 +1,9 @@
 import { Outlet, Link } from "react-router";
+import { ROUTES } from "~/utils/routes";
 
 export const handle = {
   breadcrumb: () => {
-    return <Link to={`/devices/list`}>devices</Link>;
+    return <Link to={ROUTES.static.devices}>devices</Link>;
   },
 };
 

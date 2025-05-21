@@ -3,6 +3,7 @@ import { Link, useLoaderData, LoaderFunctionArgs } from "react-router";
 import * as Evolver from "client/services.gen";
 import LogTable from "~/components/LogTable";
 import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { ROUTES } from "~/utils/routes";
 export const handle = {
   breadcrumb: ({
     params,
@@ -11,7 +12,13 @@ export const handle = {
   }) => {
     const { id, experiment_id, name } = params;
     return (
-      <Link to={`/devices/${id}/${name}/experiments/${experiment_id}/logs`}>
+      <Link
+        to={ROUTES.device.experiment.logs({
+          id,
+          name,
+          experimentId: experiment_id,
+        })}
+      >
         logs
       </Link>
     );

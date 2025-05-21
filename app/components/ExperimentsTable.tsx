@@ -1,4 +1,5 @@
 import { Link, useLocation, useParams } from "react-router";
+import { ROUTES } from "../utils/routes";
 import { Experiment_Output } from "client";
 import clsx from "clsx";
 
@@ -23,7 +24,11 @@ export function ExperimentsTable({
               className={clsx(
                 pathElements.includes(experiment_name) && "underline",
               )}
-              to={`/devices/${id}/${name}/experiments/${experiment_name}`}
+              to={ROUTES.device.experiment.current({
+                id,
+                name,
+                experimentId: experiment_name,
+              })}
             >
               {experiment_name}
             </Link>
@@ -32,7 +37,7 @@ export function ExperimentsTable({
           <td>
             <Link
               className={clsx("btn btn-outline join-item")}
-              to={`/devices/${id}/${name}/experiments/${experiment_name}/logs#logs`}
+              to={`${ROUTES.device.experiment.logs({ id, name, experimentId: experiment_name })}#logs`}
             >
               logs
             </Link>
@@ -60,7 +65,7 @@ export function ExperimentsTable({
                       <div className="join">
                         <Link
                           className={clsx("btn btn-outline join-item")}
-                          to={`/devices/${id}/${name}/experiments/${experiment_name}/controllers/${controllerName}/config#${controllerName + "config"}`}
+                          to={`${ROUTES.device.experiment.controllers.current.config({ id, name, experimentId: experiment_name, controllerId: controllerName })}#${controllerName + "config"}`}
                         >
                           config
                         </Link>

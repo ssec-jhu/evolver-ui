@@ -1,4 +1,5 @@
 import { Link, useLocation, useParams, useSearchParams } from "react-router";
+import { ROUTES } from "../utils/routes";
 import { EvolverConfigWithoutDefaults } from "client";
 import clsx from "clsx";
 
@@ -24,7 +25,7 @@ export function HardwareTable({
     const vials = evolverHardware[key]?.config?.vials;
 
     const vialsWithLinks = vials?.map((vial) => {
-      const linkTo = `/devices/${id}/${name}/hardware/${key}/history?vials=${vial}`;
+      const linkTo = `${ROUTES.device.hardware.history({ id, name, hardwareName: key })}?vials=${vial}`;
       const activeVial =
         currentVials?.includes(vial.toString()) && hardwareName === key;
       const vialButtons = (
@@ -61,8 +62,8 @@ export function HardwareTable({
         key={"all"}
         to={
           vials
-            ? `/devices/${id}/${name}/hardware/${key}/history?vials=${vials?.join(",")}`
-            : `/devices/${id}/${name}/hardware/${key}/history`
+            ? `${ROUTES.device.hardware.history({ id, name, hardwareName: key })}?vials=${vials?.join(",")}`
+            : ROUTES.device.hardware.history({ id, name, hardwareName: key })
         }
       >
         {" "}
@@ -94,7 +95,11 @@ export function HardwareTable({
                 currentPath === "calibrate" &&
                 "btn-active",
             )}
-            to={`/devices/${id}/${name}/hardware/${key}/calibrate`}
+            to={ROUTES.device.hardware.calibrate({
+              id,
+              name,
+              hardwareName: key,
+            })}
           >
             calibrate
           </Link>
