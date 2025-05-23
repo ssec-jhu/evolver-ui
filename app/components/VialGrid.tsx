@@ -3,38 +3,18 @@ import { ROUTES } from "../utils/routes";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 
-const RecursiveDataTable = ({
+const DataTable = ({
   data,
   vialIndex,
   excludedProperties = [],
   filteredProperties = [],
-  depth = 0,
 }: {
   vialIndex: number;
-  data: unknown;
+  data: { [key: string]: number };
   excludedProperties?: string[];
   filteredProperties?: string[];
-  depth?: number;
 }) => {
   const { name, id } = useParams();
-
-  // Helper function to check if an object has nested objects
-  const hasNestedObjects = (obj) => {
-    return Object.values(obj).some(
-      (val) => typeof val === "object" && val !== null && !Array.isArray(val),
-    );
-  };
-
-  // Format values based on their type
-  const formatValue = (value) => {
-    if (typeof value === "number") {
-      return Number(value.toFixed(3)) % 1 === 0
-        ? value.toFixed(0)
-        : value.toFixed(3);
-    }
-    return value || "-";
-  };
-
   return (
     <div className="overflow-x-auto">
       <table className="table table-xs">
@@ -53,123 +33,53 @@ const RecursiveDataTable = ({
           </tr>
         </thead>
         <tbody>
-          {Object.keys(data).map((mainKey) => {
-            const mainKeyData = data[mainKey];
-            const isNestedStructure = hasNestedObjects(mainKeyData);
-
-            if (isNestedStructure) {
-              // This is a nested object that requires recursive rendering
+          {Object.keys(data).map((mainKey) =>
+            Object.keys(data[mainKey]).map((subKey: string, subIndex) => {
+              let renderSubKey = true;
+              if (
+                excludedProperties.includes(subKey) ||
+                filteredProperties.includes(subKey)
+              ) {
+                renderSubKey = false;
+              }
               return (
-                <tr key={mainKey}>
-                  <td className="text-center font-mono">
-                    <Link
-                      className="link"
-                      to={`${ROUTES.device.hardware.history({ id, name, hardwareName: mainKey })}?vials=${vialIndex}`}
+                <tr key={`${mainKey}-${subKey}`}>
+                  {subIndex === 0 && (
+                    <td
+                      rowSpan={Object.keys(data[mainKey]).length}
+                      className="text-center font-mono"
                     >
-                      {mainKey}
-                    </Link>
-                  </td>
-                  <td colSpan={2} className="p-0">
-                    <table className="table table-xs w-full">
-                      <tbody>
-                        {Object.keys(mainKeyData).map((subKey) => {
-                          if (
-                            typeof mainKeyData[subKey] === "object" &&
-                            mainKeyData[subKey] !== null
-                          ) {
-                            // Further nesting
-                            return (
-                              <tr key={`${mainKey}-${subKey}`}>
-                                <td className="font-mono">
-                                  <Link
-                                    className="link"
-                                    to={`${ROUTES.device.hardware.history({ id, name, hardwareName: mainKey })}?properties=${subKey}&vials=${vialIndex}`}
-                                  >
-                                    {subKey}
-                                  </Link>
-                                </td>
-                                <td colSpan={1} className="p-0">
-                                  <RecursiveDataTable
-                                    data={{ [subKey]: mainKeyData[subKey] }}
-                                    vialIndex={vialIndex}
-                                    excludedProperties={excludedProperties}
-                                    filteredProperties={filteredProperties}
-                                    depth={depth + 1}
-                                  />
-                                </td>
-                              </tr>
-                            );
-                          } else {
-                            // Leaf node
-                            const renderSubKey =
-                              !excludedProperties.includes(subKey) &&
-                              !filteredProperties.includes(subKey);
-                            if (!renderSubKey) return null;
-
-                            return (
-                              <tr key={`${mainKey}-${subKey}`}>
-                                <td className="font-mono">
-                                  <Link
-                                    className="link"
-                                    to={`${ROUTES.device.hardware.history({ id, name, hardwareName: mainKey })}?properties=${subKey}&vials=${vialIndex}`}
-                                  >
-                                    {subKey}
-                                  </Link>
-                                </td>
-                                <td>{formatValue(mainKeyData[subKey])}</td>
-                              </tr>
-                            );
-                          }
-                        })}
-                      </tbody>
-                    </table>
-                  </td>
+                      <Link
+                        className="link"
+                        to={`${ROUTES.device.hardware.history({ id, name, hardwareName: mainKey })}?vials=${vialIndex}`}
+                      >
+                        {mainKey}
+                      </Link>
+                    </td>
+                  )}
+                  {renderSubKey && (
+                    <td>
+                      <Link
+                        className="link"
+                        to={`${ROUTES.device.hardware.history({ id, name, hardwareName: mainKey })}?properties=${subKey}&vials=${vialIndex}`}
+                      >
+                        {subKey}
+                      </Link>
+                    </td>
+                  )}
+                  {renderSubKey && (
+                    <td>
+                      {typeof data[mainKey][subKey] === "number"
+                        ? Number(data[mainKey][subKey].toFixed(3)) % 1 === 0
+                          ? data[mainKey][subKey].toFixed(0)
+                          : data[mainKey][subKey].toFixed(3)
+                        : data[mainKey][subKey] || "-"}
+                    </td>
+                  )}
                 </tr>
               );
-            } else {
-              return Object.keys(mainKeyData).map(
-                (subKey: string, subIndex) => {
-                  let renderSubKey = true;
-                  if (
-                    excludedProperties.includes(subKey) ||
-                    filteredProperties.includes(subKey)
-                  ) {
-                    renderSubKey = false;
-                  }
-                  return (
-                    <tr key={`${mainKey}-${subKey}`}>
-                      {subIndex === 0 && (
-                        <td
-                          rowSpan={Object.keys(mainKeyData).length}
-                          className="text-center font-mono"
-                        >
-                          <Link
-                            className="link"
-                            to={`${ROUTES.device.hardware.history({ id, name, hardwareName: mainKey })}?vials=${vialIndex}`}
-                          >
-                            {mainKey}
-                          </Link>
-                        </td>
-                      )}
-                      {renderSubKey && (
-                        <td>
-                          <Link
-                            className="link font-mono"
-                            to={`${ROUTES.device.hardware.history({ id, name, hardwareName: mainKey })}?properties=${subKey}&vials=${vialIndex}`}
-                          >
-                            {subKey}
-                          </Link>
-                        </td>
-                      )}
-                      {renderSubKey && (
-                        <td>{formatValue(mainKeyData[subKey])}</td>
-                      )}
-                    </tr>
-                  );
-                },
-              );
-            }
-          })}
+            }),
+          )}
         </tbody>
       </table>
     </div>
@@ -245,7 +155,7 @@ export function FilterableVialGrid({
         )}
       >
         {hasData && (
-          <RecursiveDataTable
+          <DataTable
             data={data}
             vialIndex={index}
             excludedProperties={excludedProperties}
