@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { WarningModal } from "~/components/Modals";
 import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { ROUTES } from "~/utils/routes";
 
 const Intent = z.enum(
   [
@@ -81,10 +82,15 @@ export const handle = {
     queryParams?: URLSearchParams,
   ) => {
     const { id, hardware_name, name } = params;
-    const linkTo = `/devices/${id}/${name}/hardware/${hardware_name}/`;
-    if (queryParams !== undefined) {
-      linkTo.concat(`?${queryParams.toString()}`);
-    }
+    const baseLinkTo = ROUTES.device.hardware.calibrate({
+      id,
+      name,
+      hardwareName: hardware_name,
+    });
+    const linkTo =
+      queryParams !== undefined
+        ? `${baseLinkTo}?${queryParams.toString()}`
+        : baseLinkTo;
     return <Link to={linkTo}>calibrate</Link>;
   },
 };

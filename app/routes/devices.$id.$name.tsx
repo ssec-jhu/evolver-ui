@@ -10,6 +10,7 @@ import {
   LoaderFunctionArgs,
   redirect,
 } from "react-router";
+import { ROUTES } from "~/utils/routes";
 import * as Evolver from "client/services.gen";
 import clsx from "clsx";
 import { EvolverConfigWithoutDefaults } from "client";
@@ -26,7 +27,7 @@ export const handle = {
   breadcrumb: (props: { params: { id: string; name: string } }) => {
     const { id, name } = props.params;
 
-    return <Link to={`/devices/${id}/${name}/state`}>{name}</Link>;
+    return <Link to={ROUTES.device.state({ id, name })}>{name}</Link>;
   },
 };
 
@@ -114,7 +115,7 @@ export function ErrorBoundary() {
         </div>
       </div>
 
-      <Link to="/devices/list" className="link">
+      <Link to={ROUTES.static.devices} className="link">
         home
       </Link>
     </div>
@@ -122,7 +123,7 @@ export function ErrorBoundary() {
 }
 
 export default function Device() {
-  const { id } = useParams();
+  const { id, name } = useParams();
   const { description, url, state } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
   const actionData = useActionData<typeof action>();
@@ -254,7 +255,7 @@ export default function Device() {
       <div>
         <div role="tablist" className="tabs tabs-box">
           <Link
-            to={"./state"}
+            to={ROUTES.device.state({ id, name })}
             role="tab"
             className={clsx(
               "tab",
@@ -266,7 +267,7 @@ export default function Device() {
           </Link>
           <Link
             role="tab"
-            to={"./config"}
+            to={ROUTES.device.config({ id, name })}
             className={clsx(
               "tab",
               lastPathElement === "config" &&
@@ -278,7 +279,7 @@ export default function Device() {
             configuration
           </Link>
           <Link
-            to={"./hardware"}
+            to={ROUTES.device.hardware.list({ id, name })}
             role="tab"
             className={clsx(
               "tab",
@@ -289,7 +290,7 @@ export default function Device() {
             hardware
           </Link>
           <Link
-            to={"./experiments"}
+            to={ROUTES.device.experiment.list({ id, name })}
             role="tab"
             className={clsx(
               "tab",

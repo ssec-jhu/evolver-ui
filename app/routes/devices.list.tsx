@@ -12,6 +12,7 @@ import {
   useLoaderData,
   useSubmit,
 } from "react-router";
+import { ROUTES } from "~/utils/routes";
 import clsx from "clsx";
 import { CloudIcon } from "@heroicons/react/24/outline";
 import { generateDeviceId } from "~/utils/generateDeviceId.server";
@@ -57,7 +58,7 @@ export async function action({ request }: ActionFunctionArgs) {
         } else {
           throw Error("no evolver detected at that address");
         }
-        return redirect(`/devices/${id}/${name}/state`);
+        return redirect(ROUTES.device.state({ id, name }));
       } catch (error) {
         const { url } = submission.value;
         const errorMessages = ["unable to add device"];
@@ -76,7 +77,7 @@ export async function action({ request }: ActionFunctionArgs) {
       try {
         const { id } = submission.value;
         await db.device.delete({ where: { device_id: id } });
-        return redirect("/devices/list");
+        return redirect(ROUTES.static.devices);
       } catch (error) {
         const errorMessages = ["unable to delete device"];
         return submission.reply({ formErrors: errorMessages });
@@ -148,7 +149,7 @@ export default function DevicesList() {
           <td>{new Date(createdAt).toDateString()}</td>
           <td>
             {status === "online" ? (
-              <Link to={`/devices/${device_id}/${name}/state`}>
+              <Link to={ROUTES.device.state({ id: device_id, name })}>
                 <div className="link link-primary">{name}</div>
               </Link>
             ) : (

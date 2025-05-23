@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router";
+import { ROUTES } from "../utils/routes";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 
@@ -22,7 +23,7 @@ const DataTable = ({
             <th>
               <Link
                 className={"font-mono"}
-                to={`/devices/${id}/${name}/hardware`}
+                to={ROUTES.device.hardware.list({ id, name })}
               >
                 {vialIndex}
               </Link>{" "}
@@ -50,7 +51,7 @@ const DataTable = ({
                     >
                       <Link
                         className="link"
-                        to={`/devices/${id}/${name}/hardware/${mainKey}/history?vials=${vialIndex}`}
+                        to={`${ROUTES.device.hardware.history({ id, name, hardwareName: mainKey })}?vials=${vialIndex}`}
                       >
                         {mainKey}
                       </Link>
@@ -59,8 +60,8 @@ const DataTable = ({
                   {renderSubKey && (
                     <td>
                       <Link
-                        className="link font-mono"
-                        to={`/devices/${id}/${name}/hardware/${mainKey}/history?properties=${subKey}&vials=${vialIndex}`}
+                        className="link"
+                        to={`${ROUTES.device.hardware.history({ id, name, hardwareName: mainKey })}?properties=${subKey}&vials=${vialIndex}`}
                       >
                         {subKey}
                       </Link>

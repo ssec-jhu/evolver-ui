@@ -9,13 +9,14 @@ import * as Evolver from "client/services.gen";
 import { FilterableVialGrid } from "~/components/VialGrid";
 import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
 import { loader as rootLoader } from "~/root";
+import { ROUTES } from "~/utils/routes";
 
 const VIAL_COUNT = 16;
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
     const { id, name } = params;
-    return <Link to={`/devices/${id}/${name}/state`}>state</Link>;
+    return <Link to={ROUTES.device.state({ id, name })}>state</Link>;
   },
 };
 

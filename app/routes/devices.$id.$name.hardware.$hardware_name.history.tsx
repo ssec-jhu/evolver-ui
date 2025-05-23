@@ -12,6 +12,7 @@ import { loader as rootLoader } from "~/root";
 import { WrenchScrewdriverIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import flatMap from "lodash/flatMap";
 import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { ROUTES } from "~/utils/routes";
 
 export const handle = {
   breadcrumb: (
@@ -23,10 +24,15 @@ export const handle = {
     queryParams?: URLSearchParams,
   ) => {
     const { id, hardware_name, name } = params;
-    const linkTo = `/devices/${id}/${name}/hardware/${hardware_name}/history`;
-    if (queryParams !== undefined) {
-      linkTo.concat(`?${queryParams.toString()}`);
-    }
+    const baseLinkTo = ROUTES.device.hardware.history({
+      id,
+      name,
+      hardwareName: hardware_name,
+    });
+    const linkTo =
+      queryParams !== undefined
+        ? `${baseLinkTo}?${queryParams.toString()}`
+        : baseLinkTo;
     return <Link to={linkTo}>history</Link>;
   },
 };
@@ -43,7 +49,7 @@ export function ErrorBoundary() {
         </div>
       </div>
 
-      <Link to="/devices/list" className="link">
+      <Link to={ROUTES.static.devices} className="link">
         home
       </Link>
     </div>

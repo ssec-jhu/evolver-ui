@@ -11,6 +11,7 @@ import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 
 import * as Evolver from "client/services.gen";
 import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { ROUTES } from "~/utils/routes";
 
 export const handle = {
   breadcrumb: ({
@@ -20,7 +21,13 @@ export const handle = {
   }) => {
     const { id, experiment_id, name } = params;
     return (
-      <Link to={`/devices/${id}/${name}/experiments/${experiment_id}`}>
+      <Link
+        to={ROUTES.device.experiment.current({
+          id,
+          name,
+          experimentId: experiment_id,
+        })}
+      >
         {experiment_id}
       </Link>
     );
@@ -38,7 +45,7 @@ export function ErrorBoundary() {
         </div>
       </div>
 
-      <Link to={`/devices/${id}/${name}/config`} className="link">
+      <Link to={ROUTES.device.config({ id, name })} className="link">
         config
       </Link>
     </div>
@@ -88,7 +95,7 @@ export default function Controllers() {
         >
           <Link
             className="link text-primary"
-            to={`/devices/${id}/${name}/config`}
+            to={ROUTES.device.config({ id, name })}
           >
             add experiment
           </Link>

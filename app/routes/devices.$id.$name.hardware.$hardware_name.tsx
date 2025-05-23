@@ -1,4 +1,5 @@
 import { Link, Outlet } from "react-router";
+import { ROUTES } from "~/utils/routes";
 
 export const handle = {
   breadcrumb: ({
@@ -8,7 +9,13 @@ export const handle = {
   }) => {
     const { id, hardware_name, name } = params;
     return (
-      <Link to={`/devices/${id}/${name}/hardware/${hardware_name}`}>
+      <Link
+        to={ROUTES.device.hardware.current({
+          id,
+          name,
+          hardwareName: hardware_name,
+        })}
+      >
         {hardware_name}
       </Link>
     );
