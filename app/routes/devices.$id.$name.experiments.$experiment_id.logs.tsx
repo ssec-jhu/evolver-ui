@@ -1,8 +1,10 @@
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
-import { Link, useLoaderData, LoaderFunctionArgs } from "react-router";
+import { Link, useLoaderData } from "react-router";
+import type { Route } from "./+types/devices.$id.$name.experiments.$experiment_id.logs";
 import * as Evolver from "client/services.gen";
 import LogTable from "~/components/LogTable";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo } from "~/cookies.server";
 import { ROUTES } from "~/utils/routes";
 export const handle = {
   breadcrumb: ({
@@ -25,11 +27,21 @@ export const handle = {
   },
 };
 
-export async function loader({ params }: LoaderFunctionArgs) {
-  const { id, experiment_id } = params;
+export async function clientLoader({
+  request,
+  params,
+}: Route.ClientLoaderArgs) {
+  const { experiment_id } = params;
 
   try {
-    const { evolverClient } = await getEvolverClientForDevice(id);
+    const cookieHeader = request.headers.get("Cookie");
+    const deviceData = await deviceInfo.parse(cookieHeader);
+
+    if (!deviceData?.url) {
+      throw new Error("Device URL not found in cookie");
+    }
+
+    const evolverClient = createEvolverClient(deviceData.url);
 
     const results = Promise.allSettled([
       Evolver.getExperimentLogsExperimentExperimentNameLogsGet({
@@ -69,7 +81,7 @@ export function ErrorBoundary() {
 }
 
 export default function ExperimentLogs() {
-  const { logs } = useLoaderData<typeof loader>();
+  const { logs } = useLoaderData<Route.ClientLoaderData>();
   const LogTables = Object.keys(logs).map((key, ix) => (
     <LogTable key={key + ix} title={key} logs={logs[key]} />
   ));

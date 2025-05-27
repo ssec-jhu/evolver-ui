@@ -3,10 +3,9 @@ import {
   useActionData,
   useLoaderData,
   useParams,
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
   redirect,
 } from "react-router";
+import type { Route } from "./+types/devices.$id.$name.experiments.$experiment_id.controllers.$controller_id.config";
 import { EvolverConfigWithoutDefaults } from "client";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { z } from "zod";
@@ -14,9 +13,12 @@ import { parseWithZod } from "@conform-to/zod";
 import { toast as notify } from "react-toastify";
 import * as Evolver from "client/services.gen";
 import { useEffect } from "react";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo } from "~/cookies.server";
+import { getDeviceById } from "~/utils/evolverClient.server";
 import { ControllerConfig } from "~/components/ControllerConfig";
 import { ROUTES } from "~/utils/routes";
+import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
 
 export const handle = {
   breadcrumb: ({
@@ -63,35 +65,52 @@ export function ErrorBoundary() {
   );
 }
 
-export async function loader({ params }: LoaderFunctionArgs) {
-  const { id, experiment_id, controller_id } = params;
-  const { evolverClient } = await getEvolverClientForDevice(id);
+export async function clientLoader({
+  request,
+  params,
+}: Route.ClientLoaderArgs) {
+  const { experiment_id, controller_id } = params;
 
-  const results = Promise.allSettled([
-    Evolver.getExperimentsExperimentGet({
-      client: evolverClient,
-    }),
-  ]).then((results) => {
-    return results.map((result) => result.value.data);
-  });
+  try {
+    const cookieHeader = request.headers.get("Cookie");
+    const deviceData = await deviceInfo.parse(cookieHeader);
 
-  const [experiments] = await results;
+    if (!deviceData?.url) {
+      throw new Error("Device URL not found in cookie");
+    }
 
-  const classinfo = experiments[experiment_id].controllers.find(
-    (controller) => controller.config.name == controller_id,
-  )?.classinfo;
+    const evolverClient = createEvolverClient(deviceData.url);
 
-  const controllerClassinfoSchema = await Evolver.schema({
-    query: {
-      classinfo: classinfo,
-    },
-  });
+    const results = Promise.allSettled([
+      Evolver.getExperimentsExperimentGet({
+        client: evolverClient,
+      }),
+    ]).then((results) => {
+      return results.map((result) => result.value.data);
+    });
 
-  return {
-    experiments,
-    classinfoSchema: controllerClassinfoSchema.data,
-    classinfo,
-  };
+    const [experiments] = await results;
+
+    const classinfo = experiments[experiment_id].controllers.find(
+      (controller) => controller.config.name == controller_id,
+    )?.classinfo;
+
+    const controllerClassinfoSchema = await Evolver.schema({
+      query: {
+        classinfo: classinfo,
+      },
+    });
+
+    return {
+      experiments,
+      classinfoSchema: controllerClassinfoSchema.data,
+      classinfo,
+    };
+  } catch (error) {
+    throw new Error(
+      "Failed to load controller config: " + (error.message || "Unknown error"),
+    );
+  }
 }
 
 export const Intent = z.enum(["update_controller"], {
@@ -109,22 +128,31 @@ const schema = z.discriminatedUnion("intent", [
   }),
 ]);
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
 
   // preliminary validation
   const submission = parseWithZod(formData, { schema });
 
   if (submission.status !== "success") {
-    return submission.reply();
+    return { ...submission.reply(), success: false };
   }
 
   const { intent, id } = submission.value;
 
   try {
-    const { evolverClient, url } = await getEvolverClientForDevice(id);
-    // Extract device name from params or URL
-    const name = new URL(url).hostname;
+    const cookieHeader = request.headers.get("Cookie");
+    const deviceData = await deviceInfo.parse(cookieHeader);
+
+    if (!deviceData?.url) {
+      return {
+        ...submission.reply({ formErrors: ["Device URL not found in cookie"] }),
+        success: false,
+      };
+    }
+
+    const evolverClient = createEvolverClient(deviceData.url);
+    const name = new URL(deviceData.url).hostname;
 
     switch (intent) {
       case Intent.Enum.update_controller: {
@@ -138,9 +166,12 @@ export async function action({ request }: ActionFunctionArgs) {
           });
 
         if (describeError) {
-          return submission.reply({
-            formErrors: ["Failed to retrieve device configuration"],
-          });
+          return {
+            ...submission.reply({
+              formErrors: ["Failed to retrieve device configuration"],
+            }),
+            success: false,
+          };
         }
 
         // Extract the configuration from the describe data
@@ -152,27 +183,36 @@ export async function action({ request }: ActionFunctionArgs) {
 
         // Make sure we have the experiments object
         if (!configToUpdate.experiments) {
-          return submission.reply({
-            formErrors: ["Invalid configuration: missing experiments object"],
-          });
+          return {
+            ...submission.reply({
+              formErrors: ["Invalid configuration: missing experiments object"],
+            }),
+            success: false,
+          };
         }
 
         // Make sure the specified experiment exists
         const experiment = configToUpdate.experiments[experiment_id];
         if (!experiment) {
-          return submission.reply({
-            formErrors: [
-              `Experiment '${experiment_id}' not found in configuration`,
-            ],
-          });
+          return {
+            ...submission.reply({
+              formErrors: [
+                `Experiment '${experiment_id}' not found in configuration`,
+              ],
+            }),
+            success: false,
+          };
         }
         // Make sure the experiment has a controllers array
         if (!Array.isArray(experiment.controllers)) {
-          return submission.reply({
-            formErrors: [
-              `Experiment '${experiment_id}' does not have a controllers array`,
-            ],
-          });
+          return {
+            ...submission.reply({
+              formErrors: [
+                `Experiment '${experiment_id}' does not have a controllers array`,
+              ],
+            }),
+            success: false,
+          };
         }
 
         // Find the specific controller by its name in the controllers array
@@ -182,11 +222,14 @@ export async function action({ request }: ActionFunctionArgs) {
         );
 
         if (controllerIndex === -1) {
-          return submission.reply({
-            formErrors: [
-              `Controller '${controller_id}' not found in experiment '${experiment_id}'`,
-            ],
-          });
+          return {
+            ...submission.reply({
+              formErrors: [
+                `Controller '${controller_id}' not found in experiment '${experiment_id}'`,
+              ],
+            }),
+            success: false,
+          };
         }
 
         // Parse the new controller config
@@ -194,9 +237,12 @@ export async function action({ request }: ActionFunctionArgs) {
         try {
           parsedControllerConfig = JSON.parse(controller_config);
         } catch (error) {
-          return submission.reply({
-            formErrors: ["Invalid controller configuration JSON"],
-          });
+          return {
+            ...submission.reply({
+              formErrors: ["Invalid controller configuration JSON"],
+            }),
+            success: false,
+          };
         }
 
         // Update just the controller's config, preserving other properties
@@ -228,16 +274,22 @@ export async function action({ request }: ActionFunctionArgs) {
             });
 
             if (errors) {
-              return submission.reply({ fieldErrors: errors });
+              return {
+                ...submission.reply({ fieldErrors: errors }),
+                success: false,
+              };
             }
           }
 
           if (response.status !== 200) {
-            return submission.reply({
-              formErrors: [
-                `Got an unexpected response: ${response.status}. ${JSON.stringify(response)}`,
-              ],
-            });
+            return {
+              ...submission.reply({
+                formErrors: [
+                  `Got an unexpected response: ${response.status}. ${JSON.stringify(response)}`,
+                ],
+              }),
+              success: false,
+            };
           }
 
           // Get the new controller name from the updated config
@@ -253,12 +305,15 @@ export async function action({ request }: ActionFunctionArgs) {
             })}#${newControllerName}config`,
           );
         } catch (error) {
-          return submission.reply({
-            formErrors: [
-              "Unable to update controller configuration",
-              "Error: " + JSON.stringify(error),
-            ],
-          });
+          return {
+            ...submission.reply({
+              formErrors: [
+                "Unable to update controller configuration",
+                "Error: " + JSON.stringify(error),
+              ],
+            }),
+            success: false,
+          };
         }
 
         break;
@@ -267,42 +322,32 @@ export async function action({ request }: ActionFunctionArgs) {
         break;
     }
 
-    return submission.reply({
-      formErrors: [
-        "Could not find the specified controller in the configuration",
-      ],
-    });
+    return {
+      ...submission.reply({
+        formErrors: [
+          "Could not find the specified controller in the configuration",
+        ],
+      }),
+      success: false,
+    };
   } catch (error) {
-    return submission.reply({
-      formErrors: [
-        "Failed to connect to device: " + (error.message || "Unknown error"),
-      ],
-    });
+    return {
+      ...submission.reply({
+        formErrors: [
+          "Failed to connect to device: " + (error.message || "Unknown error"),
+        ],
+      }),
+      success: false,
+    };
   }
 }
 
 export default function Controllers() {
-  const actionData = useActionData<typeof action>();
+  const actionData = useActionData<Route.ClientActionData>();
   const { experiment_id, controller_id } = useParams();
-  const { experiments, classinfo } = useLoaderData<typeof loader>();
+  const { experiments, classinfo } = useLoaderData<Route.ClientLoaderData>();
 
-  useEffect(() => {
-    if (actionData?.formErrors?.length) {
-      actionData.formErrors.forEach((error) => {
-        notify.error(error);
-      });
-    }
-
-    if (actionData?.fieldErrors) {
-      Object.entries(actionData.fieldErrors).forEach(([field, errors]) => {
-        if (Array.isArray(errors)) {
-          errors.forEach((error) => {
-            notify.error(`${field}: ${error}`);
-          });
-        }
-      });
-    }
-  }, [actionData]);
+  useFormErrorNotifications(actionData);
 
   return (
     <div className="flex flex-col gap-4">

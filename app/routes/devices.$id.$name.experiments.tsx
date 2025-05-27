@@ -4,15 +4,16 @@ import {
   useLoaderData,
   useParams,
   useRouteLoaderData,
-  LoaderFunctionArgs,
 } from "react-router";
+import type { Route } from "./+types/devices.$id.$name.experiments";
 import { ROUTES } from "~/utils/routes";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import * as Evolver from "client/services.gen";
 import { ExperimentsTable } from "~/components/ExperimentsTable";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo } from "~/cookies.server";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
@@ -41,11 +42,16 @@ export function ErrorBoundary() {
   );
 }
 
-export async function loader({ params }: LoaderFunctionArgs) {
-  const { id } = params;
-
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   try {
-    const { evolverClient } = await getEvolverClientForDevice(id);
+    const cookieHeader = request.headers.get("Cookie");
+    const deviceData = await deviceInfo.parse(cookieHeader);
+
+    if (!deviceData?.url) {
+      throw new Error("Device URL not found in cookie");
+    }
+
+    const evolverClient = createEvolverClient(deviceData.url);
 
     const results = Promise.allSettled([
       Evolver.getExperimentsExperimentGet({
@@ -67,11 +73,9 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export default function Controllers() {
   const { id, name } = useParams();
-  const { experiments } = useLoaderData<typeof loader>();
+  const { experiments } = useLoaderData<Route.ClientLoaderData>();
 
-  const loaderData = useRouteLoaderData<typeof loader>(
-    "routes/devices.$id.$name",
-  );
+  const loaderData = useRouteLoaderData("routes/devices.$id.$name");
   let evolverConfig = {} as EvolverConfigWithoutDefaults;
 
   if (loaderData?.description?.config) {

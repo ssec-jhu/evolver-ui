@@ -11,9 +11,9 @@ import {
 } from "recharts";
 import { vialColors } from "~/utils/chart/colors";
 import groupBy from "lodash/groupBy";
-import { HistoricDatum } from "client";
-import { LabelPosition } from "recharts/types/component/Label";
 import { useState } from "react";
+import type { EventInfo, HistoricDatum } from "client";
+import type { LabelPosition } from "recharts/types/component/Label";
 
 const processData = (
   data: HistoricDatum[],
@@ -28,7 +28,7 @@ const processData = (
   }));
   // group for plotting by shared x-axis on timestamp. Without this the plotting
   // utility will consider each entry as a separate line (inefficient)
-  const grouped: (typeof timed)[] = groupBy(timed, "timestamp");
+  const grouped = groupBy(timed, "timestamp");
   // grouped creates an object keyed by group with arrays of objects, but
   // plotting wants array of objects keyed by line discriminator (vial)
   return Object.values(grouped).map((group) => ({
@@ -46,7 +46,7 @@ const processEvents = (data: HistoricDatum[], vials: string[]) => {
   const mappedEvents = filtered.map((entry) => ({
     timestamp: Math.round(entry.timestamp),
     vial: `vial_${entry.vial}`,
-    data: entry.data,
+    data: entry.data as EventInfo,
   }));
 
   // Deduplicate the events using a Map with composite keys

@@ -1,5 +1,5 @@
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export function WarningModal({
   onClick,

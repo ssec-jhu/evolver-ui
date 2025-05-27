@@ -10,12 +10,10 @@ import {
   useLocation,
   useMatches,
   useSearchParams,
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
   redirect,
 } from "react-router";
 import { ROUTES } from "./utils/routes";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import "~/tailwind.css";
 import Navbar from "~/components/Navbar";
 import { GlobalLoading } from "~/components/GlobalLoading";
@@ -23,8 +21,9 @@ import { userPrefs } from "~/cookies.server";
 import { getClientEnv } from "~/utils/env.server";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import type { Route } from "./+types/root";
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request }: Route.ActionArgs) {
   const cookieHeader = request.headers.get("Cookie");
   const cookie = (await userPrefs.parse(cookieHeader)) || {};
   const formData = await request.formData();
@@ -48,7 +47,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
   // read user preferences from the client's cookie, this means user preference can be persisted between refreshes.
   const cookieHeader = request.headers.get("Cookie");
   const cookie: { theme: "dark" | "light" } = (await userPrefs.parse(

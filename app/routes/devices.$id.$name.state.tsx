@@ -1,5 +1,4 @@
 import {
-  LoaderFunctionArgs,
   Link,
   useLoaderData,
   useParams,
@@ -7,9 +6,11 @@ import {
 } from "react-router";
 import * as Evolver from "client/services.gen";
 import { FilterableVialGrid } from "~/components/VialGrid";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo } from "~/cookies.server";
 import { loader as rootLoader } from "~/root";
 import { ROUTES } from "~/utils/routes";
+import type { Route } from "./+types/devices.$id.$name.state";
 
 const VIAL_COUNT = 16;
 
@@ -20,11 +21,21 @@ export const handle = {
   },
 };
 
-export async function loader({ params }: LoaderFunctionArgs) {
-  const { id } = params;
+export async function loader({ request }: Route.LoaderArgs) {
+  const cookieHeader = request.headers.get("Cookie");
+  const deviceData = await deviceInfo.parse(cookieHeader);
+  return {
+    device: deviceData,
+  };
+}
 
+export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  const {
+    device: { url },
+  } = await serverLoader();
+  console.log("Client loader URL:", url);
   try {
-    const { evolverClient } = await getEvolverClientForDevice(id);
+    const evolverClient = createEvolverClient(url);
 
     const { data } = await Evolver.state({ client: evolverClient });
     const describeEvolver = await Evolver.describe({ client: evolverClient });
@@ -35,15 +46,13 @@ export async function loader({ params }: LoaderFunctionArgs) {
       evolverState: data,
     };
   } catch (error) {
-    throw new Error(
-      "Failed to load device state: " + (error.message || "Unknown error"),
-    );
+    throw new Error("Failed to load device state");
   }
 }
 
 export default function Hardware() {
   const { id } = useParams();
-  const { evolverState } = useLoaderData<typeof loader>();
+  const { evolverState } = useLoaderData<typeof clientLoader>();
 
   const {
     ENV: { EXCLUDED_PROPERTIES },

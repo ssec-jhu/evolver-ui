@@ -6,22 +6,24 @@ import {
   useLocation,
   useActionData,
   useSubmit,
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
   redirect,
+  data,
 } from "react-router";
 import { ROUTES } from "~/utils/routes";
 import * as Evolver from "client/services.gen";
 import clsx from "clsx";
-import { EvolverConfigWithoutDefaults } from "client";
+import type { EvolverConfigWithoutDefaults } from "client";
 import { BeakerIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 import { PauseIcon, PlayIcon } from "@heroicons/react/24/solid";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
-import { toast as notify } from "react-toastify";
-import { useEffect } from "react";
 import { WarningModal } from "~/components/Modals";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { getDeviceById } from "~/utils/evolverClient.server";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo } from "../cookies.server";
+import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
+import type { Route } from "./+types/devices.$id.$name";
+import { toast as notify } from "react-toastify";
 
 export const handle = {
   breadcrumb: (props: { params: { id: string; name: string } }) => {
@@ -36,72 +38,127 @@ const Intent = z.enum(["start", "stop"], {
   invalid_type_error: "must be one of, start or stop",
 });
 
-const schema = z.discriminatedUnion("intent", [
-  z.object({
-    intent: z.literal(Intent.Enum.start),
-    id: z.string(),
-    redirectTo: z.string(),
+const baseActionSchema = z.object({
+  redirectTo: z.string(),
+  device_url: z.string().url({
+    message: "Device URL is required and must be a valid URL",
   }),
-  z.object({
+});
+
+const schema = z.discriminatedUnion("intent", [
+  baseActionSchema.extend({
+    intent: z.literal(Intent.Enum.start),
+  }),
+  baseActionSchema.extend({
     intent: z.literal(Intent.Enum.stop),
-    id: z.string(),
-    redirectTo: z.string(),
   }),
 ]);
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
 
-  // prelim validation, just checks request has proper intent and an id for the device to start or stop
+  // Prelim validation
   const submission = parseWithZod(formData, { schema: schema });
 
   if (submission.status !== "success") {
-    return submission.reply();
+    return { ...submission.reply(), success: false };
   }
-  const { intent, id, redirectTo } = submission.value;
+  const { intent, device_url: url, redirectTo } = submission.value;
+  const evolverClient = createEvolverClient(url);
 
   try {
-    const { evolverClient } = await getEvolverClientForDevice(id);
-
     switch (intent) {
       case Intent.Enum.start:
         try {
           await Evolver.startStartPost({ client: evolverClient });
         } catch (error) {
-          return submission.reply({ formErrors: ["unable to start device"] });
+          console.log("ERROR STARTING DEVICE", error);
+          return {
+            ...submission.reply({ formErrors: ["unable to start device"] }),
+            success: false,
+          };
         }
         break;
       case Intent.Enum.stop:
         try {
           await Evolver.abortAbortPost({ client: evolverClient });
         } catch (error) {
-          return submission.reply({ formErrors: ["unable to stop device"] });
+          console.log("ERROR STOPPING DEVICE", error);
+          return {
+            ...submission.reply({ formErrors: ["unable to stop device"] }),
+            success: false,
+          };
         }
         break;
       default:
-        return submission.reply();
+        return { ...submission.reply(), success: false };
     }
     return redirect(redirectTo);
   } catch (error) {
-    return submission.reply({ formErrors: ["device not found"] });
+    return {
+      ...submission.reply({ formErrors: ["device not found"] }),
+      success: false,
+    };
   }
 }
 
-export async function loader({ params }: LoaderFunctionArgs) {
+// Server loader gets device from remote database and sets cookie.
+export async function loader({ params }: Route.LoaderArgs) {
   const { id } = params;
-  const { evolverClient, url } = await getEvolverClientForDevice(id);
+  if (!id) {
+    throw new Response("Device ID is required", { status: 400 });
+  }
+  const device = await getDeviceById(id);
 
-  const describeEvolver = await Evolver.describe({ client: evolverClient });
-  const evolverState = await Evolver.state({ client: evolverClient });
+  // TODO: because getDeviceById connects to the hosted db, it can only be
+  // called by a loader. similarly only loaders can use deviceInfo to get cookies and set them.
+  //  anything depending on this loader, and deviceInfo cookie access, fundamentally
+  // still relies on an internet connection to access the hosted db.
+  // We should consider a flag the user can set to switch to a local db connection. in that case
+  // clientLoaders would call getDeviceFromBrowserStorage instead of serverLoader() (see below).
+
+  return data(
+    { device },
+    {
+      headers: {
+        // Store device info in cookie so that it's available to other child-routes.
+        // When the user navigates to a different device, the cookie will be updated.
+        "Set-Cookie": await deviceInfo.serialize(device),
+      },
+    },
+  );
+}
+
+// Client loader fetches Evolver data.
+export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  // Get device info from server (which also sets the cookie)
+  const { device } = await serverLoader();
+
+  const evolverClient = createEvolverClient(device.url);
+
+  const [describeEvolver, evolverState] = await Promise.all([
+    Evolver.describe({ client: evolverClient }),
+    Evolver.state({ client: evolverClient }),
+  ]);
 
   return {
+    device,
     description: describeEvolver.data as {
       config: EvolverConfigWithoutDefaults;
     },
-    url,
     ok: true,
     state: evolverState.data,
   };
+}
+
+clientLoader.hydrate = true as const;
+
+export function HydrateFallback() {
+  return (
+    <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
+      <div className="skeleton h-32 w-full"></div>
+    </div>
+  );
 }
 
 export function ErrorBoundary() {
@@ -124,27 +181,16 @@ export function ErrorBoundary() {
 
 export default function Device() {
   const { id, name } = useParams();
-  const { description, url, state } = useLoaderData<typeof loader>();
+  if (!id || !name) {
+    throw new Response("Device ID and name are required", { status: 400 });
+  }
+  const { description, state, device } = useLoaderData<typeof clientLoader>();
+  const { url } = device;
   const { pathname } = useLocation();
-  const actionData = useActionData<typeof action>();
+  const actionData = useActionData<typeof clientAction>();
   const submit = useSubmit();
 
-  useEffect(() => {
-    if (actionData?.error) {
-      if (typeof actionData.error === "string") {
-        notify.error(actionData.error);
-      }
-      if (typeof actionData.error === "object") {
-        const errorMessages: string[] = [];
-        Object.entries(actionData.error).forEach(([key, value]) => {
-          errorMessages.push(`${key}: ${value}`);
-        });
-        errorMessages.forEach((message) => {
-          notify.error(message);
-        });
-      }
-    }
-  }, [actionData]);
+  useFormErrorNotifications(actionData);
   const pathElements = pathname.split("/");
   const lastPathElement = pathElements[pathElements.length - 1];
   const evolverConfig = description.config;
@@ -185,7 +231,7 @@ export default function Device() {
             <BeakerIcon className="h-9 w-9 text-accent" />
             <div className={clsx("badge text-sm", "badge-accent")}>online</div>
           </div>
-          {state.active && (
+          {state?.active && (
             <div
               className="tooltip"
               data-tip="Click to stop device hardware and stop the control loop"
@@ -199,8 +245,8 @@ export default function Device() {
                 onClick={() => {
                   notify.dismiss();
                   const formData = new FormData();
+                  formData.append("device_url", url);
                   formData.append("redirectTo", pathname);
-                  formData.append("id", id ?? "");
                   formData.append("intent", Intent.Enum.stop);
                   submit(formData, {
                     method: "POST",
@@ -217,7 +263,7 @@ export default function Device() {
               </WarningModal>
             </div>
           )}
-          {!state.active && (
+          {!state?.active && (
             <div
               className="tooltip"
               data-tip="Click to start running the device hardware and the control loop"
@@ -230,9 +276,8 @@ export default function Device() {
                 onClick={() => {
                   notify.dismiss();
                   const formData = new FormData();
-
+                  formData.append("device_url", url);
                   formData.append("redirectTo", pathname);
-                  formData.append("id", id ?? "");
                   formData.append("intent", Intent.Enum.start);
                   submit(formData, {
                     method: "POST",

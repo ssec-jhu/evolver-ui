@@ -8,7 +8,7 @@ type ObjectFieldTemplateProps = pkg.ObjectFieldTemplateProps;
 type RJSFSchema = pkg.RJSFSchema;
 type SubmitButtonProps = pkg.SubmitButtonProps;
 import validator from "@rjsf/validator-ajv8";
-import { ChangeEvent, FocusEvent } from "react";
+import type { ChangeEvent, FocusEvent } from "react";
 
 function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
   const { action_index } = props.schema;

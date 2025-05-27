@@ -19,7 +19,7 @@ type FormContextType = pkg.FormContextType;
 type StrictRJSFSchema = pkg.StrictRJSFSchema;
 
 import validator from "@rjsf/validator-ajv8";
-import { ChangeEvent, FocusEvent } from "react";
+import type { ChangeEvent, FocusEvent } from "react";
 
 function ObjectFieldTemplate<
   T = unknown,

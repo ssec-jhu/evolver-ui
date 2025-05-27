@@ -1,7 +1,4 @@
-import { toast as notify } from "react-toastify";
 import {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
   Link,
   useActionData,
   useLoaderData,
@@ -13,11 +10,14 @@ import CalibratorActionForm from "~/components/CalibratorActionForm";
 import clsx from "clsx";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { WarningModal } from "~/components/Modals";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo } from "~/cookies.server";
 import { ROUTES } from "~/utils/routes";
+import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
+import type { Route } from "./+types/devices.$id.$name.hardware.$hardware_name.calibrate";
 
 const Intent = z.enum(
   [
@@ -95,19 +95,33 @@ export const handle = {
   },
 };
 
-export async function action({ request }: ActionFunctionArgs) {
+// Client action handles calibration procedures
+export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
 
   // prelim validation, just checks request has proper intent and fields for that action intent
   const submission = parseWithZod(formData, { schema: schema });
 
   if (submission.status !== "success") {
-    return submission.reply();
+    return { ...submission.reply(), success: false };
   }
   const { intent, id } = submission.value;
 
   try {
-    const { evolverClient } = await getEvolverClientForDevice(id);
+    // Get device URL from cookie
+    const cookieHeader = request.headers.get("Cookie");
+    const deviceData = await deviceInfo.parse(cookieHeader);
+
+    if (!deviceData?.url) {
+      return {
+        ...submission.reply({
+          formErrors: ["Device URL not found. Please refresh the page."],
+        }),
+        success: false,
+      };
+    }
+
+    const evolverClient = createEvolverClient(deviceData.url);
 
     switch (intent) {
       case Intent.Enum.dispatch_action:
@@ -125,11 +139,14 @@ export async function action({ request }: ActionFunctionArgs) {
                 client: evolverClient,
               },
             );
-          return procedureState.data;
+          return { ...procedureState.data, success: true };
         } catch (error) {
-          return submission.reply({
-            formErrors: ["unable to dispatch action"],
-          });
+          return {
+            ...submission.reply({
+              formErrors: ["unable to dispatch action"],
+            }),
+            success: false,
+          };
         }
 
       case Intent.Enum.resume_calibration_procedure:
@@ -143,13 +160,16 @@ export async function action({ request }: ActionFunctionArgs) {
                 client: evolverClient,
               },
             );
-          return procedureState.data;
+          return { ...procedureState.data, success: true };
         } catch (error) {
-          return submission.reply({
-            formErrors: [
-              "unable to resume calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem. If this is a new hardware, make sure to start the calibration procedure first.",
-            ],
-          });
+          return {
+            ...submission.reply({
+              formErrors: [
+                "unable to resume calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem. If this is a new hardware, make sure to start the calibration procedure first.",
+              ],
+            }),
+            success: false,
+          };
         }
       case Intent.Enum.start_calibration_procedure:
         try {
@@ -165,13 +185,14 @@ export async function action({ request }: ActionFunctionArgs) {
                 client: evolverClient,
               },
             );
-          return procedureState.data;
+          return { ...procedureState.data, success: true };
         } catch (error) {
-          return submission.reply({
-            formErrors: [
-              "unable to save calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem.",
-            ],
-          });
+          return {
+            ...submission.reply({
+              formErrors: ["unable to start calibration"],
+            }),
+            success: false,
+          };
         }
 
       case Intent.Enum.save_calibration_procedure:
@@ -185,13 +206,16 @@ export async function action({ request }: ActionFunctionArgs) {
                 client: evolverClient,
               },
             );
-          return procedureState.data;
+          return { ...procedureState.data, success: true };
         } catch (error) {
-          return submission.reply({
-            formErrors: [
-              "unable to save calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem.",
-            ],
-          });
+          return {
+            ...submission.reply({
+              formErrors: [
+                "unable to save calibration, confirm calibrator.dir & calibrator.calibration_file attributes exist for this hardware, and the file exists on the evolver device filesystem.",
+              ],
+            }),
+            success: false,
+          };
         }
       case Intent.Enum.apply_calibration_procedure:
         try {
@@ -207,13 +231,16 @@ export async function action({ request }: ActionFunctionArgs) {
                 client: evolverClient,
               },
             );
-          return procedureState.data;
+          return { ...procedureState.data, success: true };
         } catch (error) {
-          return submission.reply({
-            formErrors: [
-              "unable to apply calibration, confirm calibration_file parameter is correct and exists on the evolver device filesystem.",
-            ],
-          });
+          return {
+            ...submission.reply({
+              formErrors: [
+                "unable to apply calibration, confirm calibration_file parameter is correct and exists on the evolver device filesystem.",
+              ],
+            }),
+            success: false,
+          };
         }
       case Intent.Enum.undo:
         try {
@@ -226,32 +253,53 @@ export async function action({ request }: ActionFunctionArgs) {
                 client: evolverClient,
               },
             );
-          return procedureState.data;
+          return { ...procedureState.data, success: true };
         } catch (error) {
-          return submission.reply({
-            formErrors: ["unable to dispatch action"],
-          });
+          return {
+            ...submission.reply({
+              formErrors: ["unable to undo action"],
+            }),
+            success: false,
+          };
         }
       default:
-        return submission.reply();
+        return { ...submission.reply(), success: false };
     }
-    return submission.reply({
-      formErrors: ["unknown error"],
-    });
+    return {
+      ...submission.reply({
+        formErrors: ["unknown error"],
+      }),
+      success: false,
+    };
   } catch (error) {
-    return submission.reply({
-      formErrors: [
-        "Failed to connect to device: " + (error.message || "Unknown error"),
-      ],
-    });
+    return {
+      ...submission.reply({
+        formErrors: [
+          "Failed to connect to device: " + (error.message || "Unknown error"),
+        ],
+      }),
+      success: false,
+    };
   }
 }
 
-export async function loader({ params }: LoaderFunctionArgs) {
-  const { id, hardware_name } = params;
+// Client loader fetches calibration data
+export async function clientLoader({
+  params,
+  request,
+}: Route.ClientLoaderArgs) {
+  const { hardware_name } = params;
 
   try {
-    const { evolverClient } = await getEvolverClientForDevice(id);
+    // Get device URL from cookie
+    const cookieHeader = request.headers.get("Cookie");
+    const deviceData = await deviceInfo.parse(cookieHeader);
+
+    if (!deviceData?.url) {
+      throw new Error("Device URL not found. Please refresh the page.");
+    }
+
+    const evolverClient = createEvolverClient(deviceData.url);
     const { data: procedureActions } =
       await Evolver.getCalibratorActionsHardwareHardwareNameCalibratorProcedureActionsGet(
         {
@@ -592,24 +640,13 @@ export function ErrorBoundary() {
 
 export default function CalibrateHardware() {
   const { actions, state, calibrationFile, procedureFile } =
-    useLoaderData<typeof loader>();
+    useLoaderData<typeof clientLoader>();
 
-  const actionData = useActionData<typeof action>();
+  const actionData = useActionData<typeof clientAction>();
   const calibrationProcedureIsComplete =
     state?.completed_actions?.length === actions?.length;
 
-  useEffect(() => {
-    if (actionData?.error) {
-      if (typeof actionData.error === "string") {
-        notify.error(actionData.error);
-      }
-      if (typeof actionData.error === "object") {
-        Object.entries(actionData.error).forEach(([key, value]) => {
-          notify.error(`${key}: ${value}`);
-        });
-      }
-    }
-  }, [actionData]);
+  useFormErrorNotifications(actionData);
 
   const started = state?.started ?? false;
   const hasHistory = state?.history && state?.history.length > 0;

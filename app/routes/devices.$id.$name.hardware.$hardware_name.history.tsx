@@ -1,5 +1,4 @@
 import {
-  LoaderFunctionArgs,
   Link,
   useLoaderData,
   useParams,
@@ -11,8 +10,10 @@ import { HardwareLineChart } from "~/components/LineChart";
 import { loader as rootLoader } from "~/root";
 import { WrenchScrewdriverIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import flatMap from "lodash/flatMap";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo } from "~/cookies.server";
 import { ROUTES } from "~/utils/routes";
+import type { Route } from "./+types/devices.$id.$name.hardware.$hardware_name.history";
 
 export const handle = {
   breadcrumb: (
@@ -56,12 +57,24 @@ export function ErrorBoundary() {
   );
 }
 
-export async function loader({ params, request }: LoaderFunctionArgs) {
-  const { id, hardware_name } = params;
+// Client loader fetches hardware history
+export async function clientLoader({
+  params,
+  request,
+}: Route.ClientLoaderArgs) {
+  const { hardware_name } = params;
   const { searchParams } = new URL(request.url);
 
   try {
-    const { evolverClient } = await getEvolverClientForDevice(id);
+    // Get device URL from cookie
+    const cookieHeader = request.headers.get("Cookie");
+    const deviceData = await deviceInfo.parse(cookieHeader);
+
+    if (!deviceData?.url) {
+      throw new Error("Device URL not found. Please refresh the page.");
+    }
+
+    const evolverClient = createEvolverClient(deviceData.url);
 
     const vials = searchParams
       .get("vials")
@@ -103,7 +116,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 }
 
 export default function Hardware() {
-  const { data, events } = useLoaderData<typeof loader>();
+  const { data, events } = useLoaderData<typeof clientLoader>();
   const {
     ENV: { EXCLUDED_PROPERTIES },
   } = useRouteLoaderData<typeof rootLoader>("root");

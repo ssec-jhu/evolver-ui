@@ -1,16 +1,12 @@
-import {
-  Link,
-  Outlet,
-  useParams,
-  useRouteLoaderData,
-  LoaderFunctionArgs,
-} from "react-router";
+import { Link, Outlet, useParams, useRouteLoaderData } from "react-router";
+import type { Route } from "./+types/devices.$id.$name.experiments.$experiment_id";
 import { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 
 import * as Evolver from "client/services.gen";
-import { getEvolverClientForDevice } from "~/utils/evolverClient.server";
+import { createEvolverClient } from "~/utils/evolverClient.client";
+import { deviceInfo } from "~/cookies.server";
 import { ROUTES } from "~/utils/routes";
 
 export const handle = {
@@ -52,29 +48,39 @@ export function ErrorBoundary() {
   );
 }
 
-export async function loader({ params }: LoaderFunctionArgs) {
-  const { id } = params;
-  const { evolverClient } = await getEvolverClientForDevice(id);
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+  try {
+    const cookieHeader = request.headers.get("Cookie");
+    const deviceData = await deviceInfo.parse(cookieHeader);
 
-  const results = Promise.allSettled([
-    Evolver.getExperimentsExperimentGet({
-      client: evolverClient,
-    }),
-  ]).then((results) => {
-    return results.map((result) => result.value.data);
-  });
+    if (!deviceData?.url) {
+      throw new Error("Device URL not found in cookie");
+    }
 
-  const [experiments] = await results;
+    const evolverClient = createEvolverClient(deviceData.url);
 
-  return { experiments };
+    const results = Promise.allSettled([
+      Evolver.getExperimentsExperimentGet({
+        client: evolverClient,
+      }),
+    ]).then((results) => {
+      return results.map((result) => result.value.data);
+    });
+
+    const [experiments] = await results;
+
+    return { experiments };
+  } catch (error) {
+    throw new Error(
+      "Failed to load experiments: " + (error.message || "Unknown error"),
+    );
+  }
 }
 
 export default function Controllers() {
   const { id, experiment_id, name } = useParams();
 
-  const loaderData = useRouteLoaderData<typeof loader>(
-    "routes/devices.$id.$name",
-  );
+  const loaderData = useRouteLoaderData("routes/devices.$id.$name");
   let evolverConfig = {} as EvolverConfigWithoutDefaults;
 
   if (loaderData?.description?.config) {

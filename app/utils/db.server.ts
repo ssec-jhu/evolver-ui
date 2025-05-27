@@ -12,8 +12,8 @@ export const db = singleton("prisma", () => {
     // Init the mock database - note that this closure is a singleton
     const mockedDatabase = initMockDB(mockDB);
     return mockPrismaClient(mockedDatabase);
+  } else {
+    // Use real Prisma client for non-test environments
+    return new PrismaClient();
   }
-
-  // Use real Prisma client for non-test environments
-  return new PrismaClient();
 });
