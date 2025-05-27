@@ -18,6 +18,7 @@ import { PauseIcon, PlayIcon } from "@heroicons/react/24/solid";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
 import { WarningModal } from "~/components/Modals";
+import { DefaultHydrateFallback } from "~/components/HydrateFallback";
 import { getDeviceById } from "~/utils/evolverClient.server";
 import { createEvolverClient } from "~/utils/evolverClient.client";
 import { deviceInfo } from "../cookies.server";
@@ -112,10 +113,11 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   // TODO: because getDeviceById connects to the hosted db, it can only be
   // called by a loader. similarly only loaders can use deviceInfo to get cookies and set them.
-  //  anything depending on this loader, and deviceInfo cookie access, fundamentally
+  // anything depending on this loader, and deviceInfo cookie access, fundamentally
   // still relies on an internet connection to access the hosted db.
   // We should consider a flag the user can set to switch to a local db connection. in that case
   // clientLoaders would call getDeviceFromBrowserStorage instead of serverLoader() (see below).
+  // with this proposed change, the cookie would be redundant.
 
   return data(
     { device },
@@ -154,11 +156,7 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
 clientLoader.hydrate = true as const;
 
 export function HydrateFallback() {
-  return (
-    <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
-      <div className="skeleton h-32 w-full"></div>
-    </div>
-  );
+  return <DefaultHydrateFallback />;
 }
 
 export function ErrorBoundary() {

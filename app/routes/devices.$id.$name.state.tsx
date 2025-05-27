@@ -8,10 +8,10 @@ import * as Evolver from "client/services.gen";
 import { FilterableVialGrid } from "~/components/VialGrid";
 import { createEvolverClient } from "~/utils/evolverClient.client";
 import { deviceInfo } from "~/cookies.server";
-import { loader as rootLoader } from "~/root";
 import { ROUTES } from "~/utils/routes";
 import type { Route } from "./+types/devices.$id.$name.state";
 
+// TODO: don't do this, i think the evolver config has layout dims.
 const VIAL_COUNT = 16;
 
 export const handle = {
@@ -33,7 +33,6 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
   const {
     device: { url },
   } = await serverLoader();
-  console.log("Client loader URL:", url);
   try {
     const evolverClient = createEvolverClient(url);
 
@@ -56,7 +55,7 @@ export default function Hardware() {
 
   const {
     ENV: { EXCLUDED_PROPERTIES },
-  } = useRouteLoaderData<typeof rootLoader>("root");
+  } = useRouteLoaderData("root");
 
   const excludedProperties = EXCLUDED_PROPERTIES?.split(",") ?? [];
 
