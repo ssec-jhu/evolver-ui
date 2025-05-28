@@ -1,6 +1,6 @@
 import { Link, Outlet, useParams, useRouteLoaderData } from "react-router";
 import type { Route } from "./+types/devices.$id.$name.experiments.$experiment_id";
-import { EvolverConfigWithoutDefaults } from "client";
+import type { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 

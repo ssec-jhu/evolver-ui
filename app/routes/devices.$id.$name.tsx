@@ -12,7 +12,6 @@ import {
 import { ROUTES } from "~/utils/routes";
 import * as Evolver from "client/services.gen";
 import clsx from "clsx";
-import type { EvolverConfigWithoutDefaults } from "client";
 import { BeakerIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 import { PauseIcon, PlayIcon } from "@heroicons/react/24/solid";
 import { z } from "zod";
@@ -64,7 +63,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   if (submission.status !== "success") {
     return { ...submission.reply(), success: false };
   }
-  const { intent, device_url: url, redirectTo } = submission.value;
+  const { intent, device_url: url, redirectTo } = submission.value; // (1) since these actions communicate with the Evolver Client, the form submission must include the device URL.
   const evolverClient = createEvolverClient(url);
 
   try {
@@ -73,7 +72,6 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         try {
           await Evolver.startStartPost({ client: evolverClient });
         } catch (error) {
-          console.log("ERROR STARTING DEVICE", error);
           return {
             ...submission.reply({ formErrors: ["unable to start device"] }),
             success: false,
@@ -84,15 +82,12 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         try {
           await Evolver.abortAbortPost({ client: evolverClient });
         } catch (error) {
-          console.log("ERROR STOPPING DEVICE", error);
           return {
             ...submission.reply({ formErrors: ["unable to stop device"] }),
             success: false,
           };
         }
         break;
-      default:
-        return { ...submission.reply(), success: false };
     }
     return redirect(redirectTo);
   } catch (error) {
@@ -103,40 +98,24 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   }
 }
 
-// Server loader gets device from remote database and sets cookie.
 export async function loader({ params }: Route.LoaderArgs) {
   const { id } = params;
-  if (!id) {
-    throw new Response("Device ID is required", { status: 400 });
-  }
-  const device = await getDeviceById(id);
-
-  // TODO: because getDeviceById connects to the hosted db, it can only be
-  // called by a loader. similarly only loaders can use deviceInfo to get cookies and set them.
-  // anything depending on this loader, and deviceInfo cookie access, fundamentally
-  // still relies on an internet connection to access the hosted db.
-  // We should consider a flag the user can set to switch to a local db connection. in that case
-  // clientLoaders would call getDeviceFromBrowserStorage instead of serverLoader() (see below).
-  // with this proposed change, the cookie would be redundant.
-
+  const device = await getDeviceById(id); // (1) fetch device data from the hosted database, only a loader that sets the device info cookie needs to do this.
   return data(
-    { device },
+    { device }, // (2) return the device data, the client loader will use the device URL to init the Evolver client on the client side.
     {
       headers: {
-        // Store device info in cookie so that it's available to other child-routes.
-        // When the user navigates to a different device, the cookie will be updated.
-        "Set-Cookie": await deviceInfo.serialize(device),
+        "Set-Cookie": await deviceInfo.serialize(device), // (3) set the cookie all child routes can access it with: deviceInfo.parse(request.headers.get("Cookie")).
       },
     },
   );
 }
 
-// Client loader fetches Evolver data.
+// All evolver client interactions must originate on the client so that the core functionality of the the system works without an internet connection over the local network.
+// This means only using the Evolver client in the clientLoader, components and clientAction.
 export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
-  // Get device info from server (which also sets the cookie)
-  const { device } = await serverLoader();
-
-  const evolverClient = createEvolverClient(device.url);
+  const { device } = await serverLoader(); // (4) get the device info - [TODO] switch case on "offline" flag - indicating the UI is hosted on the device itself and has no internet access, in this case device info (e.g. url) can be in localStorage or similar.
+  const evolverClient = createEvolverClient(device.url); // (5) create an Evolver client.
 
   const [describeEvolver, evolverState] = await Promise.all([
     Evolver.describe({ client: evolverClient }),
@@ -145,9 +124,7 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
 
   return {
     device,
-    description: describeEvolver.data as {
-      config: EvolverConfigWithoutDefaults;
-    },
+    description: describeEvolver.data,
     ok: true,
     state: evolverState.data,
   };
@@ -191,14 +168,14 @@ export default function Device() {
   useFormErrorNotifications(actionData);
   const pathElements = pathname.split("/");
   const lastPathElement = pathElements[pathElements.length - 1];
-  const evolverConfig = description.config;
+  const evolverConfig = description?.config;
 
   return (
     <div className="flex flex-col gap-4">
       <div className=" flex items-center gap-4 justify-between pb-4">
         <div className="flex items-center">
           <div className="flex flex-col gap-2">
-            <h1>{`${evolverConfig.name}`}</h1>
+            <h1>{`${evolverConfig?.name}`}</h1>
             <div className="flex w-full">
               <h1 className="font-sans">
                 <span className="font-mono">

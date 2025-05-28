@@ -1,4 +1,4 @@
-import { EvolverConfigWithoutDefaults } from "client";
+import type { EvolverConfigWithoutDefaults } from "client";
 import { getDate } from "./getDate";
 
 export const exportData = (data: EvolverConfigWithoutDefaults) => {

@@ -22,6 +22,7 @@ export default function ThemeController() {
           const newTheme = theme === "dark" ? "light" : "dark";
           formData.set("theme", newTheme);
           formData.set("redirectTo", pathname + search);
+          // handled by the root action which updates the userPrefs cookie.
           fetcher.submit(formData, { method: "POST" });
         }}
       ></input>

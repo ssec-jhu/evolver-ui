@@ -7,7 +7,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/devices.$id.$name.experiments";
 import { ROUTES } from "~/utils/routes";
-import { EvolverConfigWithoutDefaults } from "client";
+import type { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import * as Evolver from "client/services.gen";

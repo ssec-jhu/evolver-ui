@@ -92,7 +92,7 @@ export function FilterableVialGrid({
   excludedProperties = [],
 }: {
   vialCount: number;
-  stateData: { [key: string]: { [key: string]: { [key: string]: number } } };
+  stateData: { [x: string]: undefined };
   id: string;
   excludedProperties?: string[];
 }) {

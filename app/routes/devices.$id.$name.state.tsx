@@ -22,10 +22,8 @@ export const handle = {
 };
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const cookieHeader = request.headers.get("Cookie");
-  const deviceData = await deviceInfo.parse(cookieHeader);
   return {
-    device: deviceData,
+    device: await deviceInfo.parse(request.headers.get("Cookie")), // (1) loader returns the deviceInfo cookie, NOTE: this must be parsed by a loader because the cookie is server-side only pattern.
   };
 }
 
@@ -33,24 +31,18 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
   const {
     device: { url },
   } = await serverLoader();
-  try {
-    const evolverClient = createEvolverClient(url);
-
-    const { data } = await Evolver.state({ client: evolverClient });
-    const describeEvolver = await Evolver.describe({ client: evolverClient });
-    const vials = describeEvolver?.data?.config?.vials;
-
-    return {
-      vials: vials,
-      evolverState: data,
-    };
-  } catch (error) {
-    throw new Error("Failed to load device state");
-  }
+  const evolverClient = createEvolverClient(url); //(2) create a client using the device URL returned by the serverLoader().
+  const { data } = await Evolver.state({ client: evolverClient });
+  const describeEvolver = await Evolver.describe({ client: evolverClient });
+  const vials = describeEvolver?.data?.config?.vials;
+  return {
+    vials: vials,
+    evolverState: data,
+  };
 }
 
 export default function Hardware() {
-  const { id } = useParams();
+  const { id } = useParams<Route.LoaderArgs["params"]>();
   const { evolverState } = useLoaderData<typeof clientLoader>();
 
   const {
@@ -62,8 +54,8 @@ export default function Hardware() {
   return (
     <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
       <FilterableVialGrid
-        stateData={evolverState.state}
-        id={id}
+        stateData={evolverState?.state ?? {}}
+        id={id ?? ""}
         vialCount={VIAL_COUNT}
         excludedProperties={excludedProperties}
       />

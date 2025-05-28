@@ -149,7 +149,12 @@ export default function DevicesList() {
           <td>{new Date(createdAt).toDateString()}</td>
           <td>
             {status === "online" ? (
-              <Link to={ROUTES.device.state({ id: device_id, name })}>
+              <Link
+                to={ROUTES.device.state({
+                  id: device_id,
+                  name: name.toString(),
+                })}
+              >
                 <div className="link link-primary">{name}</div>
               </Link>
             ) : (

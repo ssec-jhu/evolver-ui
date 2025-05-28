@@ -1,17 +1,15 @@
 import { useRouteLoaderData } from "react-router";
 import clsx from "clsx";
-import {
+import { JsonEditor, githubDarkTheme, githubLightTheme } from "json-edit-react";
+import type {
   FilterFunction,
   JsonData,
-  JsonEditor,
   NodeData,
   TypeFilterFunction,
-  githubDarkTheme,
-  githubLightTheme,
 } from "json-edit-react";
 import { loader as rootLoader } from "~/root";
 import { checkType } from "~/utils/checkType";
-import { EvolverConfigWithoutDefaults } from "client";
+import type { EvolverConfigWithoutDefaults } from "client";
 
 export function EditJson({
   data,

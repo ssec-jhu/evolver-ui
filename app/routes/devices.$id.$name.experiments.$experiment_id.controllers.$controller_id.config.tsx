@@ -6,16 +6,13 @@ import {
   redirect,
 } from "react-router";
 import type { Route } from "./+types/devices.$id.$name.experiments.$experiment_id.controllers.$controller_id.config";
-import { EvolverConfigWithoutDefaults } from "client";
+import type { EvolverConfigWithoutDefaults } from "client";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
-import { toast as notify } from "react-toastify";
 import * as Evolver from "client/services.gen";
-import { useEffect } from "react";
 import { createEvolverClient } from "~/utils/evolverClient.client";
 import { deviceInfo } from "~/cookies.server";
-import { getDeviceById } from "~/utils/evolverClient.server";
 import { ControllerConfig } from "~/components/ControllerConfig";
 import { ROUTES } from "~/utils/routes";
 import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
