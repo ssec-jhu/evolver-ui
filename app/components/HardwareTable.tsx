@@ -56,8 +56,7 @@ export function HardwareTable({
           key === hardwareName &&
             vials?.length === currentVials?.length &&
             "btn-active",
-          "font-mono",
-          "font-extralight",
+          "font-sans",
         )}
         key={"all"}
         to={

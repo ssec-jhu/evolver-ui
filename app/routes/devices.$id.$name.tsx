@@ -221,7 +221,10 @@ export default function Device() {
                   notify.dismiss();
                   const formData = new FormData();
                   formData.append("device_url", url);
-                  formData.append("redirectTo", pathname);
+                  formData.append(
+                    "redirectTo",
+                    ROUTES.device.state({ id, name }),
+                  );
                   formData.append("intent", Intent.Enum.stop);
                   submit(formData, {
                     method: "POST",
@@ -252,7 +255,10 @@ export default function Device() {
                   notify.dismiss();
                   const formData = new FormData();
                   formData.append("device_url", url);
-                  formData.append("redirectTo", pathname);
+                  formData.append(
+                    "redirectTo",
+                    ROUTES.device.state({ id, name }),
+                  );
                   formData.append("intent", Intent.Enum.start);
                   submit(formData, {
                     method: "POST",

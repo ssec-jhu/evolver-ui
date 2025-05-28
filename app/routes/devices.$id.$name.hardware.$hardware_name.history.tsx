@@ -79,7 +79,7 @@ export async function clientLoader({
 
   const properties = searchParams.get("properties")?.split(",");
 
-  const results = Promise.all([
+  const [sensorHistory, deviceEvents] = await Promise.all([
     Evolver.history({
       query: {
         name: hardware_name,
@@ -101,9 +101,7 @@ export async function clientLoader({
     return results.map((result) => result.data);
   });
 
-  const [hist, events] = await results;
-
-  return { data: hist?.data, events: events?.data, ENV };
+  return { data: sensorHistory?.data, events: deviceEvents?.data, ENV };
 }
 
 clientLoader.hydrate = true as const;
@@ -168,9 +166,5 @@ export default function Hardware() {
     );
   });
 
-  return (
-    <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
-      {charts}
-    </div>
-  );
+  return <div className="flex flex-col gap-4">{charts}</div>;
 }

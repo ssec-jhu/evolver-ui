@@ -82,11 +82,15 @@ export const HardwareLineChart = ({
   const eventData = processEvents(events, vials);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex justify-between items-center">
-        <div className="font-mono">property: {property}</div>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2">
+    <div className="card bg-base-300">
+      <div className="card-body">
+        <div className="card-title font-sans">
+          property:
+          {` `}
+          <span className="font-mono">{property}</span>
+        </div>
+        <div className="card-actions justify-end">
+          <label className="flex gap-4">
             <span className="text-sm">event lines</span>
             <span className="swap swap-rotate">
               <input
@@ -99,96 +103,98 @@ export const HardwareLineChart = ({
             </span>
           </label>
         </div>
-      </div>
-      <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={formattedData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="timestamp"
-            type="number"
-            domain={["dataMin", "dataMax"]}
-            scale="time"
-            tickFormatter={(unixTime) =>
-              new Date(unixTime * 1000).toLocaleTimeString()
-            }
-          />
-          <YAxis domain={["auto", "auto"]} />
-          <Tooltip
-            labelFormatter={(unixTime) =>
-              new Date(unixTime * 1000).toLocaleTimeString()
-            }
-            formatter={(value, name) => {
-              // Find the index of this line to get the correct color
-              const vialName = name as string;
-              const vialNumber = vialName.replace("vial_", "");
-              const index = vials.indexOf(vialNumber);
-              // Return value and color information
-              return [
-                value,
-                vialName.replace("vial_", "Vial "),
-                vialColors[index % vialColors.length],
-              ];
-            }}
-            contentStyle={{
-              backgroundColor: "rgba(40, 44, 52, 0.9)", // Dark background
-              borderRadius: "8px",
-              border: "none",
-              boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.15)",
-              padding: "10px",
-              color: "white", // White text
-            }}
-            itemStyle={{
-              padding: "4px 0",
-              color: "white", // White text for items
-            }}
-            labelStyle={{
-              fontWeight: "bold",
-              marginBottom: "6px",
-              color: "white", // White text for label
-            }}
-            cursor={{ stroke: "#ccc", strokeWidth: 1 }}
-            wrapperStyle={{
-              outline: "none",
-            }}
-          />
-          <Legend />
-          {vials.map((vial: string, index: number) => (
-            <Line
-              key={vial}
-              type="monotone"
-              dataKey={`vial_${vial}`}
-              stroke={vialColors[index % vialColors.length]}
-              name={`Vial ${vial}`}
-              connectNulls={true}
-              dot={false}
-            />
-          ))}
-          {showVerticalLines &&
-            eventData.map((event, idx) => {
-              const positions = [
-                "insideTopLeft",
-                "insideBottomLeft",
-                "insideTopRight",
-                "insideBottomRight",
-              ];
-              const labelPosition = positions[
-                idx % positions.length
-              ] as LabelPosition;
-              return (
-                <ReferenceLine
-                  key={`${event.timestamp}${event.data.message}`}
-                  x={event.timestamp}
-                  label={{
-                    value: event.data.message,
-                    fill: "red",
-                    position: labelPosition,
-                  }}
+
+        <figure>
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={formattedData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="timestamp"
+                type="number"
+                domain={["dataMin", "dataMax"]}
+                scale="time"
+                tickFormatter={(unixTime) =>
+                  new Date(unixTime * 1000).toLocaleTimeString()
+                }
+              />
+              <YAxis domain={["auto", "auto"]} />
+              <Tooltip
+                labelFormatter={(unixTime) =>
+                  new Date(unixTime * 1000).toLocaleTimeString()
+                }
+                formatter={(value, name) => {
+                  // Find the index of this line to get the correct color
+                  const vialName = name as string;
+                  const vialNumber = vialName.replace("vial_", "");
+                  const index = vials.indexOf(vialNumber);
+                  // Return value and color information
+                  return [
+                    value,
+                    vialName.replace("vial_", "Vial "),
+                    vialColors[index % vialColors.length],
+                  ];
+                }}
+                contentStyle={{
+                  backgroundColor: "rgba(40, 44, 52, 0.9)", // Dark background
+                  borderRadius: "8px",
+                  border: "none",
+                  boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.15)",
+                  padding: "10px",
+                  color: "white", // White text
+                }}
+                itemStyle={{
+                  padding: "4px 0",
+                  color: "white", // White text for items
+                }}
+                labelStyle={{
+                  fontWeight: "bold",
+                  marginBottom: "6px",
+                  color: "white", // White text for label
+                }}
+                cursor={{ stroke: "#ccc", strokeWidth: 1 }}
+                wrapperStyle={{
+                  outline: "none",
+                }}
+              />
+              <Legend />
+              {vials.map((vial: string, index: number) => (
+                <Line
+                  key={vial}
+                  type="monotone"
+                  dataKey={`vial_${vial}`}
+                  stroke={vialColors[index % vialColors.length]}
+                  name={`Vial ${vial}`}
+                  connectNulls={true}
+                  dot={false}
                 />
-              );
-            })}
-        </LineChart>
-      </ResponsiveContainer>
-      <div className="divider"></div>
+              ))}
+              {showVerticalLines &&
+                eventData.map((event, idx) => {
+                  const positions = [
+                    "insideTopLeft",
+                    "insideBottomLeft",
+                    "insideTopRight",
+                    "insideBottomRight",
+                  ];
+                  const labelPosition = positions[
+                    idx % positions.length
+                  ] as LabelPosition;
+                  return (
+                    <ReferenceLine
+                      key={`${event.timestamp}${event.data.message}`}
+                      x={event.timestamp}
+                      label={{
+                        value: event.data.message,
+                        fill: "red",
+                        position: labelPosition,
+                      }}
+                    />
+                  );
+                })}
+            </LineChart>
+          </ResponsiveContainer>
+        </figure>
+      </div>
     </div>
   );
 };
