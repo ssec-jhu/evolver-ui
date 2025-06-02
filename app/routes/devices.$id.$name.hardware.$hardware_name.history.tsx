@@ -104,8 +104,6 @@ export async function clientLoader({
   return { data: sensorHistory?.data, events: deviceEvents?.data, ENV };
 }
 
-clientLoader.hydrate = true as const;
-
 export function HydrateFallback() {
   return <DefaultHydrateFallback />;
 }

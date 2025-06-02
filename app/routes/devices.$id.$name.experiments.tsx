@@ -2,6 +2,7 @@ import {
   Link,
   Outlet,
   useLoaderData,
+  useLocation,
   useParams,
   useRouteLoaderData,
 } from "react-router";
@@ -14,6 +15,7 @@ import * as Evolver from "client/services.gen";
 import { ExperimentsTable } from "~/components/ExperimentsTable";
 import { createEvolverClient } from "~/utils/evolverClient.client";
 import { deviceInfo } from "~/cookies.server";
+import { DefaultHydrateFallback } from "~/components/HydrateFallback";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
@@ -25,7 +27,7 @@ export const handle = {
 };
 
 export function ErrorBoundary() {
-  const { id, name } = useParams();
+  const { id, name } = useParams<Route.ActionArgs["params"]>();
   return (
     <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
       <WrenchScrewdriverIcon className="w-10 h-10" />
@@ -35,45 +37,41 @@ export function ErrorBoundary() {
         </div>
       </div>
 
-      <Link to={ROUTES.device.config({ id, name })} className="link">
-        config
-      </Link>
+      {id && name && (
+        <Link to={ROUTES.device.config({ id, name })} className="link">
+          config
+        </Link>
+      )}
     </div>
   );
 }
+export async function loader({ request }: Route.LoaderArgs) {
+  return {
+    device: await deviceInfo.parse(request.headers.get("Cookie")),
+  };
+}
 
-export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-  try {
-    const cookieHeader = request.headers.get("Cookie");
-    const deviceData = await deviceInfo.parse(cookieHeader);
+export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  const { device } = await serverLoader();
+  const evolverClient = createEvolverClient(device.url);
 
-    if (!deviceData?.url) {
-      throw new Error("Device URL not found in cookie");
-    }
+  const [experiments] = await Promise.all([
+    Evolver.getExperimentsExperimentGet({
+      client: evolverClient,
+    }),
+  ]);
 
-    const evolverClient = createEvolverClient(deviceData.url);
+  return { experiments: experiments.data };
+}
 
-    const results = Promise.allSettled([
-      Evolver.getExperimentsExperimentGet({
-        client: evolverClient,
-      }),
-    ]).then((results) => {
-      return results.map((result) => result.value.data);
-    });
-
-    const [experiments] = await results;
-
-    return { experiments };
-  } catch (error) {
-    throw new Error(
-      "Failed to load experiments: " + (error.message || "Unknown error"),
-    );
-  }
+export function HydrateFallback() {
+  return <DefaultHydrateFallback />;
 }
 
 export default function Controllers() {
-  const { id, name } = useParams();
-  const { experiments } = useLoaderData<Route.ClientLoaderData>();
+  const { id, name } = useParams<Route.ActionArgs["params"]>();
+  const { pathname } = useLocation();
+  const { experiments } = useLoaderData<typeof clientLoader>();
 
   const loaderData = useRouteLoaderData("routes/devices.$id.$name");
   let evolverConfig = {} as EvolverConfigWithoutDefaults;
@@ -94,12 +92,14 @@ export default function Controllers() {
           className="tooltip"
           data-tip="use the configuration editor to add hardware "
         >
-          <Link
-            className="link text-primary"
-            to={ROUTES.device.config({ id, name })}
-          >
-            add experiment
-          </Link>
+          {id && name && (
+            <Link
+              className="link text-primary"
+              to={ROUTES.device.config({ id, name })}
+            >
+              add experiment
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -108,10 +108,14 @@ export default function Controllers() {
   return (
     <div className="flex flex-col gap-4">
       <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
-        <ExperimentsTable
-          evolverConfig={evolverConfig}
-          experiments={experiments}
-        />
+        {name && id && (
+          <ExperimentsTable
+            experiments={experiments ?? {}}
+            name={name}
+            id={id}
+            pathname={pathname}
+          />
+        )}
       </div>
       <Outlet />
     </div>

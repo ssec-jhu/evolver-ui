@@ -130,8 +130,6 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
   };
 }
 
-clientLoader.hydrate = true as const;
-
 export function HydrateFallback() {
   return <DefaultHydrateFallback />;
 }

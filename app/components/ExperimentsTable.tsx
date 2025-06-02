@@ -1,19 +1,23 @@
-import { Link, useLocation, useParams } from "react-router";
+import { Link } from "react-router";
 import { ROUTES } from "../utils/routes";
-import { Experiment_Output } from "client";
 import clsx from "clsx";
+import type { Experiment } from "client";
 
 export function ExperimentsTable({
   experiments,
+  name,
+  id,
+  pathname,
 }: {
-  experiments: { [key: string]: Experiment_Output };
+  experiments: { [key: string]: Experiment };
+  name: string;
+  id: string;
+  pathname: string;
 }) {
-  const { name, id } = useParams();
-  const { pathname } = useLocation();
-  const pathElements = pathname.split("/");
+  const pathElements = pathname.split("/").pop();
   const currentPath = pathElements[pathElements.length - 1];
 
-  const rows = [];
+  const rows: JSX.Element[] = [];
 
   Object.entries(experiments).forEach(
     ([experiment_name, { enabled, controllers }], ix) => {
@@ -25,8 +29,8 @@ export function ExperimentsTable({
                 pathElements.includes(experiment_name) && "underline",
               )}
               to={ROUTES.device.experiment.current({
-                id,
-                name,
+                id: id,
+                name: name,
                 experimentId: experiment_name,
               })}
             >
@@ -36,7 +40,12 @@ export function ExperimentsTable({
           <td>{enabled ? "enabled" : "disabled"}</td>
           <td>
             <Link
-              className={clsx("btn btn-outline join-item")}
+              className={clsx(
+                "btn btn-outline join-item font-sans",
+                pathname.includes(experiment_name) &&
+                  pathname.includes("logs") &&
+                  "btn-active",
+              )}
               to={`${ROUTES.device.experiment.logs({ id, name, experimentId: experiment_name })}#logs`}
             >
               logs
@@ -45,35 +54,58 @@ export function ExperimentsTable({
 
           <td className="font-mono">
             <ul className="list">
-              {controllers?.map(
-                ({ classinfo, config: { name: controllerName } }, ix) => {
-                  return (
-                    <li
-                      className={clsx(
-                        "list-row",
-                        controllerName === currentPath && "underline",
-                      )}
-                      key={classinfo + ix}
-                    >
-                      <div className="opacity-30 font-mono flex items-center">
-                        {ix + 1}
-                      </div>
-                      <div className="list-col-grow flex items-center">
-                        {controllerName}
-                      </div>
+              {controllers?.map((controller, ix) => {
+                // Check if controller has classinfo and config
+                const hasClassinfo = "classinfo" in controller;
+                const hasConfig = "config" in controller;
+                const hasControllerName =
+                  hasConfig && controller.config && "name" in controller.config;
 
-                      <div className="join">
-                        <Link
-                          className={clsx("btn btn-outline join-item")}
-                          to={`${ROUTES.device.experiment.controllers.current.config({ id, name, experimentId: experiment_name, controllerId: controllerName })}#${controllerName + "config"}`}
-                        >
-                          config
-                        </Link>
-                      </div>
-                    </li>
-                  );
-                },
-              )}
+                const classInfo = hasClassinfo
+                  ? controller.classinfo
+                  : "missing classinfo";
+
+                const controllerName: string = hasControllerName
+                  ? (controller.config?.name as string)
+                  : "unnamed controller";
+
+                return (
+                  <li
+                    className={clsx(
+                      "list-row",
+                      controllerName === currentPath && "underline",
+                    )}
+                    key={classInfo + ix}
+                  >
+                    <div className="opacity-30 font-mono flex items-center">
+                      {ix + 1}
+                    </div>
+
+                    <div
+                      className={clsx(
+                        "list-col-grow flex items-center font-mono",
+                        pathname.includes(controllerName) && "underline",
+                      )}
+                    >
+                      {classInfo.split(".").pop()}
+                      {" - "}
+                      {controllerName}
+                    </div>
+
+                    <div className="join">
+                      <Link
+                        className={clsx(
+                          "btn btn-outline join-item font-sans",
+                          pathname.includes(controllerName) && "btn-active",
+                        )}
+                        to={`${ROUTES.device.experiment.controllers.current.config({ id, name, experimentId: experiment_name, controllerId: controllerName })}#${controllerName + "config"}`}
+                      >
+                        config
+                      </Link>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </td>
         </tr>,

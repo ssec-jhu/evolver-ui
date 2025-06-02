@@ -3,10 +3,10 @@ import {
   useActionData,
   useLocation,
   useParams,
-  useRouteLoaderData,
   useSearchParams,
   useSubmit,
   redirect,
+  useLoaderData,
 } from "react-router";
 import type { Route } from "./+types/devices.$id.$name.config";
 import { ROUTES } from "~/utils/routes";
@@ -14,7 +14,6 @@ import { EditJson } from "~/components/EditJson.client";
 import { ClientOnly } from "remix-utils/client-only";
 import { useEffect, useState } from "react";
 import { exportData } from "~/utils/exportData";
-import { type loader } from "./devices.$id.$name";
 import { handleFileUpload } from "~/utils/handleFileUpload";
 import type { EvolverConfigWithoutDefaults } from "client";
 import { parseWithZod } from "@conform-to/zod";
@@ -24,6 +23,8 @@ import { db } from "~/utils/db.server";
 import { createEvolverClient } from "~/utils/evolverClient.client";
 import { deviceInfo } from "~/cookies.server";
 import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
+import type { Prisma } from "@prisma/client";
+import { toast as notify } from "react-toastify";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
@@ -31,12 +32,6 @@ export const handle = {
     return <Link to={ROUTES.device.config({ id, name })}>config</Link>;
   },
 };
-
-// The action function is typically responsible for handling the form submission at the route.
-// Since the action function can handle different form submissions, we use intent to determine the action to take.
-// Branching on the intent field of the submitted form.
-// In this case, the intent is to update the evolver config. Later there may be an intent to delete a config, or undo a change etc...
-// Refs: https://sergiodxa.com/articles/multiple-forms-per-route-in-remix
 
 const UpdateDeviceIntentEnum = z.enum(["update_evolver"], {
   required_error: "an intent is required",
@@ -61,6 +56,7 @@ const schema = z.object({
   ),
   // Assume this is valid, client side AJV validation.
   data: z.string({ required_error: "an evolver config is required" }),
+  url: z.string().url(),
 });
 
 const serverSchema = z.object({
@@ -69,7 +65,7 @@ const serverSchema = z.object({
   name: z.string(),
 });
 
-// Server action handles database operations
+// Server action handles database operations, no Evolver API call here.
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: serverSchema });
@@ -84,7 +80,7 @@ export async function action({ request }: Route.ActionArgs) {
     switch (intent) {
       case ServerIntentEnum.Enum.update_device_name: {
         // Update the database with the new config's name
-        const device = await db.device.update({
+        const device = await (db.device as Prisma.DeviceDelegate).update({
           where: { device_id: id },
           data: { name },
         });
@@ -118,23 +114,10 @@ export async function clientAction({
   if (submission.status !== "success") {
     return submission.reply();
   }
-  const { intent, id, data, name } = submission.value;
+  const { intent, id, data, name, url } = submission.value;
 
   try {
-    // Get device URL from cookie
-    const cookieHeader = request.headers.get("Cookie");
-    const deviceData = await deviceInfo.parse(cookieHeader);
-
-    if (!deviceData?.url) {
-      return {
-        ...submission.reply({
-          formErrors: ["Device URL not found. Please refresh the page."],
-        }),
-        success: false,
-      };
-    }
-
-    const evolverClient = createEvolverClient(deviceData.url);
+    const evolverClient = createEvolverClient(url);
 
     switch (intent) {
       case UpdateDeviceIntentEnum.Enum.update_evolver:
@@ -219,26 +202,40 @@ export async function clientAction({
     };
   }
 }
+export async function loader({ request }: Route.LoaderArgs) {
+  return {
+    device: await deviceInfo.parse(request.headers.get("Cookie")),
+  };
+}
+
+export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  const { device } = await serverLoader();
+  const evolverClient = createEvolverClient(device.url); // (5) create an Evolver client.
+
+  const [describeEvolver, evolverState] = await Promise.all([
+    Evolver.describe({ client: evolverClient }),
+    Evolver.state({ client: evolverClient }),
+  ]);
+
+  return {
+    device,
+    description: describeEvolver.data,
+    ok: true,
+    state: evolverState.data,
+  };
+}
 
 export default function DeviceConfig() {
-  const { id } = useParams();
+  const { device, description } = useLoaderData<typeof clientLoader>();
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname } = useLocation();
+  const { id } = useParams<Route.LoaderArgs["params"]>();
 
   // This should be what comes back from the action at /devices/:id that the form was submitted to.
   const actionData = useActionData<typeof clientAction>();
 
   const submit = useSubmit();
   const mode = searchParams.get("mode") === "edit" ? "edit" : "view";
-
-  const loaderData = useRouteLoaderData<typeof loader>(
-    "routes/devices.$id.$name",
-  );
-  let description;
-
-  if (loaderData?.description?.config) {
-    description = loaderData.description;
-  }
 
   const evolverConfig = description?.config as EvolverConfigWithoutDefaults;
 

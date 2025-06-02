@@ -4,9 +4,14 @@ import {
   useLoaderData,
   useParams,
   redirect,
+  useSubmit,
 } from "react-router";
 import type { Route } from "./+types/devices.$id.$name.experiments.$experiment_id.controllers.$controller_id.config";
-import type { EvolverConfigWithoutDefaults } from "client";
+import type {
+  ConfigDescriptor,
+  EvolverConfigWithoutDefaults,
+  SchemaResponse,
+} from "client";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
@@ -44,72 +49,6 @@ export const handle = {
   },
 };
 
-export function ErrorBoundary() {
-  const { id, experiment_id, name } = useParams();
-  return (
-    <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
-      <WrenchScrewdriverIcon className="w-10 h-10" />
-      <div>
-        <div>
-          <h1 className="font-mono">{`Error loading experiment ${experiment_id}. Check config experiments attribute.`}</h1>
-        </div>
-      </div>
-
-      <Link to={ROUTES.device.config({ id, name })} className="link">
-        config
-      </Link>
-    </div>
-  );
-}
-
-export async function clientLoader({
-  request,
-  params,
-}: Route.ClientLoaderArgs) {
-  const { experiment_id, controller_id } = params;
-
-  try {
-    const cookieHeader = request.headers.get("Cookie");
-    const deviceData = await deviceInfo.parse(cookieHeader);
-
-    if (!deviceData?.url) {
-      throw new Error("Device URL not found in cookie");
-    }
-
-    const evolverClient = createEvolverClient(deviceData.url);
-
-    const results = Promise.allSettled([
-      Evolver.getExperimentsExperimentGet({
-        client: evolverClient,
-      }),
-    ]).then((results) => {
-      return results.map((result) => result.value.data);
-    });
-
-    const [experiments] = await results;
-
-    const classinfo = experiments[experiment_id].controllers.find(
-      (controller) => controller.config.name == controller_id,
-    )?.classinfo;
-
-    const controllerClassinfoSchema = await Evolver.schema({
-      query: {
-        classinfo: classinfo,
-      },
-    });
-
-    return {
-      experiments,
-      classinfoSchema: controllerClassinfoSchema.data,
-      classinfo,
-    };
-  } catch (error) {
-    throw new Error(
-      "Failed to load controller config: " + (error.message || "Unknown error"),
-    );
-  }
-}
-
 export const Intent = z.enum(["update_controller"], {
   required_error: "an intent is required",
   invalid_type_error: "must be one of: update_controller",
@@ -118,6 +57,7 @@ export const Intent = z.enum(["update_controller"], {
 const schema = z.discriminatedUnion("intent", [
   z.object({
     intent: z.literal(Intent.Enum.update_controller),
+    url: z.string().url(),
     id: z.string(),
     experiment_id: z.string(),
     controller_id: z.string(),
@@ -135,21 +75,11 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return { ...submission.reply(), success: false };
   }
 
-  const { intent, id } = submission.value;
+  const { intent, id, url } = submission.value;
 
   try {
-    const cookieHeader = request.headers.get("Cookie");
-    const deviceData = await deviceInfo.parse(cookieHeader);
-
-    if (!deviceData?.url) {
-      return {
-        ...submission.reply({ formErrors: ["Device URL not found in cookie"] }),
-        success: false,
-      };
-    }
-
-    const evolverClient = createEvolverClient(deviceData.url);
-    const name = new URL(deviceData.url).hostname;
+    const evolverClient = createEvolverClient(url);
+    const name = new URL(url).hostname;
 
     switch (intent) {
       case Intent.Enum.update_controller: {
@@ -173,7 +103,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
         // Extract the configuration from the describe data
         const deviceConfig =
-          describeData.config as EvolverConfigWithoutDefaults;
+          describeData?.config as EvolverConfigWithoutDefaults;
 
         // Create a deep copy of the device configuration
         const configToUpdate = JSON.parse(JSON.stringify(deviceConfig));
@@ -214,7 +144,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
         // Find the specific controller by its name in the controllers array
         const controllerIndex = experiment.controllers.findIndex(
-          (controller) =>
+          (controller: { config: { name: string } }) =>
             controller.config && controller.config.name === controller_id,
         );
 
@@ -255,7 +185,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
           });
 
           if (error) {
-            const errors = {};
+            const errors: { [key: string]: string[] } = {};
             error.detail?.forEach(({ loc, msg }) => {
               const errorKey = loc
                 .map((l) => {
@@ -328,21 +258,91 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       success: false,
     };
   } catch (error) {
+    const errorMessage = `Failed to connect to device: ${
+      error instanceof Error ? error.message : "Unknown error"
+    }`;
     return {
       ...submission.reply({
-        formErrors: [
-          "Failed to connect to device: " + (error.message || "Unknown error"),
-        ],
+        formErrors: [errorMessage],
       }),
       success: false,
     };
   }
 }
 
+export function ErrorBoundary() {
+  const { id, experiment_id, name } = useParams();
+  return (
+    <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
+      <WrenchScrewdriverIcon className="w-10 h-10" />
+      <div>
+        <div>
+          <h1 className="font-mono">{`Error loading experiment ${experiment_id}. Check config experiments attribute.`}</h1>
+        </div>
+      </div>
+
+      {id && name && (
+        <Link to={ROUTES.device.config({ id, name })} className="link">
+          config
+        </Link>
+      )}
+    </div>
+  );
+}
+
+export async function loader({ request }: Route.LoaderArgs) {
+  return {
+    device: await deviceInfo.parse(request.headers.get("Cookie")),
+  };
+}
+
+export async function clientLoader({
+  params,
+  serverLoader,
+}: Route.ClientLoaderArgs) {
+  const { experiment_id, controller_id } = params;
+
+  const { device } = await serverLoader();
+  const evolverClient = createEvolverClient(device.url);
+
+  const [experiments] = await Promise.all([
+    Evolver.getExperimentsExperimentGet({
+      client: evolverClient,
+    }),
+  ]);
+
+  const experimentObj = experiments?.data
+    ? experiments.data[experiment_id]
+    : undefined;
+  const controller = experimentObj?.controllers?.find(
+    (controller: unknown) =>
+      (controller as { config: { name: string } }).config.name == controller_id,
+  );
+
+  const classinfo = (controller as ConfigDescriptor).classinfo;
+
+  const controllerClassinfoSchema = await Evolver.schema({
+    query: {
+      classinfo: classinfo,
+    },
+  });
+  console.log("EXPERIMENTS:", experiments);
+
+  return {
+    device,
+    experiments: experiments.data,
+    classinfoSchema: controllerClassinfoSchema.data,
+    classinfo,
+  };
+}
+
 export default function Controllers() {
-  const actionData = useActionData<Route.ClientActionData>();
-  const { experiment_id, controller_id } = useParams();
-  const { experiments, classinfo } = useLoaderData<Route.ClientLoaderData>();
+  const actionData = useActionData();
+  const submit = useSubmit();
+  const { experiment_id, controller_id, id, name } = useParams();
+  const { experiments, classinfo, device, classinfoSchema } =
+    useLoaderData<typeof clientLoader>();
+  const { url } = device;
 
   useFormErrorNotifications(actionData);
 
@@ -357,26 +357,56 @@ export default function Controllers() {
       </div>
 
       <div className="bg-base-300 rounded-box relative overflow-x-auto">
-        {Object.entries(experiments)
-          .filter(([experimentId]) => experimentId == experiment_id)
-          .map(([experimentId, experimentData]) => (
-            <div key={experimentId}>
-              {experimentData.controllers &&
-                experimentData.controllers
-                  .filter(
-                    (controller) => controller.config.name == controller_id,
-                  )
-                  .map((controller, idx) => (
-                    <div key={`${experimentId}-controller-${idx}`}>
-                      <ControllerConfig
-                        controller={controller}
-                        actionData={actionData}
-                        classinfo={classinfo}
-                      />
-                    </div>
-                  ))}
-            </div>
-          ))}
+        {experiments &&
+          Object.entries(experiments)
+            .filter(([experimentId]) => experimentId == experiment_id)
+            .map(([experimentId, experimentData]) => (
+              <div key={experimentId}>
+                {experimentData &&
+                  experimentData.controllers &&
+                  experimentData.controllers
+                    .filter(
+                      (controller) =>
+                        controller &&
+                        typeof controller === "object" &&
+                        "config" in controller &&
+                        controller.config &&
+                        typeof controller.config === "object" &&
+                        controller.config.name === controller_id,
+                    )
+                    .map((controller: unknown, idx: number) => {
+                      return (
+                        <div key={`${experimentId}-controller-${idx}`}>
+                          <ControllerConfig
+                            id={id ?? ""}
+                            name={name ?? ""}
+                            experiment_id={experiment_id ?? ""}
+                            controller_id={controller_id ?? ""}
+                            url={url}
+                            controller={{
+                              classinfo: (
+                                controller as {
+                                  classinfo: string;
+                                  config: Record<string, unknown>;
+                                }
+                              ).classinfo,
+                              config:
+                                (
+                                  controller as {
+                                    classinfo: string;
+                                    config: Record<string, unknown>;
+                                  }
+                                ).config ?? {},
+                            }}
+                            classinfo={classinfo}
+                            classinfoSchema={classinfoSchema as SchemaResponse}
+                            submit={submit}
+                          />
+                        </div>
+                      );
+                    })}
+              </div>
+            ))}
       </div>
     </div>
   );

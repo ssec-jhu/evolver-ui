@@ -1,56 +1,46 @@
-import { Link, useLoaderData, useParams, useSubmit } from "react-router";
-import { useEffect } from "react";
+import { Link, type SubmitFunction } from "react-router";
 import { toast } from "react-toastify";
 import SchemaForm from "./SchemaForm";
-import {
-  loader,
-  action,
-  Intent,
-} from "~/routes/devices.$id.$name.experiments.$experiment_id.controllers.$controller_id.config";
+import { Intent } from "~/routes/devices.$id.$name.experiments.$experiment_id.controllers.$controller_id.config";
 import { ROUTES } from "~/utils/routes";
+import type { SchemaResponse } from "client";
 
 type ControllerConfigProps = {
   controller: {
     classinfo: string;
     config: Record<string, unknown>;
   };
-  actionData?: typeof action;
+  classinfo: string;
+  classinfoSchema: SchemaResponse;
+  submit: SubmitFunction;
+  id: string;
+  name: string;
+  experiment_id: string;
+  controller_id: string;
+  url: string;
 };
 
 export function ControllerConfig({
   controller,
-  actionData,
+  classinfo,
+  classinfoSchema,
+  submit,
+  id,
+  name,
+  experiment_id,
+  controller_id,
+  url,
 }: ControllerConfigProps) {
-  const { classinfo, classinfoSchema } = useLoaderData<typeof loader>();
-  const { id, name, experiment_id, controller_id } = useParams();
-  const submit = useSubmit();
-
-  // Display any error messages from the action
-  useEffect(() => {
-    if (actionData?.error) {
-      if (typeof actionData.error === "string") {
-        toast.error(actionData.error);
-      }
-      if (typeof actionData.error === "object") {
-        const errorMessages: string[] = [];
-        Object.entries(actionData.error).forEach(([key, value]) => {
-          errorMessages.push(`${key}: ${value}`);
-        });
-        errorMessages.forEach((message) => {
-          toast.error(message);
-        });
-      }
-    }
-  }, [actionData]);
-
-  const handleSubmit = (data) => {
+  const handleSubmit = (data: object) => {
     toast.dismiss();
 
     const formData = new FormData();
     formData.append("intent", Intent.Enum.update_controller);
-    formData.append("id", id || "");
-    formData.append("experiment_id", experiment_id || "");
-    formData.append("controller_id", controller_id || "");
+
+    formData.append("url", url);
+    formData.append("id", id);
+    formData.append("experiment_id", experiment_id);
+    formData.append("controller_id", controller_id);
     formData.append("controller_config", JSON.stringify(data));
 
     submit(formData, {
@@ -61,20 +51,22 @@ export function ControllerConfig({
   const originalSchema = classinfoSchema?.config;
   const defaultName = classinfo.split(".").pop();
 
-  // replace the schema.properties.name (which is an anyOf - and makes no sense from UI) with a string field (which is what it is.)
-  const schemaToUse = {
-    ...originalSchema,
-    title: `configuration`,
-    properties: {
-      ...originalSchema.properties,
-      name: {
-        type: "string",
-        title: "Name",
-        default: defaultName,
-        description: `Name of the controller`,
-      },
-    },
-  };
+  // replace the schema.properties.name (which is an anyOf - and makes no sense for the UI - because None type means no form field is rendered) with a string field (which is what it is.)
+  const schemaToUse = originalSchema?.properties
+    ? {
+        ...originalSchema,
+        title: `configuration`,
+        properties: {
+          ...originalSchema.properties,
+          name: {
+            type: "string",
+            title: "Name",
+            default: defaultName,
+            description: `Name of the controller`,
+          },
+        },
+      }
+    : {};
 
   return (
     <div className="flex flex-col gap-4" id={controller_id + "config"}>

@@ -8,6 +8,7 @@ import * as Evolver from "client/services.gen";
 import { createEvolverClient } from "~/utils/evolverClient.client";
 import { deviceInfo } from "~/cookies.server";
 import { ROUTES } from "~/utils/routes";
+import { DefaultHydrateFallback } from "~/components/HydrateFallback";
 
 export const handle = {
   breadcrumb: ({
@@ -41,44 +42,41 @@ export function ErrorBoundary() {
         </div>
       </div>
 
-      <Link to={ROUTES.device.config({ id, name })} className="link">
-        config
-      </Link>
+      {id && name && (
+        <Link to={ROUTES.device.config({ id, name })} className="link">
+          config
+        </Link>
+      )}
     </div>
   );
 }
 
-export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-  try {
-    const cookieHeader = request.headers.get("Cookie");
-    const deviceData = await deviceInfo.parse(cookieHeader);
+export async function loader({ request }: Route.LoaderArgs) {
+  return {
+    device: await deviceInfo.parse(request.headers.get("Cookie")),
+  };
+}
 
-    if (!deviceData?.url) {
-      throw new Error("Device URL not found in cookie");
-    }
+export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  const { device } = await serverLoader();
 
-    const evolverClient = createEvolverClient(deviceData.url);
+  const evolverClient = createEvolverClient(device.url);
 
-    const results = Promise.allSettled([
-      Evolver.getExperimentsExperimentGet({
-        client: evolverClient,
-      }),
-    ]).then((results) => {
-      return results.map((result) => result.value.data);
-    });
+  const [experiments] = await Promise.all([
+    Evolver.getExperimentsExperimentGet({
+      client: evolverClient,
+    }),
+  ]);
 
-    const [experiments] = await results;
+  return { experiments: experiments.data };
+}
 
-    return { experiments };
-  } catch (error) {
-    throw new Error(
-      "Failed to load experiments: " + (error.message || "Unknown error"),
-    );
-  }
+export function HydrateFallback() {
+  return <DefaultHydrateFallback />;
 }
 
 export default function Controllers() {
-  const { id, experiment_id, name } = useParams();
+  const { id, experiment_id, name } = useParams<Route.ActionArgs["params"]>();
 
   const loaderData = useRouteLoaderData("routes/devices.$id.$name");
   let evolverConfig = {} as EvolverConfigWithoutDefaults;
@@ -90,7 +88,7 @@ export default function Controllers() {
     }
   }
 
-  if (!evolverConfig.experiments[experiment_id]) {
+  if (experiment_id && !evolverConfig.experiments[experiment_id]) {
     return (
       <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box items-center">
         <CogIcon className="h-20 w-20" />
@@ -99,12 +97,14 @@ export default function Controllers() {
           className="tooltip"
           data-tip="use the configuration editor to add hardware "
         >
-          <Link
-            className="link text-primary"
-            to={ROUTES.device.config({ id, name })}
-          >
-            add experiment
-          </Link>
+          {id && name && (
+            <Link
+              className="link text-primary"
+              to={ROUTES.device.config({ id, name })}
+            >
+              add experiment
+            </Link>
+          )}
         </div>
       </div>
     );
