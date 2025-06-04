@@ -28,11 +28,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
   const { device } = await serverLoader();
+  console.log("clientLoader device", device);
   const { url } = device;
   const evolverClient = createEvolverClient(url);
   const [describeEvolver] = await Promise.all([
     Evolver.describe({ client: evolverClient }),
   ]);
+  console.log("describeEvolver", describeEvolver);
   return {
     description: describeEvolver.data as {
       config: EvolverConfigWithoutDefaults;

@@ -10,7 +10,7 @@ export default function Navbar({ pathname = "" as string }): JSX.Element {
         <div className="flex-1">
           <div className="flex items-center space-x-1">
             <Link to={ROUTES.static.root} className="text-primary ">
-              eVolver
+              eVOLVER
             </Link>
           </div>
         </div>

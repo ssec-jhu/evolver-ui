@@ -21,7 +21,7 @@ import { z } from "zod";
 import * as Evolver from "client/services.gen";
 import { db } from "~/utils/db.server";
 import { createEvolverClient } from "~/utils/evolverClient.client";
-import { deviceInfo } from "~/cookies.server";
+import { deviceInfo, userPrefs } from "~/cookies.server";
 import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
 import type { Prisma } from "@prisma/client";
 import { toast as notify } from "react-toastify";
@@ -35,11 +35,7 @@ export const handle = {
 
 const UpdateDeviceIntentEnum = z.enum(["update_evolver"], {
   required_error: "an intent is required",
-  invalid_type_error: "must be one of, update_device",
-});
-
-const ServerIntentEnum = z.enum(["update_device_name"], {
-  required_error: "an intent is required",
+  invalid_type_error: "must be one of, update_evolver",
 });
 
 const schema = z.object({
@@ -59,16 +55,10 @@ const schema = z.object({
   url: z.string().url(),
 });
 
-const serverSchema = z.object({
-  intent: z.literal(ServerIntentEnum.Enum.update_device_name),
-  id: z.string(),
-  name: z.string(),
-});
-
-// Server action handles database operations, no Evolver API call here.
+// Server action handles database operations, no Evolver API call should go here.
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
-  const submission = parseWithZod(formData, { schema: serverSchema });
+  const submission = parseWithZod(formData, { schema: schema });
 
   if (submission.status !== "success") {
     return { ...submission.reply(), success: false };
@@ -76,28 +66,17 @@ export async function action({ request }: Route.ActionArgs) {
 
   const { intent, id, name } = submission.value;
 
-  try {
-    switch (intent) {
-      case ServerIntentEnum.Enum.update_device_name: {
-        // Update the database with the new config's name
-        const device = await (db.device as Prisma.DeviceDelegate).update({
-          where: { device_id: id },
-          data: { name },
-        });
-
-        return { device, success: true };
-      }
-
-      default:
-        return { success: false };
+  switch (intent) {
+    case UpdateDeviceIntentEnum.Enum.update_evolver: {
+      // Update the database with the new config's name
+      const device = await (db.device as Prisma.DeviceDelegate).update({
+        where: { device_id: id },
+        data: { name },
+      });
+      return { device, success: true };
     }
-  } catch (error) {
-    return {
-      ...submission.reply({
-        formErrors: ["Database error"],
-      }),
-      success: false,
-    };
+    default:
+      return { success: false };
   }
 }
 
@@ -106,7 +85,9 @@ export async function clientAction({
   request,
   serverAction,
 }: Route.ClientActionArgs) {
-  const formData = await request.formData();
+  // Clone the request to avoid consuming the body, it's also needed for the server action.
+  const clonedRequest = request.clone();
+  const formData = await clonedRequest.formData();
 
   // prelim validation, just checks request has intent, ip and a config.
   const submission = parseWithZod(formData, { schema: schema });
@@ -122,62 +103,17 @@ export async function clientAction({
     switch (intent) {
       case UpdateDeviceIntentEnum.Enum.update_evolver:
         try {
-          const { response, error } = await Evolver.update({
-            body: JSON.parse(data),
-            client: evolverClient,
-          });
-
-          if (error) {
-            const errors: { [id: string]: string[] } = {};
-            error.detail?.forEach(({ loc, msg }) => {
-              const errorKey = loc
-                .map((l) => {
-                  switch (l) {
-                    case "body":
-                      return "config";
-                    default:
-                      return l;
-                  }
-                })
-                .join(".");
-              errors[errorKey] = [msg];
-            });
-
-            if (errors) {
-              return {
-                ...submission.reply({ fieldErrors: errors }),
-                success: false,
-              };
-            }
-          }
-          if (response.status !== 200) {
-            return {
-              ...submission.reply({
-                formErrors: [
-                  `Got an unexpected response: ${response.status}. ${JSON.stringify(response)}`,
-                ],
-              }),
-              success: false,
-            };
-          }
-
-          // Call server action to update database
-          const updateFormData = new FormData();
-          updateFormData.append(
-            "intent",
-            ServerIntentEnum.Enum.update_device_name,
-          );
-          updateFormData.append("id", id);
-          updateFormData.append("name", name);
-          const updateResult = await serverAction({ formData: updateFormData });
-
-          // Check if server action failed
-          if (!updateResult?.success) {
-            return { ...updateResult, success: false };
-          }
-
+          await Promise.all([
+            await Evolver.update({
+              body: JSON.parse(data),
+              client: evolverClient,
+            }),
+            // Server action handles the same request, so no arg params in the call
+            await serverAction(),
+          ]);
           return redirect(`${ROUTES.device.config({ id, name })}?mode=view`);
         } catch (error) {
+          console.log("ERROR: Failed to update Evolver config", error);
           return {
             ...submission.reply({
               formErrors: [
@@ -195,7 +131,10 @@ export async function clientAction({
     return {
       ...submission.reply({
         formErrors: [
-          "Failed to connect to device: " + (error.message || "Unknown error"),
+          "Failed to connect to device: " +
+            (typeof error === "object" && error !== null && "message" in error
+              ? (error as { message?: string }).message
+              : "Unknown error"),
         ],
       }),
       success: false,
@@ -203,13 +142,21 @@ export async function clientAction({
   }
 }
 export async function loader({ request }: Route.LoaderArgs) {
+  // read user preferences from the client's cookie, this means user preference can be persisted between refreshes.
+  const cookieHeader = request.headers.get("Cookie");
+  const cookie: { theme: "dark" | "light" } = (await userPrefs.parse(
+    cookieHeader,
+  )) || { theme: "dark" };
+
   return {
     device: await deviceInfo.parse(request.headers.get("Cookie")),
+    theme: cookie.theme,
   };
 }
 
 export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
-  const { device } = await serverLoader();
+  const { device, theme } = await serverLoader();
+  console.log("clientLoader device", device);
   const evolverClient = createEvolverClient(device.url); // (5) create an Evolver client.
 
   const [describeEvolver, evolverState] = await Promise.all([
@@ -222,14 +169,16 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
     description: describeEvolver.data,
     ok: true,
     state: evolverState.data,
+    theme,
   };
 }
 
 export default function DeviceConfig() {
-  const { device, description } = useLoaderData<typeof clientLoader>();
+  const { description, theme, device } = useLoaderData<typeof clientLoader>();
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname } = useLocation();
   const { id } = useParams<Route.LoaderArgs["params"]>();
+  const { url } = device;
 
   // This should be what comes back from the action at /devices/:id that the form was submitted to.
   const actionData = useActionData<typeof clientAction>();
@@ -293,6 +242,7 @@ export default function DeviceConfig() {
                 notify.dismiss();
                 const formData = new FormData();
                 formData.append("id", id ?? "");
+                formData.append("url", url);
                 // get the name from the updated evolver config.
                 formData.append("name", updatedEvolverConfig.name);
                 formData.append(
@@ -329,6 +279,7 @@ export default function DeviceConfig() {
                 data={updatedEvolverConfig}
                 mode={mode}
                 setData={setEvolverConfig}
+                theme={theme}
               />
             )}
           </ClientOnly>

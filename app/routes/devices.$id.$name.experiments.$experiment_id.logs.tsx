@@ -52,8 +52,6 @@ export async function clientLoader({
   return { logs: logs.data as Record<string, LogLine[]> };
 }
 
-clientLoader.hydrate = true as const;
-
 export function HydrateFallback() {
   return <DefaultHydrateFallback />;
 }

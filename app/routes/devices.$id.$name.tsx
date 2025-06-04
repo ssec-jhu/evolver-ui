@@ -8,6 +8,7 @@ import {
   useSubmit,
   redirect,
   data,
+  isRouteErrorResponse,
 } from "react-router";
 import { ROUTES } from "~/utils/routes";
 import * as Evolver from "client/services.gen";
@@ -38,7 +39,7 @@ const Intent = z.enum(["start", "stop"], {
   invalid_type_error: "must be one of, start or stop",
 });
 
-const baseActionSchema = z.object({
+const baseSchema = z.object({
   redirectTo: z.string(),
   device_url: z.string().url({
     message: "Device URL is required and must be a valid URL",
@@ -46,10 +47,10 @@ const baseActionSchema = z.object({
 });
 
 const schema = z.discriminatedUnion("intent", [
-  baseActionSchema.extend({
+  baseSchema.extend({
     intent: z.literal(Intent.Enum.start),
   }),
-  baseActionSchema.extend({
+  baseSchema.extend({
     intent: z.literal(Intent.Enum.stop),
   }),
 ]);
@@ -134,17 +135,31 @@ export function HydrateFallback() {
   return <DefaultHydrateFallback />;
 }
 
-export function ErrorBoundary() {
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   const { id } = useParams();
   return (
     <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
       <WrenchScrewdriverIcon className="w-10 h-10" />
-      <div>
-        <div>
-          <h1 className="font-mono">{`Error loading the device: ${id}`}</h1>
-        </div>
-      </div>
 
+      <h1 className="font-mono">{`Error loading the device: ${id}`}</h1>
+      <div>
+        {isRouteErrorResponse(error) && (
+          <>
+            <h1>
+              {error.status} {error.statusText}
+            </h1>
+            <p>{error.data}</p>
+          </>
+        )}
+        {error instanceof Error && (
+          <div>
+            <h1>Error</h1>
+            <p>{error.message}</p>
+            <p>The stack trace is:</p>
+            <pre>{error.stack}</pre>
+          </div>
+        )}
+      </div>
       <Link to={ROUTES.static.devices} className="link">
         home
       </Link>
