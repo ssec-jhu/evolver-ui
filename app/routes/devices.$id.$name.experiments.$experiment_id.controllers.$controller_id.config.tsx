@@ -21,6 +21,7 @@ import { deviceInfo } from "~/cookies.server";
 import { ControllerConfig } from "~/components/ControllerConfig";
 import { ROUTES } from "~/utils/routes";
 import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
+import { DefaultHydrateFallback } from "~/components/HydrateFallback";
 
 export const handle = {
   breadcrumb: ({
@@ -261,7 +262,6 @@ export async function clientLoader({
       classinfo: classinfo,
     },
   });
-  console.log("EXPERIMENTS:", experiments);
 
   return {
     device,
@@ -269,6 +269,11 @@ export async function clientLoader({
     classinfoSchema: controllerClassinfoSchema.data,
     classinfo,
   };
+}
+
+clientLoader.hydrate = true as const;
+export function HydrateFallback() {
+  return <DefaultHydrateFallback />;
 }
 
 export default function Controllers() {

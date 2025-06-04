@@ -299,6 +299,8 @@ export async function clientLoader({
   };
 }
 
+clientLoader.hydrate = true as const;
+
 export function HydrateFallback() {
   return <DefaultHydrateFallback />;
 }

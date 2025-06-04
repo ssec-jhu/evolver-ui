@@ -10,8 +10,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/devices.$id.$name.config";
 import { ROUTES } from "~/utils/routes";
-import { EditJson } from "~/components/EditJson.client";
-import { ClientOnly } from "remix-utils/client-only";
+import { EditJson } from "~/components/EditJson";
 import { useEffect, useState } from "react";
 import { exportData } from "~/utils/exportData";
 import { handleFileUpload } from "~/utils/handleFileUpload";
@@ -25,6 +24,7 @@ import { deviceInfo, userPrefs } from "~/cookies.server";
 import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
 import type { Prisma } from "@prisma/client";
 import { toast as notify } from "react-toastify";
+import { DefaultHydrateFallback } from "~/components/HydrateFallback";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
@@ -163,6 +163,7 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
     Evolver.describe({ client: evolverClient }),
     Evolver.state({ client: evolverClient }),
   ]);
+  console.log("describeEvolver", describeEvolver);
 
   return {
     device,
@@ -171,6 +172,13 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
     state: evolverState.data,
     theme,
   };
+}
+
+// Necessary when both clientLoader and loader on the same route and you want to hydrate with the clientLoader data.
+clientLoader.hydrate = true as const;
+
+export function HydrateFallback() {
+  return <DefaultHydrateFallback />;
 }
 
 export default function DeviceConfig() {
@@ -194,8 +202,8 @@ export default function DeviceConfig() {
     useState<typeof evolverConfig>(evolverConfig);
 
   useEffect(() => {
-    setEvolverConfig(updatedEvolverConfig);
-  }, [updatedEvolverConfig]);
+    setEvolverConfig(evolverConfig);
+  }, [updatedEvolverConfig, evolverConfig]);
 
   return (
     <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">
@@ -272,17 +280,13 @@ export default function DeviceConfig() {
           </div>
         )}
         <div className="flex items-start gap-4 mb-8 justify-between">
-          <ClientOnly fallback={<h1>...loading</h1>}>
-            {() => (
-              <EditJson
-                key={pathname}
-                data={updatedEvolverConfig}
-                mode={mode}
-                setData={setEvolverConfig}
-                theme={theme}
-              />
-            )}
-          </ClientOnly>
+          <EditJson
+            key={pathname}
+            data={updatedEvolverConfig}
+            mode={mode}
+            setData={setEvolverConfig}
+            theme={theme}
+          />
         </div>
       </div>
     </div>

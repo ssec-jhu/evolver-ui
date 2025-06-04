@@ -10,6 +10,7 @@ import { createEvolverClient } from "~/utils/evolverClient.client";
 import { deviceInfo } from "~/cookies.server";
 import { ROUTES } from "~/utils/routes";
 import type { Route } from "./+types/devices.$id.$name.state";
+import { DefaultHydrateFallback } from "~/components/HydrateFallback";
 
 // TODO: don't do this, i think the evolver config has layout dims.
 const VIAL_COUNT = 16;
@@ -39,6 +40,12 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
     vials: vials,
     evolverState: data,
   };
+}
+
+clientLoader.hydrate = true as const;
+
+export function HydrateFallback() {
+  return <DefaultHydrateFallback />;
 }
 
 export default function Hardware() {

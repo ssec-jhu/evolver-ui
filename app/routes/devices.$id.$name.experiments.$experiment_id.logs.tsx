@@ -43,14 +43,16 @@ export async function clientLoader({
   const { experiment_id } = params;
   const evolverClient = createEvolverClient(device.url);
 
-  const [logs] = await Promise.all([
+  const [{ data }] = await Promise.all([
     Evolver.getExperimentLogsExperimentExperimentNameLogsGet({
       client: evolverClient,
       path: { experiment_name: experiment_id },
     }),
   ]);
-  return { logs: logs.data as Record<string, LogLine[]> };
+  return { logs: (data as { data: object }).data as Record<string, LogLine[]> };
 }
+
+clientLoader.hydrate = true as const;
 
 export function HydrateFallback() {
   return <DefaultHydrateFallback />;
@@ -80,6 +82,8 @@ export default function ExperimentLogs() {
   const LogTables = Object.keys(logs).map((key, ix) => (
     <LogTable key={key + ix} title={key} logs={logs[key]} />
   ));
+  console.log("logs on comp", logs);
+  console.log("LogTables", Object.keys(logs).length, LogTables);
   const LogView =
     Object.keys(logs).length > 0 ? (
       LogTables

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { createRoutesStub } from "react-router";
 import { data } from "./testData";
-import { EditJson } from "../../EditJson.client";
+import { EditJson } from "../../EditJson";
 
 const RemixStub = createRoutesStub([
   {
