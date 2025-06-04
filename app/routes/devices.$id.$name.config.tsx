@@ -156,14 +156,12 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
   const { device, theme } = await serverLoader();
-  console.log("clientLoader device", device);
   const evolverClient = createEvolverClient(device.url); // (5) create an Evolver client.
 
   const [describeEvolver, evolverState] = await Promise.all([
     Evolver.describe({ client: evolverClient }),
     Evolver.state({ client: evolverClient }),
   ]);
-  console.log("describeEvolver", describeEvolver);
 
   return {
     device,
@@ -263,7 +261,7 @@ export default function DeviceConfig() {
                 });
               }}
             >
-              Save
+              save
             </button>
             <button
               className="btn"
@@ -275,7 +273,7 @@ export default function DeviceConfig() {
                 notify.dismiss();
               }}
             >
-              Cancel
+              cancel
             </button>
           </div>
         )}

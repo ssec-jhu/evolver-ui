@@ -32,7 +32,9 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
   const {
     device: { url },
   } = await serverLoader();
+
   const evolverClient = createEvolverClient(url); //(2) create a client using the device URL returned by the serverLoader().
+  // TODO Promise all.
   const { data } = await Evolver.state({ client: evolverClient });
   const describeEvolver = await Evolver.describe({ client: evolverClient });
   const vials = describeEvolver?.data?.config?.vials;
