@@ -123,24 +123,35 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const evolverClient = createEvolverClient(url);
 
     switch (intent) {
-      case ProcedureIntent.Enum.dispatch_action:
-        return {
-          ...((
-            await Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
-              {
-                body: {
-                  action_name: submission.value.action_name,
-                  payload: JSON.parse(submission.value.payload),
-                },
-                path: {
-                  hardware_name: submission.value.hardware_name,
-                },
-                client: evolverClient,
+      case ProcedureIntent.Enum.dispatch_action: {
+        const result =
+          await Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
+            {
+              body: {
+                action_name: submission.value.action_name,
+                payload: JSON.parse(submission.value.payload),
               },
-            )
-          ).data as object),
+              path: {
+                hardware_name: submission.value.hardware_name,
+              },
+              client: evolverClient,
+            },
+          );
+
+        const detail = result.error?.detail;
+        const response = result.response;
+
+        if (response.status !== 200) {
+          throw new Error(
+            `Failed to dispatch action: ${submission.value.action_name} with payload: ${submission.value.payload}. ${detail ? "Device responded with: " + detail : ""}`,
+          );
+        }
+
+        return {
+          ...(result.data as object),
           success: true,
         };
+      }
 
       case ProcedureIntent.Enum.resume_calibration_procedure:
         return {
@@ -223,11 +234,11 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         return { ...submission.reply(), success: false };
     }
   } catch (error) {
-    let errorMessage = "Failed to connect to device";
+    let errorMessage =
+      "An unexpected error occurred while processing the procedure action.";
     if (error instanceof Error) {
-      errorMessage = errorMessage + ": " + (error.message || "Unknown error");
+      errorMessage = error.message;
     }
-    // TODO: confirm the useErrorFormErrorNotifications hook works with this
     return {
       ...submission.reply({
         formErrors: [errorMessage],

@@ -213,7 +213,7 @@ export function ErrorBoundary() {
       <WrenchScrewdriverIcon className="w-10 h-10" />
       <div>
         <div>
-          <h1 className="font-mono">{`Error loading experiment ${experiment_id}. Check config experiments attribute.`}</h1>
+          <h1 className="font-mono">{`error loading experiment ${experiment_id}. Check config experiments attribute.`}</h1>
         </div>
       </div>
 

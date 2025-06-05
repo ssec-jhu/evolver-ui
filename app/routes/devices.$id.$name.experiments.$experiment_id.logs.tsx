@@ -82,8 +82,6 @@ export default function ExperimentLogs() {
   const LogTables = Object.keys(logs).map((key, ix) => (
     <LogTable key={key + ix} title={key} logs={logs[key]} />
   ));
-  console.log("logs on comp", logs);
-  console.log("LogTables", Object.keys(logs).length, LogTables);
   const LogView =
     Object.keys(logs).length > 0 ? (
       LogTables

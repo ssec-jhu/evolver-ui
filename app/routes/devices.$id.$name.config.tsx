@@ -113,7 +113,6 @@ export async function clientAction({
           ]);
           return redirect(`${ROUTES.device.config({ id, name })}?mode=view`);
         } catch (error) {
-          console.log("ERROR: Failed to update Evolver config", error);
           return {
             ...submission.reply({
               formErrors: [
@@ -200,8 +199,8 @@ export default function DeviceConfig() {
     useState<typeof evolverConfig>(evolverConfig);
 
   useEffect(() => {
-    setEvolverConfig(evolverConfig);
-  }, [updatedEvolverConfig, evolverConfig]);
+    setEvolverConfig(updatedEvolverConfig);
+  }, [updatedEvolverConfig]);
 
   return (
     <div className="p-4 bg-base-300 rounded-box relative overflow-x-auto">

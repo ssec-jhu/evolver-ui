@@ -22,7 +22,7 @@ export function useFormErrorNotifications(actionData: ActionData | undefined) {
         } else if (typeof actionData.error === "object") {
           const errorMessages: string[] = [];
           Object.entries(actionData.error).forEach(([key, value]) => {
-            errorMessages.push(`${key}: ${value}`);
+            errorMessages.push(`${key ? key + ": " : ""} ${value}`);
           });
           errorMessages.forEach((message) => {
             notify.error(message);

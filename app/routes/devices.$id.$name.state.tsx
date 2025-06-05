@@ -1,4 +1,5 @@
 import {
+  data,
   Link,
   useLoaderData,
   useParams,
@@ -11,6 +12,7 @@ import { deviceInfo } from "~/cookies.server";
 import { ROUTES } from "~/utils/routes";
 import type { Route } from "./+types/devices.$id.$name.state";
 import { DefaultHydrateFallback } from "~/components/HydrateFallback";
+import { getDeviceById } from "~/utils/evolverClient.server";
 
 // TODO: don't do this, i think the evolver config has layout dims.
 const VIAL_COUNT = 16;
@@ -22,10 +24,17 @@ export const handle = {
   },
 };
 
-export async function loader({ request }: Route.LoaderArgs) {
-  return {
-    device: await deviceInfo.parse(request.headers.get("Cookie")), // (1) loader returns the deviceInfo cookie, NOTE: this must be parsed by a loader because the cookie is server-side only pattern.
-  };
+export async function loader({ params }: Route.LoaderArgs) {
+  const { id } = params;
+  const device = await getDeviceById(id);
+  return data(
+    { device },
+    {
+      headers: {
+        "Set-Cookie": await deviceInfo.serialize(device),
+      },
+    },
+  );
 }
 
 export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
@@ -33,14 +42,16 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
     device: { url },
   } = await serverLoader();
 
-  const evolverClient = createEvolverClient(url); //(2) create a client using the device URL returned by the serverLoader().
-  // TODO Promise all.
-  const { data } = await Evolver.state({ client: evolverClient });
-  const describeEvolver = await Evolver.describe({ client: evolverClient });
-  const vials = describeEvolver?.data?.config?.vials;
+  const evolverClient = createEvolverClient(url);
+
+  const [describeEvolver, evolverState] = await Promise.all([
+    Evolver.describe({ client: evolverClient }),
+    Evolver.state({ client: evolverClient }),
+  ]);
+
   return {
-    vials: vials,
-    evolverState: data,
+    vials: describeEvolver?.data?.config?.vials,
+    evolverState: evolverState.data,
   };
 }
 

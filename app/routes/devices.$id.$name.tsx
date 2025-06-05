@@ -106,7 +106,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     { device }, // (2) return the device data, the client loader will use the device URL to init the Evolver client on the client side.
     {
       headers: {
-        "Set-Cookie": await deviceInfo.serialize(device), // (3) set the cookie all child routes can access it with: deviceInfo.parse(request.headers.get("Cookie")).
+        "Set-Cookie": await deviceInfo.serialize(device), // (3) set the cookie.
       },
     },
   );
@@ -138,12 +138,15 @@ export function HydrateFallback() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  const { id } = useParams();
+  const { name } = useParams();
   return (
     <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
       <WrenchScrewdriverIcon className="w-10 h-10" />
 
-      <h1 className="font-mono">{`Error loading the device: ${id}`}</h1>
+      <h1 className="font-mono">{`Error loading the device: ${name}`}</h1>
+      <p>
+        ensure the device is running the latest version of the evolver software.
+      </p>
       <div>
         {isRouteErrorResponse(error) && (
           <>
@@ -155,10 +158,8 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         )}
         {error instanceof Error && (
           <div>
-            <h1>Error</h1>
+            <h1>message</h1>
             <p>{error.message}</p>
-            <p>The stack trace is:</p>
-            <pre>{error.stack}</pre>
           </div>
         )}
       </div>
