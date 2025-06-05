@@ -13,6 +13,7 @@ import { createEvolverClient } from "~/utils/evolverClient.client";
 import { deviceInfo } from "~/cookies.server";
 import { ROUTES } from "~/utils/routes";
 import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
+import { evolverApiCall } from "~/utils/evolverApiCall";
 import type { Route } from "./+types/devices.$id.$name.hardware.$hardware_name.calibrate";
 import { DefaultHydrateFallback } from "~/components/HydrateFallback";
 import {
@@ -124,112 +125,135 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     switch (intent) {
       case ProcedureIntent.Enum.dispatch_action: {
-        const result =
-          await Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
-            {
-              body: {
-                action_name: submission.value.action_name,
-                payload: JSON.parse(submission.value.payload),
+        const actionName = submission.value.action_name;
+        const actionPayload = submission.value.payload;
+        const data = await evolverApiCall(
+          () =>
+            Evolver.dispatchCalibratorActionHardwareHardwareNameCalibratorProcedureDispatchPost(
+              {
+                body: {
+                  action_name: actionName,
+                  payload: JSON.parse(actionPayload),
+                },
+                path: {
+                  hardware_name: submission.value.hardware_name,
+                },
+                client: evolverClient,
               },
-              path: {
-                hardware_name: submission.value.hardware_name,
-              },
-              client: evolverClient,
-            },
-          );
-
-        const detail = result.error?.detail;
-        const response = result.response;
-
-        if (response.status !== 200) {
-          throw new Error(
-            `Failed to dispatch action: ${submission.value.action_name} with payload: ${submission.value.payload}. ${detail ? "Device responded with: " + detail : ""}`,
-          );
-        }
+            ),
+          `dispatch_action: ${submission.value.action_name} with payload: ${submission.value.payload}`,
+        );
 
         return {
-          ...(result.data as object),
+          ...(data as object),
           success: true,
         };
       }
 
-      case ProcedureIntent.Enum.resume_calibration_procedure:
-        return {
-          ...((
-            await Evolver.resumeCalibrationProcedureHardwareHardwareNameCalibratorProcedureResumePost(
+      case ProcedureIntent.Enum.resume_calibration_procedure: {
+        const data = await evolverApiCall(
+          () =>
+            Evolver.resumeCalibrationProcedureHardwareHardwareNameCalibratorProcedureResumePost(
               {
                 path: {
                   hardware_name: submission.value.hardware_name,
                 },
                 client: evolverClient,
               },
-            )
-          ).data as object),
-          success: true,
-        };
-      case ProcedureIntent.Enum.start_calibration_procedure:
-        return {
-          ...((
-            await Evolver.startCalibrationProcedureHardwareHardwareNameCalibratorProcedureStartPost(
-              {
-                path: {
-                  hardware_name: submission.value.hardware_name,
-                },
-                query: {
-                  procedure_file: submission.value.procedure_file,
-                },
-                client: evolverClient,
-              },
-            )
-          ).data as object),
-          success: true,
-        };
+            ),
+          intent,
+        );
 
-      case ProcedureIntent.Enum.save_calibration_procedure:
         return {
-          ...((
-            await Evolver.saveCalibrationProcedureHardwareHardwareNameCalibratorProcedureSavePost(
-              {
-                path: {
-                  hardware_name: submission.value.hardware_name,
-                },
-                client: evolverClient,
-              },
-            )
-          ).data as object),
+          ...(data as object),
           success: true,
         };
-      case ProcedureIntent.Enum.apply_calibration_procedure:
-        return {
-          ...((
-            await Evolver.applyCalibrationProcedureHardwareHardwareNameCalibratorProcedureApplyPost(
+      }
+      case ProcedureIntent.Enum.start_calibration_procedure: {
+        const procedureFile = submission.value.procedure_file;
+        const data = await evolverApiCall(
+          () =>
+            Evolver.startCalibrationProcedureHardwareHardwareNameCalibratorProcedureStartPost(
               {
                 path: {
                   hardware_name: submission.value.hardware_name,
                 },
                 query: {
-                  calibration_file: submission.value.calibration_file,
+                  procedure_file: procedureFile,
                 },
                 client: evolverClient,
               },
-            )
-          ).data as object),
+            ),
+          intent,
+        );
+
+        return {
+          ...(data as object),
           success: true,
         };
-      case ProcedureIntent.Enum.undo:
-        return {
-          ...((
-            await Evolver.undoCalibrationProcedureActionHardwareHardwareNameCalibratorProcedureUndoPost(
+      }
+
+      case ProcedureIntent.Enum.save_calibration_procedure: {
+        const data = await evolverApiCall(
+          () =>
+            Evolver.saveCalibrationProcedureHardwareHardwareNameCalibratorProcedureSavePost(
               {
                 path: {
                   hardware_name: submission.value.hardware_name,
                 },
                 client: evolverClient,
               },
-            )
-          ).data as object),
+            ),
+          intent,
+        );
+
+        return {
+          ...(data as object),
           success: true,
         };
+      }
+      case ProcedureIntent.Enum.apply_calibration_procedure: {
+        const calibrationFile = submission.value.calibration_file;
+        const data = await evolverApiCall(
+          () =>
+            Evolver.applyCalibrationProcedureHardwareHardwareNameCalibratorProcedureApplyPost(
+              {
+                path: {
+                  hardware_name: submission.value.hardware_name,
+                },
+                query: {
+                  calibration_file: calibrationFile,
+                },
+                client: evolverClient,
+              },
+            ),
+          intent,
+        );
+
+        return {
+          ...(data as object),
+          success: true,
+        };
+      }
+      case ProcedureIntent.Enum.undo: {
+        const data = await evolverApiCall(
+          () =>
+            Evolver.undoCalibrationProcedureActionHardwareHardwareNameCalibratorProcedureUndoPost(
+              {
+                path: {
+                  hardware_name: submission.value.hardware_name,
+                },
+                client: evolverClient,
+              },
+            ),
+          intent,
+        );
+
+        return {
+          ...(data as object),
+          success: true,
+        };
+      }
       default:
         return { ...submission.reply(), success: false };
     }

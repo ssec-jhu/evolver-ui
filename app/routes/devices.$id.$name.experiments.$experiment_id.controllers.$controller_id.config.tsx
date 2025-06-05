@@ -10,6 +10,7 @@ import type { Route } from "./+types/devices.$id.$name.experiments.$experiment_i
 import type {
   ConfigDescriptor,
   EvolverConfigWithoutDefaults,
+  EvolverStateWithConfig,
   SchemaResponse,
 } from "client";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
@@ -21,6 +22,7 @@ import { deviceInfo } from "~/cookies.server";
 import { ControllerConfig } from "~/components/ControllerConfig";
 import { ROUTES } from "~/utils/routes";
 import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
+import { evolverApiCall } from "~/utils/evolverApiCall";
 import { DefaultHydrateFallback } from "~/components/HydrateFallback";
 
 export const handle = {
@@ -78,131 +80,108 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   const { intent, id, url } = submission.value;
 
-  const evolverClient = createEvolverClient(url);
-  const name = new URL(url).hostname;
+  try {
+    const evolverClient = createEvolverClient(url);
+    const name = new URL(url).hostname;
 
-  switch (intent) {
-    case Intent.Enum.update_controller: {
-      const { controller_config, experiment_id, controller_id } =
-        submission.value;
+    switch (intent) {
+      case Intent.Enum.update_controller: {
+        const { controller_config, experiment_id, controller_id } =
+          submission.value;
 
-      // Get the current full configuration
-      const { data: describeData, error: describeError } =
-        await Evolver.describe({
-          client: evolverClient,
-        });
+        // Get the current full configuration
+        const describeData = await evolverApiCall<EvolverStateWithConfig>(
+          () => Evolver.describe({ client: evolverClient }),
+          "describe",
+        );
 
-      if (describeError) {
-        return {
-          ...submission.reply({
-            formErrors: ["Failed to retrieve device configuration"],
-          }),
-          success: false,
-        };
+        // Extract the configuration from the describe data
+        const deviceConfig =
+          describeData?.config as EvolverConfigWithoutDefaults;
+
+        // Create a deep copy of the device configuration
+        const configToUpdate = JSON.parse(JSON.stringify(deviceConfig));
+
+        // Make sure we have the experiments object
+        if (!configToUpdate.experiments) {
+          throw new Error("Invalid configuration: missing experiments object");
+        }
+
+        // Make sure the specified experiment exists
+        const experiment = configToUpdate.experiments[experiment_id];
+        if (!experiment) {
+          throw new Error(
+            `Experiment '${experiment_id}' not found in the configuration`,
+          );
+        }
+        // Make sure the experiment has a controllers array
+        if (!Array.isArray(experiment.controllers)) {
+          throw new Error(
+            `Experiment '${experiment_id}' does not have a controllers array`,
+          );
+        }
+
+        // Find the specific controller by its name in the controllers array
+        const controllerIndex = experiment.controllers.findIndex(
+          (controller: { config: { name: string } }) =>
+            controller.config && controller.config.name === controller_id,
+        );
+
+        if (controllerIndex === -1) {
+          throw new Error(
+            `Controller '${controller_id}' not found in experiment '${experiment_id}'`,
+          );
+        }
+
+        // Parse the new controller config
+        let parsedControllerConfig;
+        try {
+          parsedControllerConfig = JSON.parse(controller_config);
+        } catch (error) {
+          throw new Error(
+            `Invalid JSON for controller config: ${error instanceof Error ? error.message : "unknown error"}`,
+          );
+        }
+
+        // Update just the controller's config, preserving other properties
+        configToUpdate.experiments[experiment_id].controllers[
+          controllerIndex
+        ].config = parsedControllerConfig;
+
+        // Send the updated config to the device
+        await evolverApiCall(
+          () =>
+            Evolver.update({
+              body: configToUpdate,
+              client: evolverClient,
+            }),
+          intent,
+        );
+
+        // Get the new controller name from the updated config
+        const newControllerName = parsedControllerConfig.name || controller_id;
+
+        return redirect(
+          `${ROUTES.device.experiment.controllers.current.config({
+            id,
+            name,
+            experimentId: experiment_id,
+            controllerId: newControllerName,
+          })}#${newControllerName}config`,
+        );
       }
-
-      // Extract the configuration from the describe data
-      const deviceConfig = describeData?.config as EvolverConfigWithoutDefaults;
-
-      // Create a deep copy of the device configuration
-      const configToUpdate = JSON.parse(JSON.stringify(deviceConfig));
-
-      // Make sure we have the experiments object
-      if (!configToUpdate.experiments) {
-        return {
-          ...submission.reply({
-            formErrors: ["Invalid configuration: missing experiments object"],
-          }),
-          success: false,
-        };
-      }
-
-      // Make sure the specified experiment exists
-      const experiment = configToUpdate.experiments[experiment_id];
-      if (!experiment) {
-        return {
-          ...submission.reply({
-            formErrors: [
-              `Experiment '${experiment_id}' not found in configuration`,
-            ],
-          }),
-          success: false,
-        };
-      }
-      // Make sure the experiment has a controllers array
-      if (!Array.isArray(experiment.controllers)) {
-        return {
-          ...submission.reply({
-            formErrors: [
-              `Experiment '${experiment_id}' does not have a controllers array`,
-            ],
-          }),
-          success: false,
-        };
-      }
-
-      // Find the specific controller by its name in the controllers array
-      const controllerIndex = experiment.controllers.findIndex(
-        (controller: { config: { name: string } }) =>
-          controller.config && controller.config.name === controller_id,
-      );
-
-      if (controllerIndex === -1) {
-        return {
-          ...submission.reply({
-            formErrors: [
-              `Controller '${controller_id}' not found in experiment '${experiment_id}'`,
-            ],
-          }),
-          success: false,
-        };
-      }
-
-      // Parse the new controller config
-      let parsedControllerConfig;
-      try {
-        parsedControllerConfig = JSON.parse(controller_config);
-      } catch (error) {
-        return {
-          ...submission.reply({
-            formErrors: ["Invalid controller configuration JSON"],
-          }),
-          success: false,
-        };
-      }
-
-      // Update just the controller's config, preserving other properties
-      configToUpdate.experiments[experiment_id].controllers[
-        controllerIndex
-      ].config = parsedControllerConfig;
-
-      // Send the updated config to the device
-      const { error } = await Evolver.update({
-        body: configToUpdate,
-        client: evolverClient,
-      });
-
-      if (error) {
-        return {
-          ...submission.reply({
-            formErrors: ["Failed to update device configuration"],
-          }),
-          success: false,
-        };
-      }
-
-      // Get the new controller name from the updated config
-      const newControllerName = parsedControllerConfig.name || controller_id;
-
-      return redirect(
-        `${ROUTES.device.experiment.controllers.current.config({
-          id,
-          name,
-          experimentId: experiment_id,
-          controllerId: newControllerName,
-        })}#${newControllerName}config`,
-      );
     }
+  } catch (error) {
+    let errorMessage = "An unexpected error occurred";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    return {
+      ...submission.reply({
+        formErrors: [errorMessage],
+      }),
+      success: false,
+    };
   }
 }
 

@@ -23,6 +23,7 @@ import { getDeviceById } from "~/utils/evolverClient.server";
 import { createEvolverClient } from "~/utils/evolverClient.client";
 import { deviceInfo } from "../cookies.server";
 import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
+import { evolverApiCall } from "~/utils/evolverApiCall";
 import type { Route } from "./+types/devices.$id.$name";
 import { toast as notify } from "react-toastify";
 
@@ -69,31 +70,31 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   try {
     switch (intent) {
-      case Intent.Enum.start:
-        try {
-          await Evolver.startStartPost({ client: evolverClient });
-        } catch (error) {
-          return {
-            ...submission.reply({ formErrors: ["unable to start device"] }),
-            success: false,
-          };
-        }
+      case Intent.Enum.start: {
+        await evolverApiCall(
+          () => Evolver.startStartPost({ client: evolverClient }),
+          intent,
+        );
         break;
-      case Intent.Enum.stop:
-        try {
-          await Evolver.abortAbortPost({ client: evolverClient });
-        } catch (error) {
-          return {
-            ...submission.reply({ formErrors: ["unable to stop device"] }),
-            success: false,
-          };
-        }
+      }
+      case Intent.Enum.stop: {
+        await evolverApiCall(
+          () => Evolver.abortAbortPost({ client: evolverClient }),
+          intent,
+        );
         break;
+      }
     }
     return redirect(redirectTo);
   } catch (error) {
+    let errorMessage = "An unexpected error occurred";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     return {
-      ...submission.reply({ formErrors: ["device not found"] }),
+      ...submission.reply({
+        formErrors: [errorMessage],
+      }),
       success: false,
     };
   }

@@ -22,6 +22,7 @@ import { db } from "~/utils/db.server";
 import { createEvolverClient } from "~/utils/evolverClient.client";
 import { deviceInfo, userPrefs } from "~/cookies.server";
 import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
+import { evolverApiCall } from "~/utils/evolverApiCall";
 import type { Prisma } from "@prisma/client";
 import { toast as notify } from "react-toastify";
 import { DefaultHydrateFallback } from "~/components/HydrateFallback";
@@ -101,40 +102,33 @@ export async function clientAction({
     const evolverClient = createEvolverClient(url);
 
     switch (intent) {
-      case UpdateDeviceIntentEnum.Enum.update_evolver:
-        try {
-          await Promise.all([
-            await Evolver.update({
-              body: JSON.parse(data),
-              client: evolverClient,
-            }),
-            // Server action handles the same request, so no arg params in the call
-            await serverAction(),
-          ]);
-          return redirect(`${ROUTES.device.config({ id, name })}?mode=view`);
-        } catch (error) {
-          return {
-            ...submission.reply({
-              formErrors: [
-                "unable to update device",
-                " error object: " + JSON.stringify(error),
-              ],
-            }),
-            success: false,
-          };
-        }
+      case UpdateDeviceIntentEnum.Enum.update_evolver: {
+        await Promise.all([
+          evolverApiCall(
+            () =>
+              Evolver.update({
+                body: JSON.parse(data),
+                client: evolverClient,
+              }),
+            intent,
+          ),
+          // Server action handles the same request, so no arg params in the call
+          serverAction(),
+        ]);
+        return redirect(`${ROUTES.device.config({ id, name })}?mode=view`);
+      }
       default:
         return { success: false };
     }
   } catch (error) {
+    let errorMessage =
+      "An unexpected error occurred while updating the configuration";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     return {
       ...submission.reply({
-        formErrors: [
-          "Failed to connect to device: " +
-            (typeof error === "object" && error !== null && "message" in error
-              ? (error as { message?: string }).message
-              : "Unknown error"),
-        ],
+        formErrors: [errorMessage],
       }),
       success: false,
     };

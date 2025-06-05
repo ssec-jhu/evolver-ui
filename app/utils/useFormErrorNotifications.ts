@@ -3,9 +3,9 @@ import { toast as notify } from "react-toastify";
 
 type ActionData = {
   success?: boolean;
-  error?: string | Record<string, any>;
+  error?: string | Record<string, string[] | null> | undefined;
   formErrors?: string[];
-  fieldErrors?: Record<string, string[]>;
+  fieldErrors?: Record<string, string[] | null> | undefined;
 };
 
 /**
