@@ -26,6 +26,7 @@ import { evolverApiCall } from "~/utils/evolverApiCall";
 import type { Prisma } from "@prisma/client";
 import { toast as notify } from "react-toastify";
 import { DefaultHydrateFallback } from "~/components/HydrateFallback";
+import { DefaultErrorBoundary } from "~/components/DefaultErrorBoundary";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
@@ -170,6 +171,16 @@ clientLoader.hydrate = true as const;
 
 export function HydrateFallback() {
   return <DefaultHydrateFallback />;
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  return (
+    <DefaultErrorBoundary
+      error={error}
+      title="Error loading device configuration"
+      subtitle="Unable to load the device configuration. Please ensure the device is online and try again."
+    />
+  );
 }
 
 export default function DeviceConfig() {

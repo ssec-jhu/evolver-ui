@@ -8,6 +8,7 @@ import { deviceInfo } from "~/cookies.server";
 import { createEvolverClient } from "~/utils/evolverClient.client";
 import type { EvolverConfigWithoutDefaults } from "client";
 import { DefaultHydrateFallback } from "~/components/HydrateFallback";
+import { DefaultErrorBoundary } from "~/components/DefaultErrorBoundary";
 
 export const handle = {
   breadcrumb: ({
@@ -45,6 +46,16 @@ clientLoader.hydrate = true as const;
 
 export function HydrateFallback() {
   return <DefaultHydrateFallback />;
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  return (
+    <DefaultErrorBoundary
+      error={error}
+      title="Error loading hardware"
+      subtitle="Unable to load hardware information. Please ensure the device is online and try again."
+    />
+  );
 }
 
 export default function Hardware() {

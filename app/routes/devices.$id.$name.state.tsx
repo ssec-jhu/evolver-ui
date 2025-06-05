@@ -13,6 +13,7 @@ import { ROUTES } from "~/utils/routes";
 import type { Route } from "./+types/devices.$id.$name.state";
 import { DefaultHydrateFallback } from "~/components/HydrateFallback";
 import { getDeviceById } from "~/utils/evolverClient.server";
+import { DefaultErrorBoundary } from "~/components/DefaultErrorBoundary";
 
 // TODO: don't do this, i think the evolver config has layout dims.
 const VIAL_COUNT = 16;
@@ -59,6 +60,16 @@ clientLoader.hydrate = true as const;
 
 export function HydrateFallback() {
   return <DefaultHydrateFallback />;
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  return (
+    <DefaultErrorBoundary
+      error={error}
+      title="Error loading device state"
+      subtitle="Unable to load the device state. Please ensure the device is online and try again."
+    />
+  );
 }
 
 export default function Hardware() {

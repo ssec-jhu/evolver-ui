@@ -26,6 +26,7 @@ import { useFormErrorNotifications } from "~/utils/useFormErrorNotifications";
 import { evolverApiCall } from "~/utils/evolverApiCall";
 import type { Route } from "./+types/devices.$id.$name";
 import { toast as notify } from "react-toastify";
+import { DefaultErrorBoundary } from "~/components/DefaultErrorBoundary";
 
 export const handle = {
   breadcrumb: (props: { params: { id: string; name: string } }) => {
@@ -141,33 +142,11 @@ export function HydrateFallback() {
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   const { name } = useParams();
   return (
-    <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
-      <WrenchScrewdriverIcon className="w-10 h-10" />
-
-      <h1 className="font-mono">{`Error loading the device: ${name}`}</h1>
-      <p>
-        ensure the device is running the latest version of the evolver software.
-      </p>
-      <div>
-        {isRouteErrorResponse(error) && (
-          <>
-            <h1>
-              {error.status} {error.statusText}
-            </h1>
-            <p>{error.data}</p>
-          </>
-        )}
-        {error instanceof Error && (
-          <div>
-            <h1>message</h1>
-            <p>{error.message}</p>
-          </div>
-        )}
-      </div>
-      <Link to={ROUTES.static.devices} className="link">
-        home
-      </Link>
-    </div>
+    <DefaultErrorBoundary 
+      error={error}
+      title={`Error loading the device: ${name}`}
+      subtitle="Ensure the device is running the latest version of the evolver software."
+    />
   );
 }
 

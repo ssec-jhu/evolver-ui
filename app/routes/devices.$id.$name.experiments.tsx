@@ -10,12 +10,12 @@ import type { Route } from "./+types/devices.$id.$name.experiments";
 import { ROUTES } from "~/utils/routes";
 import type { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
-import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 import * as Evolver from "client/services.gen";
 import { ExperimentsTable } from "~/components/ExperimentsTable";
 import { createEvolverClient } from "~/utils/evolverClient.client";
 import { deviceInfo } from "~/cookies.server";
 import { DefaultHydrateFallback } from "~/components/HydrateFallback";
+import { DefaultErrorBoundary } from "~/components/DefaultErrorBoundary";
 
 export const handle = {
   breadcrumb: ({ params }: { params: { id: string; name: string } }) => {
@@ -26,23 +26,13 @@ export const handle = {
   },
 };
 
-export function ErrorBoundary() {
-  const { id, name } = useParams<Route.ActionArgs["params"]>();
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   return (
-    <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box">
-      <WrenchScrewdriverIcon className="w-10 h-10" />
-      <div>
-        <div>
-          <h1 className="font-mono">{`error loading experiment - check`}</h1>
-        </div>
-      </div>
-
-      {id && name && (
-        <Link to={ROUTES.device.config({ id, name })} className="link">
-          config
-        </Link>
-      )}
-    </div>
+    <DefaultErrorBoundary
+      error={error}
+      title="Error loading experiments"
+      subtitle="Unable to load experiments. Please ensure the device is online and try again."
+    />
   );
 }
 export async function loader({ request }: Route.LoaderArgs) {
