@@ -8,12 +8,11 @@ import {
   useSubmit,
   redirect,
   data,
-  isRouteErrorResponse,
 } from "react-router";
 import { ROUTES } from "~/utils/routes";
 import * as Evolver from "client/services.gen";
 import clsx from "clsx";
-import { BeakerIcon, WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
+import { BeakerIcon } from "@heroicons/react/24/outline";
 import { PauseIcon, PlayIcon } from "@heroicons/react/24/solid";
 import { z } from "zod";
 import { parseWithZod } from "@conform-to/zod";
@@ -120,14 +119,13 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
   const { device } = await serverLoader(); // (4) get the device info - [TODO] switch case on "offline" flag - indicating the UI is hosted on the device itself and has no internet access, in this case device info (e.g. url) can be in localStorage or similar.
   const evolverClient = createEvolverClient(device.url); // (5) create an Evolver client.
 
-  const [describeEvolver, evolverState] = await Promise.all([
+  const [evolverState] = await Promise.all([
     Evolver.describe({ client: evolverClient }),
     Evolver.state({ client: evolverClient }),
   ]);
 
   return {
     device,
-    description: describeEvolver.data,
     ok: true,
     state: evolverState.data,
   };
@@ -142,7 +140,7 @@ export function HydrateFallback() {
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   const { name } = useParams();
   return (
-    <DefaultErrorBoundary 
+    <DefaultErrorBoundary
       error={error}
       title={`Error loading the device: ${name}`}
       subtitle="Ensure the device is running the latest version of the evolver software."
@@ -155,7 +153,7 @@ export default function Device() {
   if (!id || !name) {
     throw new Response("Device ID and name are required", { status: 400 });
   }
-  const { description, state, device } = useLoaderData<typeof clientLoader>();
+  const { state, device } = useLoaderData<typeof clientLoader>();
   const { url } = device;
   const { pathname } = useLocation();
   const actionData = useActionData<typeof clientAction>();
@@ -164,14 +162,13 @@ export default function Device() {
   useFormErrorNotifications(actionData);
   const pathElements = pathname.split("/");
   const lastPathElement = pathElements[pathElements.length - 1];
-  const evolverConfig = description?.config;
 
   return (
     <div className="flex flex-col gap-4">
       <div className=" flex items-center gap-4 justify-between pb-4">
         <div className="flex items-center">
           <div className="flex flex-col gap-2">
-            <h1>{`${evolverConfig?.name}`}</h1>
+            <h1>{`${name}`}</h1>
             <div className="flex w-full">
               <h1 className="font-sans">
                 <span className="font-mono">
