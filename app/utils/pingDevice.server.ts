@@ -28,9 +28,9 @@ export async function pingDevice(
     const evolverDescription = await Evolver.describe({
       client: evolverClient,
     });
-    const {
-      config: { name },
-    } = evolverDescription.data;
+    const data = evolverDescription.data;
+    const config = data?.config;
+    const name = config?.name || "unknown";
     return { online: true, name };
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {

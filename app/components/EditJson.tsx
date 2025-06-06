@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { JsonEditor, githubDarkTheme, githubLightTheme } from "json-edit-react";
+import { JsonEditor, githubDarkTheme } from "json-edit-react";
 import type {
   FilterFunction,
   JsonData,
@@ -20,13 +20,6 @@ export function EditJson({
   setData: (arg0: EvolverConfigWithoutDefaults) => void;
   theme: "dark" | "light";
 }) {
-  /*
-  const { theme } = useRouteLoaderData<typeof rootLoader>("root") ?? {
-    theme: "dark",
-  };
-
-  const editorTheme = theme === "dark" ? githubDarkTheme : githubLightTheme;
-  */
   const editorTheme = githubDarkTheme;
 
   const customizeText = ({ key, value }: NodeData) => {

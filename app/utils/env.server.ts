@@ -56,7 +56,7 @@ export function getClientEnv() {
   const parsed = clientSchema.safeParse(clientEnv);
   if (parsed.success === false) {
     throw new Error(
-      "⛔ ️new publically visible env var detected, env vars added here will be visible on the client did you consider the security implications?",
+      "⛔ ️new publicly visible env var detected, env vars added here will be visible on the client did you consider the security implications?",
     );
   }
   if (parsed.success === true) {

@@ -30,7 +30,6 @@ import { DefaultErrorBoundary } from "~/components/DefaultErrorBoundary";
 export const handle = {
   breadcrumb: (props: { params: { id: string; name: string } }) => {
     const { id, name } = props.params;
-
     return <Link to={ROUTES.device.state({ id, name })}>{name}</Link>;
   },
 };

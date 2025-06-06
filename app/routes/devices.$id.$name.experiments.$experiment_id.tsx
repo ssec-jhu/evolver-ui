@@ -1,6 +1,5 @@
-import { Link, Outlet, useParams, useRouteLoaderData } from "react-router";
+import { Link, Outlet, useLoaderData, useParams } from "react-router";
 import type { Route } from "./+types/devices.$id.$name.experiments.$experiment_id";
-import type { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/solid";
 
@@ -79,18 +78,9 @@ export function HydrateFallback() {
 
 export default function Controllers() {
   const { id, experiment_id, name } = useParams<Route.ActionArgs["params"]>();
+  const { experiments } = useLoaderData<typeof clientLoader>();
 
-  const loaderData = useRouteLoaderData("routes/devices.$id.$name");
-  let evolverConfig = {} as EvolverConfigWithoutDefaults;
-
-  if (loaderData?.description?.config) {
-    const description = loaderData.description;
-    if (description && description.config) {
-      evolverConfig = description.config as EvolverConfigWithoutDefaults;
-    }
-  }
-
-  if (experiment_id && !evolverConfig.experiments[experiment_id]) {
+  if (experiments && experiment_id && !experiments[experiment_id]) {
     return (
       <div className="flex flex-col gap-4 bg-base-300 p-4 rounded-box items-center">
         <CogIcon className="h-20 w-20" />

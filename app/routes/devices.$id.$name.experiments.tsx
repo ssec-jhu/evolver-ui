@@ -4,11 +4,9 @@ import {
   useLoaderData,
   useLocation,
   useParams,
-  useRouteLoaderData,
 } from "react-router";
 import type { Route } from "./+types/devices.$id.$name.experiments";
 import { ROUTES } from "~/utils/routes";
-import type { EvolverConfigWithoutDefaults } from "client";
 import { CogIcon } from "@heroicons/react/24/outline";
 import * as Evolver from "client/services.gen";
 import { ExperimentsTable } from "~/components/ExperimentsTable";
@@ -65,21 +63,13 @@ export default function Controllers() {
   const { pathname } = useLocation();
   const { experiments } = useLoaderData<typeof clientLoader>();
 
-  const loaderData = useRouteLoaderData("routes/devices.$id.$name");
-  let evolverConfig = {} as EvolverConfigWithoutDefaults;
+  console.log("Experiments:", experiments);
 
-  if (loaderData?.description?.config) {
-    const description = loaderData.description;
-    if (description && description.config) {
-      evolverConfig = description.config as EvolverConfigWithoutDefaults;
-    }
-  }
-
-  if (!evolverConfig.experiments) {
+  if (!experiments) {
     return (
       <div className="flex flex-col items-center">
         <CogIcon className="h-20 w-20" />
-        <div>No experiments found in config.</div>
+        <div>no experiments found in config.</div>
         <div
           className="tooltip"
           data-tip="use the configuration editor to add hardware "

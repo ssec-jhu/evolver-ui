@@ -11,6 +11,7 @@ import {
   useMatches,
   useSearchParams,
   redirect,
+  type UIMatch,
 } from "react-router";
 import { ROUTES } from "./utils/routes";
 import type { ReactNode } from "react";
@@ -58,6 +59,10 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { theme: cookie.theme, ENV: getClientEnv() };
 }
 
+export type THandle = {
+  breadcrumb: (match: UIMatch, queryParams: URLSearchParams) => ReactNode;
+};
+
 export default function App() {
   const { theme } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
@@ -65,11 +70,11 @@ export default function App() {
   const matches = useMatches();
 
   const breadcrumbs = matches
-    .filter((match) => match.handle && match.handle.breadcrumb)
+    .filter((match) => match.handle && (match.handle as THandle).breadcrumb)
     .map((match, index) => {
       return (
         <li role="navigation" key={index}>
-          {match.handle.breadcrumb(match, queryParams)}
+          {(match.handle as THandle).breadcrumb(match, queryParams)}
         </li>
       );
     });
